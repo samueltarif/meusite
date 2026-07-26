@@ -12,6 +12,8 @@ export default defineNuxtConfig({
     compatibilityVersion: 4
   },
   app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
+    layoutTransition: { name: 'layout', mode: 'out-in' },
     head: {
       htmlAttrs: { lang: 'pt-BR' },
       link: [

@@ -9,7 +9,7 @@ const DotLottieVue = defineAsyncComponent(() =>
 <template>
   <section
     id="home"
-    class="relative pt-44 pb-24 lg:pt-52 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
+    class="relative pt-48 pb-32 lg:pt-56 lg:pb-40 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
   >
     <!-- Background Cosmic Atmosphere matching Stitch Screenshot 100% -->
     <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
@@ -73,6 +73,9 @@ const DotLottieVue = defineAsyncComponent(() =>
           }"
         />
       </ClientOnly>
+
+      <!-- Smooth Gradient Fade to next section -->
+      <div class="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-b from-transparent via-[#060318]/70 to-[#F8FAFC] pointer-events-none z-10" />
     </div>
 
     <!-- Hero Content Container -->
