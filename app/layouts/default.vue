@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-[#050212]">
+  <div class="min-h-screen flex flex-col bg-[#FCFCFC]">
     <LayoutHeader />
 
     <main class="flex-grow w-full">
