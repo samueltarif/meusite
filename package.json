@@ -1,0 +1,30 @@
+{
+  "name": "meu-site",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "npx cross-env JITI_CACHE=false nuxt build",
+    "dev": "npx cross-env JITI_CACHE=false nuxt dev",
+    "generate": "npx cross-env JITI_CACHE=false nuxt generate",
+    "preview": "npx cross-env JITI_CACHE=false nuxt preview",
+    "postinstall": "npx cross-env JITI_CACHE=false nuxt prepare"
+  },
+  "dependencies": {
+    "@lottiefiles/dotlottie-vue": "^0.11.20",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@pinia/nuxt": "^0.11.3",
+    "@vueuse/core": "^14.3.0",
+    "@vueuse/nuxt": "^14.3.0",
+    "nuxt": "^4.4.8",
+    "pinia": "^3.0.4",
+    "stripe": "^22.3.1",
+    "vue": "^3.5.39",
+    "vue-router": "^5.1.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "deepmerge": "^4.3.1",
+    "shadcn-vue": "^2.7.4"
+  }
+}
