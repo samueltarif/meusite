@@ -9,7 +9,7 @@ const DotLottieVue = defineAsyncComponent(() =>
 <template>
   <section
     id="home"
-    class="relative pt-44 pb-36 lg:pt-52 lg:pb-48 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
+    class="relative pt-44 pb-24 lg:pt-52 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
   >
     <!-- Background Cosmic Atmosphere matching Stitch Screenshot 100% -->
     <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
@@ -147,17 +147,6 @@ const DotLottieVue = defineAsyncComponent(() =>
 
       </div>
 
-    </div>
-
-    <!-- Divisor Orgânico em Onda SVG (Elimina 100% qualquer linha reta entre as páginas/seções) -->
-    <div class="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-30 pointer-events-none">
-      <svg 
-        class="relative block w-full h-16 sm:h-24 lg:h-32 text-surface fill-current" 
-        viewBox="0 0 1200 120" 
-        preserveAspectRatio="none"
-      >
-        <path d="M0,0 C150,90 350,-40 500,65 C650,160 900,10 1200,45 L1200,120 L0,120 Z"></path>
-      </svg>
     </div>
   </section>
 </template>
