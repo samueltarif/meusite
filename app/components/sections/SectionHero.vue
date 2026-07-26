@@ -9,7 +9,7 @@ const DotLottieVue = defineAsyncComponent(() =>
 <template>
   <section
     id="home"
-    class="relative pt-48 pb-36 lg:pt-56 lg:pb-44 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
+    class="relative pt-44 pb-36 lg:pt-52 lg:pb-48 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
   >
     <!-- Background Cosmic Atmosphere matching Stitch Screenshot 100% -->
     <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
@@ -73,15 +73,6 @@ const DotLottieVue = defineAsyncComponent(() =>
           }"
         />
       </ClientOnly>
-
-      <!-- Cosmic Deep Glow Blend Mask (Dissolve o fundo em névoa sem linhas retas) -->
-      <div class="absolute bottom-0 left-0 w-full h-64 pointer-events-none z-10 overflow-hidden">
-        <!-- Glowing ambient radial aura -->
-        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1200px] h-[300px] bg-[radial-gradient(ellipse_at_bottom,rgba(0,240,255,0.2)_0%,rgba(168,85,247,0.15)_40%,transparent_75%)] blur-3xl opacity-80" />
-        
-        <!-- Gradiente suave continuo até a seção de serviços -->
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#060318]/50 via-[#0a0724]/80 to-[#FCFCFC]" />
-      </div>
     </div>
 
     <!-- Hero Content Container -->
@@ -156,6 +147,17 @@ const DotLottieVue = defineAsyncComponent(() =>
 
       </div>
 
+    </div>
+
+    <!-- Divisor Orgânico em Onda SVG (Elimina 100% qualquer linha reta entre as páginas/seções) -->
+    <div class="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-30 pointer-events-none">
+      <svg 
+        class="relative block w-full h-16 sm:h-24 lg:h-32 text-surface fill-current" 
+        viewBox="0 0 1200 120" 
+        preserveAspectRatio="none"
+      >
+        <path d="M0,0 C150,90 350,-40 500,65 C650,160 900,10 1200,45 L1200,120 L0,120 Z"></path>
+      </svg>
     </div>
   </section>
 </template>
