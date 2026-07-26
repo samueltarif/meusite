@@ -9,23 +9,29 @@ const DotLottieVue = defineAsyncComponent(() =>
 <template>
   <section
     id="home"
-    class="relative pt-36 pb-24 lg:pt-44 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center stitch-cosmic-bg"
+    class="relative pt-36 pb-24 lg:pt-44 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center stitch-hero-bg"
   >
-    <!-- Background Cosmic Atmosphere matching Stitch Variant 2 Image -->
+    <!-- Background Cosmic Atmosphere matching Stitch Screenshot 100% -->
     <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
       
-      <!-- Cosmic Deep Space Base Layer -->
+      <!-- Cosmic Deep Space Layer -->
       <div class="absolute inset-0 bg-[#050212]" />
 
-      <!-- Side Purple & Pink Nebula Gas Clouds -->
-      <div class="absolute -left-40 top-1/4 w-[850px] h-[850px] rounded-full bg-[#6b21a8]/35 blur-[180px]" />
-      <div class="absolute -right-40 top-1/3 w-[850px] h-[850px] rounded-full bg-[#4c1d95]/35 blur-[180px]" />
+      <!-- High-res Stitch Background Image Blend -->
+      <div 
+        class="absolute inset-0 bg-cover bg-center opacity-65 mix-blend-screen"
+        style="background-image: url('/images/stitch-hero-bg.png');"
+      />
 
-      <!-- Center Radial Cyan/Purple Burst -->
-      <div class="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[1100px] bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.3)_0%,rgba(168,85,247,0.2)_38%,transparent_75%)] pointer-events-none" />
+      <!-- Side Purple & Pink Nebula Gas Clouds -->
+      <div class="absolute -left-40 top-1/4 w-[850px] h-[850px] rounded-full bg-[#6b21a8]/40 blur-[180px]" />
+      <div class="absolute -right-40 top-1/3 w-[850px] h-[850px] rounded-full bg-[#4c1d95]/40 blur-[180px]" />
+
+      <!-- Center Explosive Cyan/Purple Burst -->
+      <div class="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[1100px] bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.32)_0%,rgba(168,85,247,0.22)_38%,transparent_75%)] pointer-events-none" />
 
       <!-- 360-Degree Radial Sparks & Star Rays matching Stitch -->
-      <svg class="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] opacity-70 pointer-events-none" viewBox="0 0 900 900" fill="none">
+      <svg class="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] opacity-75 pointer-events-none" viewBox="0 0 900 900" fill="none">
         <g stroke="url(#sparkGrad)" stroke-width="1.5">
           <line x1="450" y1="30" x2="450" y2="180" />
           <line x1="450" y1="720" x2="450" y2="870" />
@@ -36,8 +42,6 @@ const DotLottieVue = defineAsyncComponent(() =>
           <line x1="750" y1="150" x2="640" y2="260" />
           <line x1="260" y1="640" x2="150" y2="750" />
         </g>
-
-        <!-- Twinkling Cyan & Magenta Particles -->
         <circle cx="210" cy="180" r="3.5" fill="#00f0ff" />
         <circle cx="680" cy="200" r="3" fill="#a855f7" />
         <circle cx="150" cy="540" r="2.5" fill="#00f0ff" />
@@ -54,26 +58,7 @@ const DotLottieVue = defineAsyncComponent(() =>
       </svg>
 
       <!-- Glowing Cyan/Purple Aura Ring surrounding "Venda Mais" matching Stitch -->
-      <div class="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] sm:w-[480px] h-[380px] sm:h-[480px] rounded-full border-[4px] border-[#00f0ff] shadow-[0_0_100px_#00f0ff,0_0_160px_rgba(168,85,247,0.85),inset_0_0_70px_#00f0ff] bg-[radial-gradient(circle,rgba(0,240,255,0.25)_0%,rgba(168,85,247,0.3)_50%,transparent_80%)] pointer-events-none" />
-
-      <!-- Lottie space particles -->
-      <ClientOnly>
-        <template #fallback>
-          <div class="absolute inset-0 bg-[#050212]" />
-        </template>
-        <DotLottieVue
-          class="w-full h-full opacity-65 mix-blend-screen scale-110"
-          autoplay
-          loop
-          src="/earth-animation.json"
-          :renderConfig="{
-            layout: {
-              fit: 'cover',
-              align: [0.5, 0.5]
-            }
-          }"
-        />
-      </ClientOnly>
+      <div class="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[390px] sm:w-[490px] h-[390px] sm:h-[490px] rounded-full border-[4px] border-[#00f0ff] shadow-[0_0_100px_#00f0ff,0_0_160px_rgba(168,85,247,0.85),inset_0_0_70px_#00f0ff] bg-[radial-gradient(circle,rgba(0,240,255,0.25)_0%,rgba(168,85,247,0.3)_50%,transparent_80%)] pointer-events-none" />
     </div>
 
     <!-- Hero Content Container -->
@@ -97,7 +82,7 @@ const DotLottieVue = defineAsyncComponent(() =>
       <div class="pt-4">
         <a
           href="#orcamento"
-          class="group relative inline-flex items-center justify-center p-[3px] rounded-full overflow-hidden shadow-[0_0_45px_#00f0ff,0_0_80px_rgba(168,85,247,0.7)] transition-all duration-300 hover:scale-105"
+          class="group relative inline-flex items-center justify-center p-[3px] rounded-full overflow-hidden shadow-[0_0_45px_#00f0ff,0_0_85px_rgba(168,85,247,0.75)] transition-all duration-300 hover:scale-105"
         >
           <!-- Outer Dual Neon Border Gradient -->
           <div class="absolute inset-0 bg-gradient-to-r from-[#00f0ff] via-[#a855f7] to-[#ec4899] rounded-full animate-gradient-x" />
@@ -161,18 +146,11 @@ const DotLottieVue = defineAsyncComponent(() =>
 </template>
 
 <style scoped>
-/* Space background blending matching Stitch */
-.stitch-cosmic-bg {
-  background-image: 
-    radial-gradient(circle at 50% 42%, rgba(0, 240, 255, 0.28) 0%, rgba(168, 85, 247, 0.3) 35%, transparent 70%),
-    linear-gradient(180deg, #050212 0%, #0c0828 50%, #050212 100%),
-    url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&q=80&w=1920');
-  background-blend-mode: screen, normal, color-dodge;
-  background-size: cover;
-  background-position: center;
+.stitch-hero-bg {
+  background-color: #050212;
 }
 
-/* Organic Wavy deckle border for Badge 1 matching Stitch Image 1 & 2 */
+/* Organic Wavy deckle border for Badge 1 matching Stitch Image */
 .badge-wavy {
   clip-path: polygon(
     0% 15%, 5% 0%, 12% 10%, 20% 2%, 30% 12%, 40% 0%, 50% 10%, 60% 0%, 70% 12%, 80% 2%, 90% 10%, 96% 0%, 100% 15%,

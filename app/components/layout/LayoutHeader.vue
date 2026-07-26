@@ -17,12 +17,12 @@ function closeMenu() {
 
 <template>
   <header class="fixed top-5 left-0 w-full z-50 px-4 sm:px-8 pointer-events-none">
-    <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0a0624]/60 backdrop-blur-xl border border-[#6b42b6]/30 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] px-6 py-3 flex justify-between items-center transition-all duration-300">
+    <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0d0928]/60 backdrop-blur-2xl border border-purple-500/20 rounded-[20px] shadow-[0_10px_35px_rgba(0,0,0,0.6)] px-6 py-3 flex justify-between items-center transition-all duration-300">
       
-      <!-- Logo matching Stitch exact image: T Tarif icon + text -->
+      <!-- Logo: T Tarif matching Stitch screenshot -->
       <NuxtLink to="/" class="flex items-center gap-2.5 group">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.7)] p-[1.5px]">
-          <div class="w-full h-full bg-[#0a0624] rounded-full flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.8)] p-[1.5px]">
+          <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
             <span class="font-heading font-black text-[#00f0ff] text-sm tracking-tighter">T</span>
           </div>
         </div>
@@ -35,7 +35,7 @@ function closeMenu() {
           v-for="link in navLinks"
           :key="link.href"
           :href="link.href"
-          class="text-[#8e91b9] hover:text-white transition-colors duration-200 font-body text-sm font-semibold tracking-wide"
+          class="text-[#9497c0] hover:text-white transition-colors duration-200 font-body text-sm font-semibold tracking-wide"
         >
           {{ link.label }}
         </a>
@@ -65,7 +65,7 @@ function closeMenu() {
     <Transition name="slide-down">
       <div
         v-if="isMenuOpen"
-        class="md:hidden pointer-events-auto max-w-5xl mx-auto mt-2 bg-[#0a0624]/95 backdrop-blur-2xl border border-purple-500/40 rounded-2xl p-5 shadow-2xl space-y-3"
+        class="md:hidden pointer-events-auto max-w-5xl mx-auto mt-2 bg-[#0d0928]/95 backdrop-blur-2xl border border-purple-500/40 rounded-2xl p-5 shadow-2xl space-y-3"
       >
         <nav class="flex flex-col gap-3">
           <a
