@@ -6,28 +6,36 @@ const DotLottieVue = defineAsyncComponent(() =>
 )
 
 const badges = [
-  { icon: 'check_circle', label: 'Design Exclusivo' },
-  { icon: 'speed', label: 'Alta Performance' },
-  { icon: 'trending_up', label: 'Foco em Conversão' },
+  { icon: 'verified', label: 'Design Exclusivo', borderClass: 'border-cyan-400/50 shadow-[0_0_20px_rgba(0,240,255,0.25)]' },
+  { icon: 'rocket_launch', label: 'Alta Performance', borderClass: 'border-purple-400/50 shadow-[0_0_20px_rgba(168,85,247,0.25)]' },
+  { icon: 'trending_up', label: 'Foco em Conversão', borderClass: 'border-cyan-400/50 shadow-[0_0_20px_rgba(0,240,255,0.25)]' },
+  { icon: 'cases', label: 'Consultoria Profissional', borderClass: 'border-purple-400/50 shadow-[0_0_20px_rgba(168,85,247,0.25)]' },
 ]
 </script>
 
 <template>
   <section
     id="home"
-    class="relative pt-32 pb-section-padding-mobile lg:py-section-padding-desktop px-margin-mobile lg:px-0 flex flex-col items-center text-center overflow-hidden min-h-[90vh] lg:min-h-screen justify-center"
+    class="relative pt-36 pb-20 lg:pt-48 lg:pb-32 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center bg-[#03010c]"
   >
-    <!-- Background Lottie Animation -->
-    <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
-      <!-- Dark overlay gradient to ensure text readability and smooth transition to next section -->
-      <div class="absolute inset-0 bg-gradient-to-b from-primary/40 via-primary/60 to-primary z-10" />
+    <!-- Central Cosmic Halo Aura & Particle Stars -->
+    <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none flex items-center justify-center">
+      <!-- Deep space dark base -->
+      <div class="absolute inset-0 bg-[#03010c]" />
       
+      <!-- Central glowing cyan & purple gradient aura ring from Stitch design -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] sm:w-[700px] sm:h-[700px] rounded-full bg-gradient-to-tr from-cyan-500/20 via-purple-600/30 to-pink-500/20 blur-[100px] animate-pulse pointer-events-none opacity-80" />
+      
+      <!-- Light rays radial backdrop -->
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.15)_0%,rgba(0,240,255,0.08)_40%,transparent_75%)]" />
+
+      <!-- Lottie background stars / space effect -->
       <ClientOnly>
         <template #fallback>
-          <div class="absolute inset-0 bg-primary" />
+          <div class="absolute inset-0 bg-[#03010c]" />
         </template>
         <DotLottieVue
-          class="w-full h-full"
+          class="w-full h-full opacity-40 mix-blend-screen"
           autoplay
           loop
           src="/earth-animation.json"
@@ -41,37 +49,53 @@ const badges = [
       </ClientOnly>
     </div>
 
-    <div class="max-w-container-max mx-auto flex flex-col items-center gap-6 relative z-20 px-margin-mobile lg:px-gutter">
-      <!-- Headline -->
-      <h1 class="font-heading text-headline-lg-mobile lg:text-display-lg text-on-primary max-w-4xl tracking-tight leading-tight drop-shadow-md">
-        Crie seu Site Profissional e
-        <span class="text-gradient">Venda Mais</span>
+    <!-- Main Container matching Stitch Hero Variant 2 -->
+    <div class="max-w-5xl mx-auto flex flex-col items-center gap-8 relative z-20">
+      
+      <!-- Main Headline -->
+      <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl tracking-tight leading-[1.1] drop-shadow-[0_10px_35px_rgba(0,0,0,0.8)]">
+        Crie seu Site <br class="hidden sm:inline">
+        Profissional e <br>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-400 drop-shadow-[0_0_25px_rgba(0,240,255,0.6)]">
+          Venda Mais
+        </span>
       </h1>
 
       <!-- Subtitle -->
-      <p class="font-body text-body-md lg:text-body-lg text-on-primary/90 max-w-2xl mb-4 drop-shadow">
+      <p class="font-body text-base sm:text-lg lg:text-xl text-white/85 max-w-2xl leading-relaxed font-medium">
         Transforme sua presença online com sites de alta performance, focados em conversão e design premium. Atraia os clientes certos.
       </p>
 
-      <!-- CTA -->
-      <a
-        href="#orcamento"
-        class="action-gradient-bg text-on-primary font-heading text-label-md px-8 py-4 rounded-full hover:scale-[1.02] transition-transform duration-200 shadow-[0px_4px_20px_rgba(35,147,230,0.4)] w-full lg:w-auto text-center"
-      >
-        Quero um Orçamento
-      </a>
+      <!-- Primary CTA Button with Glowing Neon Frame -->
+      <div class="pt-2">
+        <a
+          href="#orcamento"
+          class="relative inline-flex items-center justify-center px-10 py-4.5 text-base font-bold text-white rounded-full bg-[#0a0520]/80 border-2 border-cyan-400/80 hover:border-cyan-300 shadow-[0_0_35px_rgba(0,240,255,0.5)] hover:shadow-[0_0_55px_rgba(0,240,255,0.8)] backdrop-blur-xl transition-all duration-300 hover:scale-105 group"
+        >
+          <span class="relative z-10 font-heading tracking-wide">Quero um Orçamento</span>
+          <div class="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </a>
+      </div>
 
-      <!-- Trust Badges -->
-      <div class="mt-12 flex gap-6 lg:gap-8 items-center justify-center opacity-90 flex-wrap">
+      <!-- 4 Bottom Glass Badges (Matching Stitch Screenshot) -->
+      <div class="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full max-w-4xl">
         <div
           v-for="badge in badges"
           :key="badge.label"
-          class="flex items-center gap-2 bg-primary/45 backdrop-blur-md px-4 py-2 rounded-full border border-white/5"
+          :class="[
+            'flex items-center justify-center gap-3 bg-[#0a051d]/60 backdrop-blur-xl px-5 py-3.5 rounded-2xl border transition-all duration-300 hover:scale-105 hover:bg-[#0a051d]/80',
+            badge.borderClass
+          ]"
         >
-          <span class="material-symbols-outlined text-secondary-fixed">{{ badge.icon }}</span>
-          <span class="text-on-primary font-body text-body-md">{{ badge.label }}</span>
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-purple-600/20 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-cyan-300 text-[20px]">{{ badge.icon }}</span>
+          </div>
+          <span class="text-white/90 font-heading text-xs sm:text-sm font-bold tracking-tight text-left">
+            {{ badge.label }}
+          </span>
         </div>
       </div>
+
     </div>
   </section>
 </template>

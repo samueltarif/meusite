@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
 const isMenuOpen = ref(false)
 
 const navLinks = [
@@ -14,39 +16,40 @@ function closeMenu() {
 </script>
 
 <template>
-  <header
-    class="bg-primary fixed top-0 w-full z-50 shadow-md"
-  >
-    <div class="flex justify-between items-center px-margin-mobile lg:px-gutter h-16 max-w-container-max mx-auto">
+  <header class="fixed top-4 left-0 w-full z-50 px-4 sm:px-8 pointer-events-none">
+    <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0a061e]/70 backdrop-blur-xl border border-purple-500/30 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] px-5 py-3 flex justify-between items-center transition-all duration-300">
+      
       <!-- Logo -->
-      <NuxtLink to="/" class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-on-primary">design_services</span>
-        <span class="font-heading text-headline-sm font-bold text-on-primary">Tarif</span>
+      <NuxtLink to="/" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+          <span class="material-symbols-outlined text-white text-[18px]">auto_awesome</span>
+        </div>
+        <span class="font-heading text-lg font-bold text-white tracking-tight">Tarif</span>
       </NuxtLink>
 
       <!-- Desktop Nav -->
-      <nav class="hidden lg:flex gap-8 items-center">
+      <nav class="hidden md:flex gap-8 items-center">
         <a
           v-for="link in navLinks"
           :key="link.href"
           :href="link.href"
-          class="text-on-primary/70 hover:text-on-primary transition-colors duration-200 font-body text-body-md"
+          class="text-white/80 hover:text-cyan-300 transition-colors duration-200 font-body text-sm font-medium"
         >
           {{ link.label }}
         </a>
       </nav>
 
-      <!-- Desktop CTA -->
+      <!-- Desktop CTA Button -->
       <a
         href="#orcamento"
-        class="hidden lg:inline-flex items-center justify-center bg-surface-light text-primary font-heading text-label-md px-6 py-2.5 rounded-full hover:scale-105 transition-transform duration-200 active:scale-95 shadow-sm"
+        class="hidden md:inline-flex items-center justify-center px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600/60 to-cyan-600/60 border border-purple-400/40 hover:border-cyan-400/80 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_20px_rgba(0,240,255,0.5)] hover:scale-105 transition-all duration-300 backdrop-blur-md"
       >
-        Solicitar Orçamento
+        Contato
       </a>
 
       <!-- Mobile Menu Toggle -->
       <button
-        class="lg:hidden text-on-primary p-2"
+        class="md:hidden text-white p-1.5 focus:outline-none"
         aria-label="Abrir menu"
         @click="isMenuOpen = !isMenuOpen"
       >
@@ -60,24 +63,24 @@ function closeMenu() {
     <Transition name="slide-down">
       <div
         v-if="isMenuOpen"
-        class="lg:hidden bg-primary border-t border-on-primary/10 px-margin-mobile pb-6"
+        class="md:hidden pointer-events-auto max-w-5xl mx-auto mt-2 bg-[#0a061e]/95 backdrop-blur-2xl border border-purple-500/30 rounded-2xl p-5 shadow-2xl space-y-3"
       >
-        <nav class="flex flex-col gap-4 pt-4">
+        <nav class="flex flex-col gap-3">
           <a
             v-for="link in navLinks"
             :key="link.href"
             :href="link.href"
-            class="text-on-primary/80 hover:text-on-primary py-2 font-body text-body-md transition-colors"
+            class="text-white/90 hover:text-cyan-300 py-1.5 font-body text-sm font-medium transition-colors"
             @click="closeMenu"
           >
             {{ link.label }}
           </a>
           <a
             href="#orcamento"
-            class="action-gradient-bg text-on-primary font-heading text-label-md px-6 py-3 rounded-full text-center mt-2"
+            class="w-full py-2.5 rounded-xl text-xs font-bold text-center text-white bg-gradient-to-r from-cyan-500 to-purple-600 shadow-[0_0_20px_rgba(0,240,255,0.4)] mt-2"
             @click="closeMenu"
           >
-            Solicitar Orçamento
+            Quero um Orçamento
           </a>
         </nav>
       </div>
@@ -97,12 +100,5 @@ function closeMenu() {
   opacity: 0;
   max-height: 0;
   transform: translateY(-8px);
-}
-
-.slide-down-enter-to,
-.slide-down-leave-from {
-  opacity: 1;
-  max-height: 400px;
-  transform: translateY(0);
 }
 </style>
