@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-screen flex flex-col bg-[#050212]">
     <LayoutHeader />
 
-    <main class="flex-grow pt-16 lg:pt-0">
+    <main class="flex-grow w-full">
       <slot />
     </main>
 

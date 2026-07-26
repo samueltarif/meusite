@@ -9,7 +9,7 @@ const DotLottieVue = defineAsyncComponent(() =>
 <template>
   <section
     id="home"
-    class="relative pt-44 pb-24 lg:pt-52 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
+    class="relative pt-32 sm:pt-44 pb-20 lg:pt-52 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
   >
     <!-- Background Cosmic Atmosphere matching Stitch Screenshot 100% -->
     <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">

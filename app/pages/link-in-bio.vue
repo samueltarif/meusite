@@ -756,7 +756,7 @@ const applyTheme = (theme: Theme) => {
 </script>
 
 <template>
-  <div class="bg-[#FCFCFC] min-h-screen py-12 px-4 lg:px-8">
+  <div class="bg-[#FCFCFC] min-h-screen pt-24 lg:pt-28 pb-12 px-4 lg:px-8">
     <div class="max-w-7xl mx-auto">
       
       <!-- Back to Portfolio -->
