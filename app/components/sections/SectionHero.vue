@@ -9,39 +9,41 @@ const DotLottieVue = defineAsyncComponent(() =>
 <template>
   <section
     id="home"
-    class="relative pt-36 pb-24 lg:pt-44 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-hero-bg"
+    class="relative pt-36 pb-24 lg:pt-44 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center stitch-cosmic-bg"
   >
-    <!-- Background Cosmic Atmosphere matching Stitch Variant 2 Image 1 & 2 -->
+    <!-- Background Cosmic Atmosphere matching Stitch Variant 2 Image -->
     <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
       
       <!-- Cosmic Deep Space Base Layer -->
       <div class="absolute inset-0 bg-[#050212]" />
 
       <!-- Side Purple & Pink Nebula Gas Clouds -->
-      <div class="absolute -left-40 top-1/4 w-[800px] h-[800px] rounded-full bg-purple-800/40 blur-[170px]" />
-      <div class="absolute -right-40 top-1/3 w-[800px] h-[800px] rounded-full bg-indigo-800/40 blur-[170px]" />
+      <div class="absolute -left-40 top-1/4 w-[850px] h-[850px] rounded-full bg-[#6b21a8]/35 blur-[180px]" />
+      <div class="absolute -right-40 top-1/3 w-[850px] h-[850px] rounded-full bg-[#4c1d95]/35 blur-[180px]" />
 
       <!-- Center Radial Cyan/Purple Burst -->
-      <div class="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.28)_0%,rgba(168,85,247,0.18)_38%,transparent_75%)] pointer-events-none" />
+      <div class="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[1100px] bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.3)_0%,rgba(168,85,247,0.2)_38%,transparent_75%)] pointer-events-none" />
 
       <!-- 360-Degree Radial Sparks & Star Rays matching Stitch -->
-      <svg class="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[850px] opacity-60 pointer-events-none" viewBox="0 0 850 850" fill="none">
+      <svg class="absolute top-[43%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] opacity-70 pointer-events-none" viewBox="0 0 900 900" fill="none">
         <g stroke="url(#sparkGrad)" stroke-width="1.5">
-          <line x1="425" y1="40" x2="425" y2="180" />
-          <line x1="425" y1="670" x2="425" y2="810" />
-          <line x1="40" y1="425" x2="180" y2="425" />
-          <line x1="670" y1="425" x2="810" y2="425" />
-          <line x1="150" y1="150" x2="250" y2="250" />
-          <line x1="600" y1="600" x2="700" y2="700" />
-          <line x1="700" y1="150" x2="600" y2="250" />
-          <line x1="250" y1="600" x2="150" y2="700" />
+          <line x1="450" y1="30" x2="450" y2="180" />
+          <line x1="450" y1="720" x2="450" y2="870" />
+          <line x1="30" y1="450" x2="180" y2="450" />
+          <line x1="720" y1="450" x2="870" y2="450" />
+          <line x1="150" y1="150" x2="260" y2="260" />
+          <line x1="640" y1="640" x2="750" y2="750" />
+          <line x1="750" y1="150" x2="640" y2="260" />
+          <line x1="260" y1="640" x2="150" y2="750" />
         </g>
+
+        <!-- Twinkling Cyan & Magenta Particles -->
         <circle cx="210" cy="180" r="3.5" fill="#00f0ff" />
-        <circle cx="640" cy="200" r="3" fill="#a855f7" />
-        <circle cx="150" cy="520" r="2.5" fill="#00f0ff" />
-        <circle cx="710" cy="480" r="3.5" fill="#ec4899" />
-        <circle cx="320" cy="120" r="3" fill="#00f0ff" />
-        <circle cx="560" cy="730" r="3.5" fill="#00f0ff" />
+        <circle cx="680" cy="200" r="3" fill="#a855f7" />
+        <circle cx="150" cy="540" r="2.5" fill="#00f0ff" />
+        <circle cx="750" cy="500" r="3.5" fill="#ec4899" />
+        <circle cx="340" cy="110" r="3" fill="#00f0ff" />
+        <circle cx="580" cy="780" r="3.5" fill="#00f0ff" />
         <defs>
           <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="#00f0ff" />
@@ -52,9 +54,9 @@ const DotLottieVue = defineAsyncComponent(() =>
       </svg>
 
       <!-- Glowing Cyan/Purple Aura Ring surrounding "Venda Mais" matching Stitch -->
-      <div class="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[370px] sm:w-[470px] h-[370px] sm:h-[470px] rounded-full border-[4px] border-[#00f0ff] shadow-[0_0_90px_#00f0ff,0_0_150px_rgba(168,85,247,0.85),inset_0_0_60px_#00f0ff] bg-[radial-gradient(circle,rgba(0,240,255,0.25)_0%,rgba(168,85,247,0.3)_50%,transparent_80%)] pointer-events-none" />
+      <div class="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] sm:w-[480px] h-[380px] sm:h-[480px] rounded-full border-[4px] border-[#00f0ff] shadow-[0_0_100px_#00f0ff,0_0_160px_rgba(168,85,247,0.85),inset_0_0_70px_#00f0ff] bg-[radial-gradient(circle,rgba(0,240,255,0.25)_0%,rgba(168,85,247,0.3)_50%,transparent_80%)] pointer-events-none" />
 
-      <!-- Lottie star particles -->
+      <!-- Lottie space particles -->
       <ClientOnly>
         <template #fallback>
           <div class="absolute inset-0 bg-[#050212]" />
@@ -77,7 +79,7 @@ const DotLottieVue = defineAsyncComponent(() =>
     <!-- Hero Content Container -->
     <div class="max-w-5xl mx-auto flex flex-col items-center gap-7 relative z-20">
       
-      <!-- Main Headline matching Stitch Image 1 & 2 -->
+      <!-- Main Headline matching Stitch Image -->
       <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl tracking-tight leading-[1.12] drop-shadow-[0_10px_35px_rgba(0,0,0,0.95)]">
         Crie seu Site <br class="hidden sm:inline">
         Profissional e <br>
@@ -87,7 +89,7 @@ const DotLottieVue = defineAsyncComponent(() =>
       </h1>
 
       <!-- Subtitle matching Stitch -->
-      <p class="font-body text-sm sm:text-base lg:text-lg text-white/90 max-w-2xl leading-relaxed font-medium px-4">
+      <p class="font-body text-sm sm:text-base lg:text-lg text-[#b5b8d0] max-w-2xl leading-relaxed font-normal px-4">
         Transforme sua presença online com sites de alta performance, focados em conversão e design premium. Atraia os clientes certos.
       </p>
 
@@ -160,7 +162,7 @@ const DotLottieVue = defineAsyncComponent(() =>
 
 <style scoped>
 /* Space background blending matching Stitch */
-.space-hero-bg {
+.stitch-cosmic-bg {
   background-image: 
     radial-gradient(circle at 50% 42%, rgba(0, 240, 255, 0.28) 0%, rgba(168, 85, 247, 0.3) 35%, transparent 70%),
     linear-gradient(180deg, #050212 0%, #0c0828 50%, #050212 100%),

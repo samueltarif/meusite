@@ -17,11 +17,11 @@ function closeMenu() {
 
 <template>
   <header class="fixed top-5 left-0 w-full z-50 px-4 sm:px-8 pointer-events-none">
-    <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0a0624]/65 backdrop-blur-2xl border border-purple-500/30 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.7)] px-6 py-3 flex justify-between items-center transition-all duration-300">
+    <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0a0624]/60 backdrop-blur-xl border border-[#6b42b6]/30 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] px-6 py-3 flex justify-between items-center transition-all duration-300">
       
-      <!-- Logo: T Tarif with glowing gradient circle badge matching Stitch -->
+      <!-- Logo matching Stitch exact image: T Tarif icon + text -->
       <NuxtLink to="/" class="flex items-center gap-2.5 group">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.8)] p-[1.5px]">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.7)] p-[1.5px]">
           <div class="w-full h-full bg-[#0a0624] rounded-full flex items-center justify-center">
             <span class="font-heading font-black text-[#00f0ff] text-sm tracking-tighter">T</span>
           </div>
@@ -29,22 +29,22 @@ function closeMenu() {
         <span class="font-heading text-xl font-extrabold text-white tracking-tight">Tarif</span>
       </NuxtLink>
 
-      <!-- Desktop Nav -->
+      <!-- Desktop Nav matching Stitch exact colors -->
       <nav class="hidden md:flex gap-8 items-center">
         <a
           v-for="link in navLinks"
           :key="link.href"
           :href="link.href"
-          class="text-white/85 hover:text-[#00f0ff] transition-colors duration-200 font-body text-sm font-semibold tracking-wide"
+          class="text-[#8e91b9] hover:text-white transition-colors duration-200 font-body text-sm font-semibold tracking-wide"
         >
           {{ link.label }}
         </a>
       </nav>
 
-      <!-- Desktop CTA Button: Contact Glass Pill Button with cyan neon glow matching Stitch -->
+      <!-- Desktop CTA Button: Contact Glass Pill Button matching Stitch -->
       <a
         href="#orcamento"
-        class="hidden md:inline-flex items-center justify-center px-7 py-2 rounded-full text-sm font-bold text-white bg-gradient-to-b from-white/25 to-cyan-500/20 border-2 border-[#00f0ff] shadow-[0_0_25px_rgba(0,240,255,0.6)] hover:shadow-[0_0_40px_rgba(0,240,255,0.9)] hover:scale-105 transition-all duration-300 backdrop-blur-2xl"
+        class="hidden md:inline-flex items-center justify-center px-7 py-2 rounded-full text-sm font-bold text-white bg-white/10 border-2 border-[#00f0ff] shadow-[0_0_25px_rgba(0,240,255,0.6)] hover:shadow-[0_0_40px_rgba(0,240,255,0.9)] hover:scale-105 transition-all duration-300 backdrop-blur-2xl"
       >
         Contact
       </a>
