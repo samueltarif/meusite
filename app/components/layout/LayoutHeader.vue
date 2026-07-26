@@ -4,10 +4,11 @@ import { ref } from 'vue'
 const isMenuOpen = ref(false)
 
 const navLinks = [
-  { label: 'Home', href: '#home' },
-  { label: 'Serviços', href: '#services' },
-  { label: 'Portfólio', href: '#portfolio' },
-  { label: 'Contato', href: '#contact' },
+  { label: 'Home', href: '/#home' },
+  { label: 'Modelos', href: '/modelos-site' },
+  { label: 'Serviços', href: '/#services' },
+  { label: 'Portfólio', href: '/#portfolio' },
+  { label: 'Contato', href: '/#contact' },
 ]
 
 function closeMenu() {
@@ -16,8 +17,8 @@ function closeMenu() {
 </script>
 
 <template>
-  <header class="fixed top-5 left-0 w-full z-50 px-4 sm:px-8 pointer-events-none">
-    <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0d0928]/60 backdrop-blur-2xl border border-purple-500/20 rounded-[20px] shadow-[0_10px_35px_rgba(0,0,0,0.6)] px-6 py-3 flex justify-between items-center transition-all duration-300">
+  <header class="fixed top-3 sm:top-5 left-0 w-full z-50 px-3 sm:px-8 pointer-events-none">
+    <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0d0928]/70 backdrop-blur-2xl border border-purple-500/20 rounded-[20px] shadow-[0_10px_35px_rgba(0,0,0,0.6)] px-5 sm:px-6 py-3 flex justify-between items-center transition-all duration-300">
       
       <!-- Logo: T Tarif matching Stitch screenshot -->
       <NuxtLink to="/" class="flex items-center gap-2.5 group">
@@ -30,20 +31,20 @@ function closeMenu() {
       </NuxtLink>
 
       <!-- Desktop Nav matching Stitch exact colors -->
-      <nav class="hidden md:flex gap-8 items-center">
-        <a
+      <nav class="hidden md:flex gap-7 items-center">
+        <NuxtLink
           v-for="link in navLinks"
           :key="link.href"
-          :href="link.href"
+          :to="link.href"
           class="text-[#9497c0] hover:text-white transition-colors duration-200 font-body text-sm font-semibold tracking-wide"
         >
           {{ link.label }}
-        </a>
+        </NuxtLink>
       </nav>
 
       <!-- Desktop CTA Button: Contact Glass Pill Button matching Stitch -->
       <a
-        href="#orcamento"
+        href="/#contact"
         class="hidden md:inline-flex items-center justify-center px-7 py-2 rounded-full text-sm font-bold text-white bg-white/10 border-2 border-[#00f0ff] shadow-[0_0_25px_rgba(0,240,255,0.6)] hover:shadow-[0_0_40px_rgba(0,240,255,0.9)] hover:scale-105 transition-all duration-300 backdrop-blur-2xl"
       >
         Contact
@@ -68,17 +69,17 @@ function closeMenu() {
         class="md:hidden pointer-events-auto max-w-5xl mx-auto mt-2 bg-[#0d0928]/95 backdrop-blur-2xl border border-purple-500/40 rounded-2xl p-5 shadow-2xl space-y-3"
       >
         <nav class="flex flex-col gap-3">
-          <a
+          <NuxtLink
             v-for="link in navLinks"
             :key="link.href"
-            :href="link.href"
+            :to="link.href"
             class="text-white/90 hover:text-cyan-300 py-1.5 font-body text-sm font-medium transition-colors"
             @click="closeMenu"
           >
             {{ link.label }}
-          </a>
+          </NuxtLink>
           <a
-            href="#orcamento"
+            href="/#contact"
             class="w-full py-2.5 rounded-full text-xs font-bold text-center text-white bg-gradient-to-r from-cyan-500 to-purple-600 shadow-[0_0_20px_rgba(0,240,255,0.5)] mt-2"
             @click="closeMenu"
           >

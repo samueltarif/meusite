@@ -9,7 +9,7 @@ const DotLottieVue = defineAsyncComponent(() =>
 <template>
   <section
     id="home"
-    class="relative pt-32 sm:pt-44 pb-20 lg:pt-52 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
+    class="relative pt-44 pb-24 lg:pt-52 lg:pb-36 px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center overflow-hidden min-h-screen justify-center space-nebula-bg"
   >
     <!-- Background Cosmic Atmosphere matching Stitch Screenshot 100% -->
     <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none select-none">
@@ -92,14 +92,22 @@ const DotLottieVue = defineAsyncComponent(() =>
         Transforme sua presença online com sites de alta performance, focados em conversão e design premium. Atraia os clientes certos.
       </p>
 
-      <!-- Primary CTA Glass Button matching Stitch Image 100% -->
-      <div class="pt-4">
+      <!-- Primary CTA Glass Buttons -->
+      <div class="pt-4 flex flex-wrap items-center justify-center gap-4">
         <a
           href="#orcamento"
-          class="relative inline-flex items-center justify-center px-12 py-4 text-base sm:text-lg font-bold text-white rounded-full bg-white/15 hover:bg-white/25 border-2 border-[#00f0ff] shadow-[0_0_40px_#00f0ff,0_0_75px_rgba(168,85,247,0.7),inset_0_0_20px_rgba(0,240,255,0.4)] backdrop-blur-2xl transition-all duration-300 hover:scale-105"
+          class="relative inline-flex items-center justify-center px-10 py-4 text-base sm:text-lg font-bold text-white rounded-full bg-white/15 hover:bg-white/25 border-2 border-[#00f0ff] shadow-[0_0_40px_#00f0ff,0_0_75px_rgba(168,85,247,0.7),inset_0_0_20px_rgba(0,240,255,0.4)] backdrop-blur-2xl transition-all duration-300 hover:scale-105"
         >
           <span class="relative z-10 font-heading tracking-wide">Quero um Orçamento</span>
         </a>
+
+        <NuxtLink
+          to="/modelos-site"
+          class="relative inline-flex items-center justify-center px-8 py-4 text-base sm:text-lg font-bold text-white rounded-full bg-purple-600/30 hover:bg-purple-600/50 border-2 border-purple-400/80 shadow-[0_0_30px_rgba(168,85,247,0.6)] backdrop-blur-2xl transition-all duration-300 hover:scale-105"
+        >
+          <span class="material-symbols-outlined text-[20px] mr-2">space_dashboard</span>
+          <span class="font-heading tracking-wide">Veja Modelos</span>
+        </NuxtLink>
       </div>
 
       <!-- 4 Bottom Glass Badges matching Stitch -->
