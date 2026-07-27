@@ -5,7 +5,7 @@ import { brandIcons } from '~/utils/brandIcons'
 
 const route = useRoute()
 const rawParam = (route.params.username as string) || ''
-const cleanUsername = rawParam.replace(/[@\s]/g, '').toLowerCase()
+const cleanUsername = rawParam.replace(/[@\s]/g, '').replace(/\/$/, '').trim().toLowerCase()
 
 interface Profile {
   id: string
@@ -33,37 +33,20 @@ interface LinkItem {
   clicks_count: number
 }
 
-const profile = ref<Profile | null>(null)
-const links = ref<LinkItem[]>([])
-const loading = ref(true)
-const notFound = ref(false)
+// Fetch profile & links on SSR + Client
+const { data: pageData, pending: loading } = await useAsyncData(`bio-${cleanUsername}`, async () => {
+  if (!cleanUsername) return null
 
-onMounted(async () => {
-  if (!cleanUsername) {
-    notFound.value = true
-    loading.value = false
-    return
-  }
-
-  // 1. Fetch profile
-  const { data: profileData } = await supabase
+  // 1. Fetch profile (case-insensitive match)
+  const { data: profileData, error: profErr } = await supabase
     .from('profiles')
     .select('*')
-    .eq('username', cleanUsername)
+    .ilike('username', cleanUsername)
     .maybeSingle()
 
-  if (!profileData) {
-    notFound.value = true
-    loading.value = false
-    return
+  if (profErr || !profileData) {
+    return null
   }
-
-  profile.value = profileData
-
-  useSeoMeta({
-    title: `${profileData.display_name || profileData.username} | Link-in-Bio`,
-    description: profileData.bio_description || `Confira todos os links oficiais de ${profileData.display_name}`,
-  })
 
   // 2. Fetch active links
   const { data: linksData } = await supabase
@@ -73,12 +56,22 @@ onMounted(async () => {
     .eq('is_active', true)
     .order('position', { ascending: true })
 
-  if (linksData) {
-    links.value = linksData
+  return {
+    profile: profileData as Profile,
+    links: (linksData || []) as LinkItem[],
   }
-
-  loading.value = false
 })
+
+const profile = computed(() => pageData.value?.profile || null)
+const links = computed(() => pageData.value?.links || [])
+const notFound = computed(() => !loading.value && !profile.value)
+
+if (profile.value) {
+  useSeoMeta({
+    title: `${profile.value.display_name || profile.value.username} | Link-in-Bio`,
+    description: profile.value.bio_description || `Confira todos os links oficiais de ${profile.value.display_name}`,
+  })
+}
 
 async function handleClick(link: LinkItem) {
   try {
