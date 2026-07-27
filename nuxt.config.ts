@@ -11,6 +11,11 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4
   },
+  vite: {
+    optimizeDeps: {
+      include: ['ws']
+    }
+  },
   app: {
     pageTransition: { name: 'page', mode: 'out-in' },
     layoutTransition: { name: 'layout', mode: 'out-in' },
