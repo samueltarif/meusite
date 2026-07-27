@@ -10,11 +10,14 @@
     "postinstall": "npx cross-env JITI_CACHE=false nuxt prepare"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1095.0",
     "@lottiefiles/dotlottie-vue": "^0.11.20",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "@pinia/nuxt": "^0.11.3",
+    "@supabase/supabase-js": "^2.110.8",
     "@vueuse/core": "^14.3.0",
     "@vueuse/nuxt": "^14.3.0",
+    "mercadopago": "^3.2.1",
     "nuxt": "^4.4.8",
     "pinia": "^3.0.4",
     "stripe": "^22.3.1",

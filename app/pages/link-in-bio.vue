@@ -770,9 +770,22 @@ const applyTheme = (theme: Theme) => {
         <h1 class="font-heading text-[32px] md:text-[40px] font-extrabold text-[#111111] mb-3">
           Selecione um tema
         </h1>
-        <p class="text-[#666666] font-body text-base max-w-2xl mx-auto">
-          Escolha o estilo que combina com você — você pode adicionar seu conteúdo depois
+        <p class="text-[#666666] font-body text-base max-w-2xl mx-auto mb-6">
+          Escolha o estilo que combina com você — crie sua conta e personalize sua página pública com links ilimitados.
         </p>
+
+        <!-- SaaS CTA Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-4">
+          <NuxtLink to="/register" class="px-8 py-3.5 rounded-full font-heading font-extrabold text-sm text-white bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-500 shadow-[0_0_25px_rgba(0,240,255,0.4)] hover:scale-105 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+            Criar Meu Link-in-Bio
+          </NuxtLink>
+
+          <NuxtLink to="/login" class="px-7 py-3.5 rounded-full font-heading font-bold text-sm bg-white text-gray-800 border border-gray-300 hover:bg-gray-100 shadow-sm transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">login</span>
+            Já sou Cliente (Fazer Login)
+          </NuxtLink>
+        </div>
       </div>
 
       <!-- Categories Filter Tabs Bar -->
