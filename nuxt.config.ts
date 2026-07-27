@@ -31,6 +31,7 @@ export default defineNuxtConfig({
     r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
     r2BucketName: process.env.R2_BUCKET_NAME || 'unajoya',
     r2PublicUrl: process.env.R2_PUBLIC_URL || '',
+    pexelsApiKey: process.env.PEXELS_API_KEY || '',
     public: {
       stripePublicKey: process.env.STRIPE_PUBLIC_KEY || ''
     }
