@@ -160,6 +160,17 @@ const computedButtonStyles = computed(() => {
   }
 })
 
+const playingVideoId = ref<string | null>(null)
+
+function parseVideoPayload(urlStr: string) {
+  try {
+    if (urlStr && urlStr.startsWith('{')) {
+      return JSON.parse(urlStr)
+    }
+  } catch (e) {}
+  return { videoUrl: urlStr || '', thumbnailUrl: '' }
+}
+
 // Background style engine matching playground
 const pageCssStyle = computed(() => {
   if (!profile.value) return ''
@@ -229,23 +240,58 @@ const pageCssStyle = computed(() => {
 
       <!-- Links Buttons List (EXACT styling engine match from preview) -->
       <div class="w-full space-y-3.5 mb-10">
-        <a
-          v-for="link in links"
-          :key="link.id"
-          :href="link.url"
-          target="_blank"
-          @click="handleClick(link)"
-          :class="[
-            'w-full py-3.5 px-5 text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm',
-            computedButtonClasses,
-            profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')
-          ]"
-          :style="computedButtonStyles"
-        >
-          <div v-if="link.icon && brandIcons[link.icon]" class="w-5 h-5 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
-          <span v-else-if="link.icon" class="material-symbols-outlined text-[18px] shrink-0">{{ link.icon }}</span>
-          <span>{{ link.title }}</span>
-        </a>
+        <template v-for="link in links" :key="link.id">
+          <!-- Case 1: Spotify Embed Player -->
+          <div v-if="link.icon === 'spotify_embed'" class="w-full rounded-2xl overflow-hidden shadow-sm">
+            <iframe style="border-radius:12px" :src="link.url" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+          </div>
+
+          <!-- Case 2: Custom Video Player Block -->
+          <div v-else-if="link.icon === 'video_card'" class="w-full rounded-2xl overflow-hidden shadow-md bg-black relative aspect-video border border-white/10">
+            <!-- If playing inline -->
+            <video v-if="playingVideoId === link.id" :src="parseVideoPayload(link.url).videoUrl" controls autoplay class="w-full h-full object-contain" @play="handleClick(link)"></video>
+            
+            <!-- Cover / Play Button trigger -->
+            <div v-else @click="playingVideoId = link.id" class="w-full h-full relative group cursor-pointer">
+              <!-- Poster/Thumbnail -->
+              <img v-if="parseVideoPayload(link.url).thumbnailUrl" :src="parseVideoPayload(link.url).thumbnailUrl" class="w-full h-full object-cover">
+              <div v-else class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-gray-500">
+                <span class="material-symbols-outlined text-4xl mb-1 text-gray-400">movie</span>
+                <span class="text-[10px] font-mono text-gray-400">Vídeo Player (R2)</span>
+              </div>
+              
+              <!-- Video title/caption overlay -->
+              <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/45 to-transparent flex flex-col justify-end text-left z-10">
+                <p class="text-white text-xs font-bold font-heading truncate">{{ link.title }}</p>
+              </div>
+
+              <!-- Play Overlay button -->
+              <div class="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+                <div class="w-12 h-12 rounded-full bg-white/95 text-black shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+                  <span class="material-symbols-outlined text-2xl font-bold ml-0.5" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Case 3: Standard Link Button -->
+          <a
+            v-else
+            :href="link.url"
+            target="_blank"
+            @click="handleClick(link)"
+            :class="[
+              'w-full py-3.5 px-5 text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm',
+              computedButtonClasses,
+              profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')
+            ]"
+            :style="computedButtonStyles"
+          >
+            <div v-if="link.icon && brandIcons[link.icon]" class="w-5 h-5 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
+            <span v-else-if="link.icon" class="material-symbols-outlined text-[18px] shrink-0">{{ link.icon }}</span>
+            <span>{{ link.title }}</span>
+          </a>
+        </template>
       </div>
 
       <!-- Footer Watermark -->

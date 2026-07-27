@@ -453,6 +453,19 @@ const newLinkIcon = ref('')
 const newLinkTitle = ref('')
 const newLinkUrl = ref('')
 
+// ─── Block Creator Type Selector State ───
+const activeBlockType = ref<'link' | 'spotify' | 'video'>('link')
+
+// Spotify Creator State
+const spotifyInputUrl = ref('')
+
+// Video Creator State
+const newVideoTitle = ref('')
+const newVideoUrl = ref('')
+const newVideoThumbUrl = ref('')
+const uploadingVideo = ref(false)
+const uploadingThumb = ref(false)
+
 // ─── Lifecycle ───
 onMounted(async () => {
   const { data: { session } } = await supabase.auth.getSession()
@@ -603,6 +616,100 @@ async function addCustomLink() {
   newLinkIcon.value = ''
 }
 
+async function addSpotifyBlock() {
+  if (!spotifyInputUrl.value || !currentUser.value) return
+  let url = spotifyInputUrl.value.trim()
+  
+  if (url.includes('open.spotify.com/')) {
+    if (!url.includes('open.spotify.com/embed/')) {
+      url = url.replace('open.spotify.com/', 'open.spotify.com/embed/')
+    }
+  }
+  url = url.split('?')[0]
+
+  const { data, error } = await supabase.from('links').insert({
+    user_id: currentUser.value.id,
+    title: 'Player Spotify',
+    url,
+    icon: 'spotify_embed',
+    position: links.value.length,
+  }).select().single()
+
+  if (error) {
+    console.error('Erro ao adicionar bloco do Spotify:', error)
+    errorMsg.value = `Erro ao adicionar: ${error.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+    return
+  }
+
+  if (data) links.value.push(data)
+  spotifyInputUrl.value = ''
+}
+
+async function addVideoBlock() {
+  if (!newVideoTitle.value || !newVideoUrl.value || !currentUser.value) return
+
+  const payload = JSON.stringify({
+    videoUrl: newVideoUrl.value,
+    thumbnailUrl: newVideoThumbUrl.value || ''
+  })
+
+  const { data, error } = await supabase.from('links').insert({
+    user_id: currentUser.value.id,
+    title: newVideoTitle.value,
+    url: payload,
+    icon: 'video_card',
+    position: links.value.length,
+  }).select().single()
+
+  if (error) {
+    console.error('Erro ao adicionar bloco de vídeo:', error)
+    errorMsg.value = `Erro ao adicionar: ${error.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+    return
+  }
+
+  if (data) links.value.push(data)
+  newVideoTitle.value = ''
+  newVideoUrl.value = ''
+  newVideoThumbUrl.value = ''
+}
+
+async function handleVideoUpload(event: Event, type: 'video' | 'thumb') {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  const file = input.files[0]
+  if (type === 'video') uploadingVideo.value = true
+  else uploadingThumb.value = true
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await $fetch<{ success: boolean; url: string }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (res && res.url) {
+      if (type === 'video') {
+        newVideoUrl.value = res.url
+      } else {
+        newVideoThumbUrl.value = res.url
+      }
+    }
+  } catch (err: any) {
+    console.error('Video upload error:', err)
+    errorMsg.value = `Erro no upload: ${err.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+  } finally {
+    if (type === 'video') uploadingVideo.value = false
+    else uploadingThumb.value = false
+    input.value = ''
+  }
+}
+
 async function removeLink(id: any) {
   const { error } = await supabase.from('links').delete().eq('id', id)
   if (error) { console.error('Erro ao remover link:', error); return }
@@ -683,6 +790,15 @@ async function saveProfile() {
   savingProfile.value = false
   saveSuccess.value = true
   setTimeout(() => { saveSuccess.value = false }, 3000)
+}
+
+function parseVideoPayload(urlStr: string) {
+  try {
+    if (urlStr && urlStr.startsWith('{')) {
+      return JSON.parse(urlStr)
+    }
+  } catch (e) {}
+  return { videoUrl: urlStr || '', thumbnailUrl: '' }
 }
 
 // ─── Checkout ───
@@ -1179,7 +1295,13 @@ async function logout() {
             <div class="space-y-3.5 mb-6">
               <div v-for="link in links" :key="link.id" class="flex items-center justify-between p-3.5 bg-[#FAFAFA] rounded-2xl border border-[#EEEEEE]">
                 <div class="flex items-center gap-3 min-w-0 flex-1 pr-3">
-                  <div v-if="link.icon && brandIcons[link.icon]" class="w-8 h-8 rounded-xl bg-secondary/10 text-secondary p-2 flex items-center justify-center shrink-0">
+                  <div v-if="link.icon === 'spotify_embed'" class="w-8 h-8 rounded-xl bg-green-500/10 text-green-600 p-2 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[18px]">podcasts</span>
+                  </div>
+                  <div v-else-if="link.icon === 'video_card'" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-600 p-2 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[18px]">movie</span>
+                  </div>
+                  <div v-else-if="link.icon && brandIcons[link.icon]" class="w-8 h-8 rounded-xl bg-secondary/10 text-secondary p-2 flex items-center justify-center shrink-0">
                     <div class="w-4 h-4" v-html="brandIcons[link.icon]"></div>
                   </div>
                   <div v-else class="w-8 h-8 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
@@ -1199,33 +1321,129 @@ async function logout() {
               </div>
             </div>
 
-            <!-- Form to add customized link with official platform vector icons -->
-            <div class="space-y-4 bg-[#FAFAFA] p-4 rounded-2xl border border-[#EEEEEE]">
-              <div>
-                <label class="block text-xs font-semibold text-[#111111] mb-1.5">Ícone Oficial da Plataforma</label>
-                <div class="flex flex-wrap gap-1.5">
-                  <button v-for="pIcon in topPlatformsIcons" :key="pIcon.id" @click="newLinkIcon = pIcon.icon"
-                    :class="['px-2.5 py-1.5 text-[11px] rounded-xl border transition-all flex items-center gap-1.5 font-medium',
-                      newLinkIcon === pIcon.icon ? 'border-secondary bg-secondary text-white font-bold shadow-sm' : 'border-[#EEEEEE] bg-white text-[#444] hover:border-secondary/40 hover:text-secondary'
-                    ]">
-                    <div v-if="pIcon.icon && brandIcons[pIcon.icon]" class="w-3.5 h-3.5 shrink-0" v-html="brandIcons[pIcon.icon]"></div>
-                    <span>{{ pIcon.name }}</span>
-                  </button>
+            <!-- Block Type Creator Tabs -->
+            <div class="flex border-b border-[#EEEEEE] mb-4">
+              <button
+                @click="activeBlockType = 'link'"
+                :class="['px-4 py-2 text-xs font-bold transition-all border-b-2', activeBlockType === 'link' ? 'border-secondary text-secondary' : 'border-transparent text-gray-400 hover:text-gray-600']"
+              >
+                🔗 Link Padrão
+              </button>
+              <button
+                @click="activeBlockType = 'spotify'"
+                :class="['px-4 py-2 text-xs font-bold transition-all border-b-2', activeBlockType === 'spotify' ? 'border-secondary text-secondary' : 'border-transparent text-gray-400 hover:text-gray-600']"
+              >
+                🎧 Player Spotify
+              </button>
+              <button
+                @click="activeBlockType = 'video'"
+                :class="['px-4 py-2 text-xs font-bold transition-all border-b-2', activeBlockType === 'video' ? 'border-secondary text-secondary' : 'border-transparent text-gray-400 hover:text-gray-600']"
+              >
+                📹 Player de Vídeo (R2)
+              </button>
+            </div>
+
+            <!-- Dynamic Block Forms -->
+            <div>
+              <!-- Form 1: Standard Link -->
+              <div v-if="activeBlockType === 'link'" class="space-y-4 bg-[#FAFAFA] p-4 rounded-2xl border border-[#EEEEEE]">
+                <div>
+                  <label class="block text-xs font-semibold text-[#111111] mb-1.5">Ícone Oficial da Plataforma</label>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button v-for="pIcon in topPlatformsIcons" :key="pIcon.id" @click="newLinkIcon = pIcon.icon"
+                      :class="['px-2.5 py-1.5 text-[11px] rounded-xl border transition-all flex items-center gap-1.5 font-medium',
+                        newLinkIcon === pIcon.icon ? 'border-secondary bg-secondary text-white font-bold shadow-sm' : 'border-[#EEEEEE] bg-white text-[#444] hover:border-secondary/40 hover:text-secondary'
+                      ]">
+                      <div v-if="pIcon.icon && brandIcons[pIcon.icon]" class="w-3.5 h-3.5 shrink-0" v-html="brandIcons[pIcon.icon]"></div>
+                      <span>{{ pIcon.name }}</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                  <div class="sm:col-span-5">
+                    <label class="block text-xs font-semibold text-[#111111] mb-1">Título do botão</label>
+                    <input v-model="newLinkTitle" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white" placeholder="Ex: Entre em contato no WhatsApp">
+                  </div>
+                  <div class="sm:col-span-5">
+                    <label class="block text-xs font-semibold text-[#111111] mb-1">URL de destino</label>
+                    <input v-model="newLinkUrl" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white font-mono" placeholder="https://">
+                  </div>
+                  <div class="sm:col-span-2">
+                    <button @click="addCustomLink" class="w-full py-2 bg-secondary text-white font-heading text-xs font-bold rounded-xl hover:bg-secondary/90 transition-colors h-[34px]">
+                      Adicionar
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                <div class="sm:col-span-5">
-                  <label class="block text-xs font-semibold text-[#111111] mb-1">Título do botão</label>
-                  <input v-model="newLinkTitle" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white" placeholder="Ex: Entre em contato no WhatsApp">
+
+              <!-- Form 2: Spotify Embed Player -->
+              <div v-else-if="activeBlockType === 'spotify'" class="space-y-4 bg-[#FAFAFA] p-4 rounded-2xl border border-[#EEEEEE]">
+                <div>
+                  <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">🎧 Adicionar Podcast ou Música do Spotify</h4>
+                  <p class="text-[10px] text-gray-400">Insira um link do Spotify para exibir o player diretamente na sua página.</p>
                 </div>
-                <div class="sm:col-span-5">
-                  <label class="block text-xs font-semibold text-[#111111] mb-1">URL de destino</label>
-                  <input v-model="newLinkUrl" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white font-mono" placeholder="https://">
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                  <div class="sm:col-span-10">
+                    <label class="block text-xs font-semibold text-[#111111] mb-1">Link do Spotify (Playlist, Show, Episódio, Track)</label>
+                    <input v-model="spotifyInputUrl" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white font-mono" placeholder="https://open.spotify.com/episode/... ou /playlist/...">
+                  </div>
+                  <div class="sm:col-span-2">
+                    <button @click="addSpotifyBlock" class="w-full py-2 bg-secondary text-white font-heading text-xs font-bold rounded-xl hover:bg-secondary/90 transition-colors h-[34px]">
+                      Adicionar
+                    </button>
+                  </div>
                 </div>
-                <div class="sm:col-span-2">
-                  <button @click="addCustomLink" class="w-full py-2 bg-secondary text-white font-heading text-xs font-bold rounded-xl hover:bg-secondary/90 transition-colors h-[34px]">
-                    Adicionar
-                  </button>
+              </div>
+
+              <!-- Form 3: Video Player -->
+              <div v-else-if="activeBlockType === 'video'" class="space-y-4 bg-[#FAFAFA] p-4 rounded-2xl border border-[#EEEEEE]">
+                <div>
+                  <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">📹 Adicionar Bloco de Vídeo (Cloudflare R2)</h4>
+                  <p class="text-[10px] text-gray-400">Suba um arquivo de vídeo (.mp4 ou .webm) para exibir um player customizado.</p>
+                </div>
+                <div class="space-y-3">
+                  <!-- Title -->
+                  <div>
+                    <label class="block text-xs font-semibold text-[#111111] mb-1">Título do Vídeo (Legenda)</label>
+                    <input v-model="newVideoTitle" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white" placeholder="Ex: Perfect Person Ep. 165">
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Video upload -->
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1.5">Arquivo de Vídeo (.mp4, .webm)</label>
+                      <div class="flex items-center gap-2">
+                        <label class="cursor-pointer px-3 py-2 bg-secondary text-white font-bold text-xs rounded-xl shadow hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0">
+                          <span v-if="uploadingVideo" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                          <span v-else class="material-symbols-outlined text-[14px]">upload</span>
+                          {{ uploadingVideo ? 'Subindo Vídeo...' : 'Selecionar Vídeo' }}
+                          <input type="file" accept="video/*" @change="e => handleVideoUpload(e, 'video')" class="hidden">
+                        </label>
+                        <span class="text-[10px] text-gray-400 truncate max-w-[120px]" v-if="newVideoUrl">Vídeo pronto!</span>
+                      </div>
+                    </div>
+
+                    <!-- Thumbnail upload -->
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1.5">Imagem de Capa (Thumbnail - Opcional)</label>
+                      <div class="flex items-center gap-2">
+                        <label class="cursor-pointer px-3 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow hover:bg-emerald-700 transition-all flex items-center gap-1.5 shrink-0">
+                          <span v-if="uploadingThumb" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                          <span v-else class="material-symbols-outlined text-[14px]">photo</span>
+                          {{ uploadingThumb ? 'Subindo Capa...' : 'Selecionar Capa' }}
+                          <input type="file" accept="image/*" @change="e => handleVideoUpload(e, 'thumb')" class="hidden">
+                        </label>
+                        <span class="text-[10px] text-gray-400 truncate max-w-[120px]" v-if="newVideoThumbUrl">Capa pronta!</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Add Button -->
+                  <div class="pt-2 flex justify-end">
+                    <button @click="addVideoBlock" :disabled="!newVideoTitle || !newVideoUrl || uploadingVideo || uploadingThumb" class="px-6 py-2 bg-secondary text-white font-heading text-xs font-bold rounded-xl hover:bg-secondary/90 transition-all disabled:opacity-50">
+                      Adicionar Vídeo
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1311,18 +1529,48 @@ async function logout() {
                   <div v-for="s in selectedSocials" :key="s" class="w-5 h-5 cursor-pointer hover:scale-110 transition-transform" v-html="brandIcons[s] || ''" :title="s"></div>
                 </div>
 
-                <!-- Links Buttons -->
+                <!-- Links Buttons / Embeds -->
                 <div class="space-y-3.5 w-full">
-                  <a v-for="link in links" :key="link.id" href="#"
-                    :class="[
-                      'w-full py-3 px-4 text-center font-bold text-xs md:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm', 
-                      computedButtonClasses, 
-                      customFontClass.startsWith('custom:') ? '' : customFontClass
-                    ]"
-                    :style="computedButtonStyles">
-                    <div v-if="link.icon && brandIcons[link.icon]" class="w-4 h-4 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
-                    <span>{{ link.title }}</span>
-                  </a>
+                  <template v-for="link in links" :key="link.id">
+                    <!-- Case 1: Spotify Embed Player -->
+                    <div v-if="link.icon === 'spotify_embed'" class="w-full rounded-2xl overflow-hidden shadow-sm">
+                      <iframe style="border-radius:12px" :src="link.url" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                    </div>
+
+                    <!-- Case 2: Custom Video Player Block -->
+                    <div v-else-if="link.icon === 'video_card'" class="w-full rounded-2xl overflow-hidden shadow-md bg-black relative aspect-video group border border-white/10">
+                      <!-- Poster/Thumbnail -->
+                      <img v-if="parseVideoPayload(link.url).thumbnailUrl" :src="parseVideoPayload(link.url).thumbnailUrl" class="w-full h-full object-cover">
+                      <div v-else class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-gray-500">
+                        <span class="material-symbols-outlined text-4xl mb-1 text-gray-400">movie</span>
+                        <span class="text-[10px] font-mono text-gray-400">Vídeo Player (R2)</span>
+                      </div>
+                      
+                      <!-- Video title/caption overlay -->
+                      <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/45 to-transparent flex flex-col justify-end text-left z-10">
+                        <p class="text-white text-xs font-bold font-heading truncate">{{ link.title }}</p>
+                      </div>
+
+                      <!-- Play Overlay button -->
+                      <div class="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+                        <div class="w-11 h-11 rounded-full bg-white/95 text-black shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+                          <span class="material-symbols-outlined text-2xl font-bold ml-0.5" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Case 3: Standard Link Button -->
+                    <a v-else href="#"
+                      :class="[
+                        'w-full py-3 px-4 text-center font-bold text-xs md:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm', 
+                        computedButtonClasses, 
+                        customFontClass.startsWith('custom:') ? '' : customFontClass
+                      ]"
+                      :style="computedButtonStyles">
+                      <div v-if="link.icon && brandIcons[link.icon]" class="w-4 h-4 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
+                      <span>{{ link.title }}</span>
+                    </a>
+                  </template>
                 </div>
 
                 <!-- Branding Footer -->
