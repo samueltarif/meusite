@@ -150,7 +150,8 @@ const copyBioSuccess = ref(false)
 
 function copyBioLink() {
   const domain = import.meta.client ? window.location.origin : 'https://tarif.com.br'
-  const fullUrl = `${domain}/bio/@${profileUsername.value}`
+  const cleanName = profileUsername.value.replace(/^@/, '')
+  const fullUrl = `${domain}/@${cleanName}`
   navigator.clipboard.writeText(fullUrl)
   copyBioSuccess.value = true
   setTimeout(() => { copyBioSuccess.value = false }, 3000)
@@ -446,9 +447,9 @@ async function logout() {
             <span class="text-xs text-[#999] font-mono">@{{ profileUsername }}</span>
           </div>
           <p class="text-xs text-[#666]">
-            Seu link público oficial para a bio do Insta/TikTok:
-            <a :href="`/bio/@${profileUsername}`" target="_blank" class="text-secondary font-bold hover:underline font-mono ml-1">
-              tarif.com.br/bio/@{{ profileUsername }}
+            Seu link ultracurto para a bio do Insta/TikTok:
+            <a :href="`/@${profileUsername.replace(/^@/, '')}`" target="_blank" class="text-secondary font-bold hover:underline font-mono ml-1">
+              tarif.com.br/@{{ profileUsername.replace(/^@/, '') }}
             </a>
           </p>
         </div>
@@ -457,7 +458,7 @@ async function logout() {
             <span class="material-symbols-outlined text-[16px]">{{ copyBioSuccess ? 'check' : 'content_copy' }}</span>
             {{ copyBioSuccess ? 'Link Copiado!' : 'Copiar Link da Bio' }}
           </button>
-          <a :href="`/bio/@${profileUsername}`" target="_blank" class="px-5 py-2.5 rounded-full text-xs font-bold bg-white text-[#333] border border-[#DDD] hover:border-secondary/40 transition-all flex items-center gap-2">
+          <a :href="`/@${profileUsername.replace(/^@/, '')}`" target="_blank" class="px-5 py-2.5 rounded-full text-xs font-bold bg-white text-[#333] border border-[#DDD] hover:border-secondary/40 transition-all flex items-center gap-2">
             <span class="material-symbols-outlined text-[16px]">open_in_new</span>
             Ver Minha Página
           </a>
