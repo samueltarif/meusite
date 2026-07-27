@@ -831,6 +831,12 @@ async function logout() {
                     { val: 'btn-brutal', label: '🔳 Brutalista' },
                     { val: 'btn-glass', label: '✨ Vidro' },
                     { val: 'btn-outline', label: '🔲 Contorno' },
+                    { val: 'btn-sketchy', label: '✏️ Esboçado' },
+                    { val: 'btn-soft-shadow', label: '☁️ Sombra Leve' },
+                    { val: 'btn-left-accent', label: '▮ Detalhe Esq' },
+                    { val: 'btn-angled', label: '📐 Inclinado' },
+                    { val: 'btn-double-border', label: '🎫 Borda Dupla' },
+                    { val: 'btn-neon-glow', label: '🔋 Brilho Neon' },
                   ]" :key="btn.val" @click="customRoundness = btn.val"
                     :class="['py-2 px-2 text-[11px] border rounded-xl transition-all flex items-center justify-center gap-1', customRoundness === btn.val ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">
                     {{ btn.label }}
@@ -841,11 +847,18 @@ async function logout() {
               <div>
                 <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider mb-1.5">Estilo da Fonte</label>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                  <button @click="customFontClass = 'font-sans'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-sans', customFontClass === 'font-sans' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Inter (Sans)</button>
-                  <button @click="customFontClass = 'font-serif'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-serif', customFontClass === 'font-serif' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Playfair (Serif)</button>
-                  <button @click="customFontClass = 'font-outfit'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-outfit', customFontClass === 'font-outfit' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Outfit (Moderna)</button>
-                  <button @click="customFontClass = 'font-space'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-space', customFontClass === 'font-space' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Space (Tech)</button>
-                  <button @click="customFontClass = 'font-handwriting'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-handwriting', customFontClass === 'font-handwriting' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Pacifico (Arte)</button>
+                  <button @click="customFontClass = 'font-sans'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-sans', customFontClass === 'font-sans' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Inter</button>
+                  <button @click="customFontClass = 'font-serif'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-serif', customFontClass === 'font-serif' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Playfair</button>
+                  <button @click="customFontClass = 'font-outfit'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-outfit', customFontClass === 'font-outfit' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Outfit</button>
+                  <button @click="customFontClass = 'font-space'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-space', customFontClass === 'font-space' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Space</button>
+                  <button @click="customFontClass = 'font-handwriting'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-handwriting', customFontClass === 'font-handwriting' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Pacifico</button>
+                  <button @click="customFontClass = 'font-montserrat'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-montserrat', customFontClass === 'font-montserrat' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Montserrat</button>
+                  <button @click="customFontClass = 'font-cinzel'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-cinzel', customFontClass === 'font-cinzel' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Cinzel</button>
+                  <button @click="customFontClass = 'font-cursive'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-cursive', customFontClass === 'font-cursive' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Dancing</button>
+                  <button @click="customFontClass = 'font-bebas'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-bebas', customFontClass === 'font-bebas' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Bebas</button>
+                  <button @click="customFontClass = 'font-chalkboard'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-chalkboard', customFontClass === 'font-chalkboard' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Chalkboard</button>
+                  <button @click="customFontClass = 'font-syne'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-syne', customFontClass === 'font-syne' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Syne</button>
+                  <button @click="customFontClass = 'font-pixel'" :class="['py-1.5 px-2 text-[9px] border rounded-xl transition-all font-pixel', customFontClass === 'font-pixel' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Retro 8bit</button>
                 </div>
               </div>
 

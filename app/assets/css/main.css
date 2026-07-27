@@ -59,6 +59,35 @@ body {
   .font-handwriting {
     font-family: 'Pacifico', cursive !important;
   }
+
+  .font-montserrat {
+    font-family: 'Montserrat', sans-serif !important;
+  }
+
+  .font-cinzel {
+    font-family: 'Cinzel', serif !important;
+  }
+
+  .font-cursive {
+    font-family: 'Dancing Script', cursive !important;
+  }
+
+  .font-bebas {
+    font-family: 'Bebas Neue', sans-serif !important;
+  }
+
+  .font-chalkboard {
+    font-family: 'Architects Daughter', cursive !important;
+  }
+
+  .font-syne {
+    font-family: 'Syne', sans-serif !important;
+  }
+
+  .font-pixel {
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.75rem !important;
+  }
 }
 
 /* ===== Animações & Estilos Globais ===== */
@@ -87,3 +116,41 @@ body {
     scrollbar-width: none;
   }
 }
+
+/* ===== Formatos e Estilos de Botão Adicionais ===== */
+.btn-sketchy {
+  border: 2px solid currentColor !important;
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px !important;
+}
+
+.btn-soft-shadow {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08), 0 6px 6px rgba(0, 0, 0, 0.05) !important;
+  border: none !important;
+}
+
+.btn-left-accent {
+  border-left: 6px solid currentColor !important;
+  border-radius: 8px !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+}
+
+.btn-angled {
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%) !important;
+  border-radius: 0px !important;
+  border: none !important;
+}
+
+.btn-double-border {
+  outline: 1px solid currentColor !important;
+  outline-offset: 3px !important;
+  border: 1px solid currentColor !important;
+  margin: 3px 0 !important;
+}
+
+.btn-neon-glow {
+  box-shadow: 0 0 12px currentColor !important;
+  border: 1px solid currentColor !important;
+}
+
