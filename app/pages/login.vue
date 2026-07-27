@@ -32,7 +32,14 @@ async function handleLogin() {
 
     router.push('/dashboard')
   } catch (err: any) {
-    errorMessage.value = err.message || 'Erro ao fazer login. Verifique seus dados.'
+    const msg = err.message || ''
+    if (msg.includes('Email not confirmed')) {
+      errorMessage.value = 'Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada (ou Spam) e clique no link de confirmação que enviamos.'
+    } else if (msg.includes('Invalid login credentials')) {
+      errorMessage.value = 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.'
+    } else {
+      errorMessage.value = msg || 'Erro ao fazer login. Verifique seus dados.'
+    }
   } finally {
     loading.value = false
   }

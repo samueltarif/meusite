@@ -26,6 +26,11 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
+    r2Endpoint: process.env.R2_ENDPOINT || '',
+    r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+    r2BucketName: process.env.R2_BUCKET_NAME || 'unajoya',
+    r2PublicUrl: process.env.R2_PUBLIC_URL || '',
     public: {
       stripePublicKey: process.env.STRIPE_PUBLIC_KEY || ''
     }

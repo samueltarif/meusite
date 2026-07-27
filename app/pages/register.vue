@@ -12,7 +12,8 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
-const successMessage = ref('')
+const registrationComplete = ref(false)
+const registeredEmail = ref('')
 const router = useRouter()
 
 async function handleRegister() {
@@ -52,7 +53,7 @@ async function handleRegister() {
       email: email.value,
       password: password.value,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm`,
         data: {
           username: formattedUsername,
         },
@@ -62,14 +63,12 @@ async function handleRegister() {
     if (authError) throw authError
 
     if (authData.session) {
-      // User is logged in immediately
+      // User is logged in immediately (email confirmation disabled)
       router.push('/dashboard')
     } else {
-      // User created, auto-redirect to login
-      successMessage.value = 'Conta criada com sucesso! Faça login abaixo.'
-      setTimeout(() => {
-        router.push('/login')
-      }, 1500)
+      // User created, needs email confirmation
+      registeredEmail.value = email.value
+      registrationComplete.value = true
     }
   } catch (err: any) {
     errorMessage.value = err.message || 'Erro ao criar conta.'
@@ -101,10 +100,27 @@ async function handleRegister() {
         <p class="text-sm text-gray-400">Escolha seu link personalizado para o Instagram</p>
       </div>
 
-      <!-- Success Alert -->
-      <div v-if="successMessage" class="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px]">check_circle</span>
-        <span>{{ successMessage }}</span>
+      <!-- Registration Complete - Email Confirmation Card -->
+      <div v-if="registrationComplete" class="text-center space-y-5">
+        <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-400 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)]">
+          <span class="material-symbols-outlined text-3xl text-white">mark_email_read</span>
+        </div>
+        <h2 class="font-heading text-xl font-bold text-white">Verifique seu e-mail</h2>
+        <p class="text-sm text-gray-300 leading-relaxed">
+          Enviamos um link de confirmação para<br>
+          <span class="text-cyan-400 font-bold">{{ registeredEmail }}</span>
+        </p>
+        <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs leading-relaxed">
+          <span class="material-symbols-outlined text-[16px] align-middle mr-1">warning</span>
+          <strong>Não encontrou?</strong> Verifique a sua caixa de <strong>Spam</strong> ou <strong>Lixo Eletrônico</strong>. O e-mail pode demorar até 2 minutos para chegar.
+        </div>
+        <NuxtLink
+          to="/login"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-full font-heading font-bold text-white bg-gradient-to-r from-cyan-500 via-purple-600 to-pink-500 shadow-[0_0_25px_rgba(0,240,255,0.4)] hover:scale-[1.02] active:scale-95 transition-all duration-300 text-sm"
+        >
+          <span class="material-symbols-outlined text-[18px]">login</span>
+          Ir para o Login
+        </NuxtLink>
       </div>
 
       <!-- Error Alert -->
@@ -113,7 +129,7 @@ async function handleRegister() {
         <span>{{ errorMessage }}</span>
       </div>
 
-      <form @submit.prevent="handleRegister" class="space-y-5">
+      <form v-if="!registrationComplete" @submit.prevent="handleRegister" class="space-y-5">
         <div>
           <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Seu Nome de Usuário (URL)</label>
           <div class="relative">
@@ -161,7 +177,7 @@ async function handleRegister() {
         </button>
       </form>
 
-      <div class="mt-8 text-center text-xs text-gray-400">
+      <div v-if="!registrationComplete" class="mt-8 text-center text-xs text-gray-400">
         Já possui uma conta?
         <NuxtLink to="/login" class="text-cyan-400 font-bold hover:underline ml-1">
           Fazer Login

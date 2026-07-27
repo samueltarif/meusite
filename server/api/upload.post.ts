@@ -20,13 +20,20 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const endpoint = process.env.R2_ENDPOINT
-    const accessKeyId = process.env.R2_ACCESS_KEY_ID
-    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
-    const bucketName = process.env.R2_BUCKET_NAME || 'unajoya'
-    const publicBaseUrl = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
+    // Use Nuxt runtimeConfig for reliable env access (with fallback to process.env)
+    const config = useRuntimeConfig()
+    const endpoint = config.r2Endpoint || process.env.R2_ENDPOINT
+    const accessKeyId = config.r2AccessKeyId || process.env.R2_ACCESS_KEY_ID
+    const secretAccessKey = config.r2SecretAccessKey || process.env.R2_SECRET_ACCESS_KEY
+    const bucketName = config.r2BucketName || process.env.R2_BUCKET_NAME || 'unajoya'
+    const publicBaseUrl = (config.r2PublicUrl || process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
 
     if (!endpoint || !accessKeyId || !secretAccessKey) {
+      console.error('R2 Config Missing:', { 
+        hasEndpoint: !!endpoint, 
+        hasAccessKey: !!accessKeyId, 
+        hasSecret: !!secretAccessKey 
+      })
       throw createError({
         statusCode: 500,
         statusMessage: 'Configuração do Cloudflare R2 incompleta no servidor.'
