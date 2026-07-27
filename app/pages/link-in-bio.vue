@@ -253,6 +253,121 @@ const themes: Theme[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=150',
     socials: ['instagram', 'spotify', 'website'],
   },
+  // 9. Shaep Fitness (Kelsey Rose)
+  {
+    id: 'shaep-fitness',
+    name: 'Shaep Fitness (Kelsey Rose)',
+    categories: ['health-fitness', 'influencer-creator'],
+    bio: 'Treinadora & fundadora da Shaep (442 mil seguidores)',
+    bgColor: '#f4f1ea',
+    bgImageUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&q=80&w=800',
+    bgStyle: 'background: linear-gradient(rgba(244,241,234,0.85), rgba(235,231,223,0.92)), url("https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&q=80&w=800"); background-size: cover; background-position: center;',
+    textColor: '#1c1917',
+    btnBgColor: '#e7e3da',
+    btnTextColor: '#1c1917',
+    btnBorder: 'border border-[#d6d0c4]',
+    roundness: 'rounded-full',
+    fontClass: 'font-serif',
+    avatarUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=150',
+    socials: ['instagram', 'tiktok', 'youtube'],
+    links: [
+      { id: 1, title: '🏋️ Shift Workouts & Training', url: 'https://shaep.co', icon: 'store' },
+      { id: 2, title: '🧘 Meditation & Breathwork', url: 'https://shaep.co', icon: 'website' },
+      { id: 3, title: '💬 Shaep Community Chat', url: 'https://shaep.co', icon: 'whatsapp' }
+    ]
+  },
+  // 10. Pistakio Organic (Nico & Fran)
+  {
+    id: 'pistakio-organic',
+    name: 'Pistakio Organic (Nico & Fran)',
+    categories: ['small-business', 'food'],
+    bio: 'Fundadores da Pistakio (28,7 mil seguidores)',
+    bgColor: '#8fa844',
+    bgImageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=800',
+    bgStyle: 'background: linear-gradient(rgba(143,168,68,0.85), rgba(110,132,48,0.92)), url("https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=800"); background-size: cover; background-position: center;',
+    textColor: '#1a2e05',
+    btnBgColor: '#f1f7d9',
+    btnTextColor: '#2d4508',
+    btnBorder: 'border border-[#a8c652]',
+    roundness: 'rounded-2xl',
+    fontClass: 'font-sans',
+    avatarUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=150',
+    socials: ['instagram', 'youtube', 'tiktok'],
+    links: [
+      { id: 1, title: '🥜 Creamy Pistachio Spread - $15', url: 'https://pistakio.com', icon: 'store' },
+      { id: 2, title: '🫙 Crunchy Pistachio Spread - $15', url: 'https://pistakio.com', icon: 'store' },
+      { id: 3, title: '🌱 Nossa História & Loja Oficial', url: 'https://pistakio.com', icon: 'website' }
+    ]
+  },
+  // 11. Perfect Person (Miles Bon)
+  {
+    id: 'perfect-person-podcast',
+    name: 'Perfect Person (Miles Bon)',
+    categories: ['podcast', 'music'],
+    bio: 'Podcaster & Criador (351 mil seguidores)',
+    bgColor: '#d97706',
+    bgImageUrl: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=800',
+    bgStyle: 'background: linear-gradient(rgba(217,119,6,0.85), rgba(180,83,9,0.92)), url("https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=800"); background-size: cover; background-position: center;',
+    textColor: '#451a03',
+    btnBgColor: '#fef3c7',
+    btnTextColor: '#78350f',
+    btnBorder: 'border border-[#f59e0b]',
+    roundness: 'rounded-xl',
+    fontClass: 'font-serif',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+    socials: ['instagram', 'spotify', 'youtube'],
+    links: [
+      { id: 1, title: '🎙️ Perfect Person Podcast Ep. 165', url: 'https://perfectperson.com', icon: 'spotify' },
+      { id: 2, title: '⭐ Join My Patreon', url: 'https://patreon.com', icon: 'website' },
+      { id: 3, title: '🎟️ Dialtone Tour Pt. 2 Tickets', url: 'https://perfectperson.com', icon: 'store' }
+    ]
+  },
+  // 12. Zay Dante (Músico & Criador)
+  {
+    id: 'zay-dante-music',
+    name: 'Zay Dante (Músico & Criador)',
+    categories: ['music', 'influencer-creator'],
+    bio: 'Músico e Criador (2.7 milhões de seguidores)',
+    bgColor: '#ea580c',
+    bgImageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800',
+    bgStyle: 'background: linear-gradient(rgba(234,88,12,0.85), rgba(154,52,18,0.92)), url("https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800"); background-size: cover; background-position: center;',
+    textColor: '#fff7ed',
+    btnBgColor: '#84cc16',
+    btnTextColor: '#1a2e05',
+    btnBorder: '',
+    roundness: 'rounded-2xl',
+    fontClass: 'font-sans',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150',
+    socials: ['instagram', 'spotify', 'youtube'],
+    links: [
+      { id: 1, title: '🎵 New Single: Pop Song (Out Now)', url: 'https://spotify.com', icon: 'spotify' },
+      { id: 2, title: '🎧 Official Spotify Playlist', url: 'https://spotify.com', icon: 'spotify' },
+      { id: 3, title: '🎸 Tour Dates & Tickets 2026', url: 'https://zaydante.com', icon: 'website' }
+    ]
+  },
+  // 13. Koy Sun (Artista & Pop Art)
+  {
+    id: 'koy-sun-art',
+    name: 'Koy Sun (Artista & Pop Art)',
+    categories: ['art', 'tiktok'],
+    bio: 'Artista Visual & Criador (238 mil seguidores)',
+    bgColor: '#1d4ed8',
+    bgImageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=800',
+    bgStyle: 'background: linear-gradient(rgba(29,78,216,0.85), rgba(30,58,138,0.92)), url("https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&q=80&w=800"); background-size: cover; background-position: center;',
+    textColor: '#fffbeb',
+    btnBgColor: '#fffbeb',
+    btnTextColor: '#1e3a8a',
+    btnBorder: 'border-2 border-[#1d4ed8]',
+    roundness: 'btn-outline',
+    fontClass: 'font-sans',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+    socials: ['instagram', 'tiktok', 'youtube'],
+    links: [
+      { id: 1, title: '🎨 Check Out My Work & Portfolio', url: 'https://koysun.com', icon: 'website' },
+      { id: 2, title: '🎬 TikTok Paint & Process Videos', url: 'https://tiktok.com', icon: 'tiktok' },
+      { id: 3, title: '🖼️ Limited Edition Art Prints', url: 'https://koysun.com', icon: 'store' }
+    ]
+  },
   // 8. Line Art Leaves (Health & Wellness)
   {
     id: 'line-art-leaves',
