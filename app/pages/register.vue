@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { supabase } from '~/composables/useSupabase'
 
 useSeoMeta({
-  title: 'Criar Conta Grátis | Tarif Link-in-Bio',
+  title: 'Criar Conta Grátis | Avyro Link-in-Bio',
   description: 'Crie seu perfil profissional e comece a compartilhar seus links com visual incrível.',
 })
 
@@ -91,10 +91,10 @@ async function handleRegister() {
         <NuxtLink to="/" class="inline-flex items-center gap-2 mb-4">
           <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.8)] p-[1.5px]">
             <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
-              <span class="font-heading font-black text-[#00f0ff] text-base">T</span>
+              <span class="font-heading font-black text-[#00f0ff] text-base">A</span>
             </div>
           </div>
-          <span class="font-heading text-2xl font-extrabold text-white">Tarif</span>
+          <span class="font-heading text-2xl font-extrabold text-white">Avyro</span>
         </NuxtLink>
         <h1 class="font-heading text-2xl font-bold text-white mb-2">Crie sua Conta SaaS</h1>
         <p class="text-sm text-gray-400">Escolha seu link personalizado para o Instagram</p>
@@ -133,7 +133,7 @@ async function handleRegister() {
         <div>
           <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Seu Nome de Usuário (URL)</label>
           <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400 font-bold text-sm">tarif.com.br/bio/@</span>
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400 font-bold text-sm">avyro.com.br/@</span>
             <input
               v-model="username"
               type="text"

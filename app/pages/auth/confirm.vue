@@ -2,7 +2,7 @@
 import { supabase } from '~/composables/useSupabase'
 
 useSeoMeta({
-  title: 'E-mail Confirmado | Tarif Link-in-Bio',
+  title: 'E-mail Confirmado | Avyro Link-in-Bio',
   description: 'Seu e-mail foi confirmado com sucesso. Faça login para acessar seu painel.',
 })
 
@@ -81,10 +81,10 @@ onUnmounted(() => {
         <NuxtLink to="/" class="inline-flex items-center gap-2 mb-6">
           <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.8)] p-[1.5px]">
             <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
-              <span class="font-heading font-black text-[#00f0ff] text-base">T</span>
+              <span class="font-heading font-black text-[#00f0ff] text-base">A</span>
             </div>
           </div>
-          <span class="font-heading text-2xl font-extrabold text-white">Tarif</span>
+          <span class="font-heading text-2xl font-extrabold text-white">Avyro</span>
         </NuxtLink>
       </div>
 

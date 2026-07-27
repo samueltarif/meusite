@@ -152,11 +152,11 @@ const currentDomainHost = computed(() => {
   if (import.meta.client) {
     return window.location.host
   }
-  return 'tarif.com.br'
+  return 'avyro.com.br'
 })
 
 function copyBioLink() {
-  const domain = import.meta.client ? window.location.origin : 'https://tarif.com.br'
+  const domain = import.meta.client ? window.location.origin : 'https://www.avyro.com.br'
   const cleanName = profileUsername.value.replace(/^@/, '')
   const fullUrl = `${domain}/${cleanName}`
   navigator.clipboard.writeText(fullUrl)
@@ -862,7 +862,7 @@ async function logout() {
                 <div class="mt-auto pt-10 text-center">
                   <span class="inline-flex items-center gap-1 text-[10px] font-bold opacity-40" :class="customFontClass" :style="{ color: customTextColor }">
                     <span class="material-symbols-outlined text-[12px] font-bold">eco</span>
-                    Powered by Tarif Link-in-Bio
+                    Powered by Avyro Link-in-Bio
                   </span>
                 </div>
               </div>

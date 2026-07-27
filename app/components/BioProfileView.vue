@@ -177,7 +177,7 @@ const pageCssStyle = computed(() => {
       <div class="mt-auto pt-6 text-center">
         <span class="inline-flex items-center gap-1 text-[10px] font-bold opacity-40" :style="{ color: profile?.text_color }">
           <span class="material-symbols-outlined text-[12px] font-bold">eco</span>
-          Powered by Tarif Link-in-Bio
+          Powered by Avyro Link-in-Bio
         </span>
       </div>
 

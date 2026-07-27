@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { supabase } from '~/composables/useSupabase'
 
 useSeoMeta({
-  title: 'Entrar na sua Conta | Tarif Link-in-Bio',
+  title: 'Entrar na sua Conta | Avyro Link-in-Bio',
   description: 'Faça login para gerenciar sua página de links e visualizar estatísticas de acessos.',
 })
 
@@ -59,10 +59,10 @@ async function handleLogin() {
         <NuxtLink to="/" class="inline-flex items-center gap-2 mb-4">
           <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.8)] p-[1.5px]">
             <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
-              <span class="font-heading font-black text-[#00f0ff] text-base">T</span>
+              <span class="font-heading font-black text-[#00f0ff] text-base">A</span>
             </div>
           </div>
-          <span class="font-heading text-2xl font-extrabold text-white">Tarif</span>
+          <span class="font-heading text-2xl font-extrabold text-white">Avyro</span>
         </NuxtLink>
         <h1 class="font-heading text-2xl font-bold text-white mb-2">Bem-vindo de volta!</h1>
         <p class="text-sm text-gray-400">Acesse seu painel do Link-in-Bio</p>
