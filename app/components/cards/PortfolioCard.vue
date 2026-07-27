@@ -1,9 +1,22 @@
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue'
 
-const DotLottieVue = defineAsyncComponent(() =>
-  import('@lottiefiles/dotlottie-vue').then((m) => m.DotLottieVue)
-)
+const DotLottieVue = defineAsyncComponent({
+  loader: async () => {
+    try {
+      if (typeof window !== 'undefined' && !window.WebAssembly) return { template: '<div></div>' }
+      const m = await import('@lottiefiles/dotlottie-vue')
+      return m.DotLottieVue
+    } catch (err) {
+      console.warn('Lottie portfolio load error:', err)
+      return { template: '<div></div>' }
+    }
+  },
+  onError(error, retry, fail) {
+    console.warn('Lottie portfolio error:', error)
+    fail()
+  }
+})
 
 interface Props {
   imageUrl?: string
