@@ -937,7 +937,6 @@ async function logout() {
             <!-- Stylings inputs -->
             <div class="space-y-4">
               <div>
-              <div>
                 <div class="flex items-center justify-between mb-2">
                   <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider">Formato & Estilo do Botão</label>
                   <label class="flex items-center gap-1.5 cursor-pointer relative">

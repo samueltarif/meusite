@@ -18,11 +18,51 @@ if (import.meta.server) {
   }
 }
 
+// Safe storage detection to avoid SecurityError crashes in Safari Private Browsing / iOS in-app WebViews
+const isStorageAvailable = () => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return false
+    const testKey = '__storage_test__'
+    window.localStorage.setItem(testKey, testKey)
+    window.localStorage.removeItem(testKey)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+const memoryStorage: Record<string, string> = {}
+const safeStorage = {
+  getItem: (key: string): string | null => {
+    if (isStorageAvailable()) return window.localStorage.getItem(key)
+    return memoryStorage[key] || null
+  },
+  setItem: (key: string, value: string): void => {
+    if (isStorageAvailable()) {
+      try {
+        window.localStorage.setItem(key, value)
+        return
+      } catch (e) {}
+    }
+    memoryStorage[key] = value
+  },
+  removeItem: (key: string): void => {
+    if (isStorageAvailable()) {
+      try {
+        window.localStorage.removeItem(key)
+        return
+      } catch (e) {}
+    }
+    delete memoryStorage[key]
+  }
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: import.meta.client,
     autoRefreshToken: import.meta.client,
     detectSessionInUrl: import.meta.client,
+    storage: import.meta.client ? safeStorage : undefined,
   },
   ...(wsConstructor ? { realtime: { transport: wsConstructor } } : {}),
 })
