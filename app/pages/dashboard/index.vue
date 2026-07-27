@@ -344,6 +344,105 @@ const customAvatar = ref('')
 const selectedSocials = ref<string[]>(['tiktok', 'youtube', 'instagram'])
 const links = ref<LinkItem[]>([])
 
+// ─── Google Fonts API State & Loader ───
+const googleFonts = ref<any[]>([])
+const searchFontQuery = ref('')
+const loadingFonts = ref(false)
+const filteredFonts = computed(() => {
+  if (!searchFontQuery.value.trim()) return googleFonts.value.slice(0, 50)
+  const q = searchFontQuery.value.toLowerCase()
+  return googleFonts.value.filter(f => f.family.toLowerCase().includes(q)).slice(0, 50)
+})
+
+async function fetchGoogleFonts() {
+  if (googleFonts.value.length > 0) return
+  loadingFonts.value = true
+  try {
+    const res = await $fetch<any[]>('https://api.fontsource.org/v1/fonts')
+    if (res) {
+      googleFonts.value = res.filter(f => f.type === 'google')
+    }
+  } catch (err) {
+    console.error('Failed to fetch google fonts list:', err)
+  } finally {
+    loadingFonts.value = false
+  }
+}
+
+function loadGoogleFont(family: string) {
+  if (import.meta.server) return
+  const id = `gfont-${family.replace(/\s+/g, '-').toLowerCase()}`
+  if (document.getElementById(id)) return
+
+  const link = document.createElement('link')
+  link.id = id
+  link.rel = 'stylesheet'
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@400;700&display=swap`
+  document.head.appendChild(link)
+}
+
+function selectCustomFont(family: string) {
+  customFontClass.value = `custom:${family}`
+  loadGoogleFont(family)
+}
+
+// Watcher to dynamically load selected custom font on preview mount or change
+watch(customFontClass, (newVal) => {
+  if (newVal?.startsWith('custom:')) {
+    loadGoogleFont(newVal.slice(7))
+  }
+}, { immediate: true })
+
+// ─── Advanced Custom Button Customizer State ───
+const isCustomBtn = ref(false)
+const customBtnConfig = ref({
+  borderRadius: 24,
+  borderWidth: 0,
+  borderStyle: 'solid',
+  borderColor: '#111111',
+  shadowType: 'none',
+  shadowOffsetX: 4,
+  shadowOffsetY: 4,
+  shadowBlur: 8,
+  shadowColor: 'rgba(0,0,0,0.15)',
+  hoverEffect: 'hover:scale-[1.02]'
+})
+
+const computedButtonClasses = computed(() => {
+  if (isCustomBtn.value) {
+    return customBtnConfig.value.hoverEffect || ''
+  }
+  return [customRoundness.value, customBtnBorder.value]
+})
+
+const computedButtonStyles = computed(() => {
+  const base = {
+    backgroundColor: customBtnBgColor.value,
+    color: customBtnTextColor.value,
+    fontFamily: customFontClass.value.startsWith('custom:') ? customFontClass.value.slice(7) : undefined
+  }
+  if (!isCustomBtn.value) return base
+
+  const c = customBtnConfig.value
+  let shadowStr = undefined
+  if (c.shadowType === 'drop') {
+    shadowStr = `${c.shadowOffsetX}px ${c.shadowOffsetY}px ${c.shadowBlur}px ${c.shadowColor}`
+  } else if (c.shadowType === 'brutal') {
+    shadowStr = `${c.shadowOffsetX}px ${c.shadowOffsetY}px 0px ${c.shadowColor}`
+  } else if (c.shadowType === 'neon') {
+    shadowStr = `0 0 ${c.shadowBlur}px ${c.shadowColor}`
+  }
+
+  return {
+    ...base,
+    borderRadius: `${c.borderRadius}px`,
+    borderWidth: `${c.borderWidth}px`,
+    borderStyle: c.borderStyle,
+    borderColor: c.borderColor,
+    boxShadow: shadowStr
+  }
+})
+
 // Platform add dialog
 const showAddPlatformId = ref<string | null>(null)
 const platformInputUrl = ref('')
@@ -392,10 +491,25 @@ async function loadUserData(userId: string) {
     customBtnBgColor.value = p.btn_bg_color || '#6b5d52'
     customBtnTextColor.value = p.btn_text_color || '#ffffff'
     customBtnBorder.value = p.btn_border || ''
-    customRoundness.value = p.roundness || 'rounded-full'
     customFontClass.value = p.font_class || 'font-serif'
     selectedSocials.value = p.socials || ['tiktok', 'youtube', 'instagram']
     customBgStyle.value = p.bg_style || (customBgImage.value ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${customBgImage.value}"); background-size: cover; background-position: center;` : `background-color: ${customBgColor.value};`)
+    
+    if (p.roundness && p.roundness.startsWith('custom:')) {
+      isCustomBtn.value = true
+      try {
+        customBtnConfig.value = {
+          ...customBtnConfig.value,
+          ...JSON.parse(p.roundness.slice(7))
+        }
+      } catch (e) {
+        console.error('Failed to parse custom button style:', e)
+      }
+      customRoundness.value = p.roundness
+    } else {
+      isCustomBtn.value = false
+      customRoundness.value = p.roundness || 'rounded-full'
+    }
   }
 
   const { data: linksData } = await supabase.from('links').select('*').eq('user_id', userId).order('position', { ascending: true })
@@ -544,6 +658,10 @@ async function saveProfile() {
   savingProfile.value = true
   saveSuccess.value = false
 
+  const roundnessValue = isCustomBtn.value 
+    ? `custom:${JSON.stringify(customBtnConfig.value)}`
+    : customRoundness.value
+
   await supabase.from('profiles').update({
     display_name: customUsername.value,
     bio_description: customBio.value,
@@ -556,7 +674,7 @@ async function saveProfile() {
     btn_bg_color: customBtnBgColor.value,
     btn_text_color: customBtnTextColor.value,
     btn_border: customBtnBorder.value,
-    roundness: customRoundness.value,
+    roundness: roundnessValue,
     font_class: customFontClass.value,
     socials: selectedSocials.value,
     updated_at: new Date().toISOString(),
@@ -819,8 +937,128 @@ async function logout() {
             <!-- Stylings inputs -->
             <div class="space-y-4">
               <div>
-                <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider mb-2">Formato & Estilo do Botão</label>
-                <div class="grid grid-cols-3 gap-2">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider">Formato & Estilo do Botão</label>
+                  <label class="flex items-center gap-1.5 cursor-pointer relative">
+                    <input type="checkbox" v-model="isCustomBtn" class="sr-only peer">
+                    <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary relative"></div>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">🎛️ Avançado</span>
+                  </label>
+                </div>
+
+                <!-- Custom Button Sliders -->
+                <div v-if="isCustomBtn" class="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-3.5 mb-4">
+                  <!-- Border Radius -->
+                  <div>
+                    <div class="flex justify-between text-[10px] font-bold text-gray-600 mb-1">
+                      <span>ARREDONDAMENTO (BORDER RADIUS)</span>
+                      <span>{{ customBtnConfig.borderRadius }}px</span>
+                    </div>
+                    <input type="range" min="0" max="32" v-model.number="customBtnConfig.borderRadius" class="w-full accent-secondary">
+                  </div>
+
+                  <!-- Border Width -->
+                  <div>
+                    <div class="flex justify-between text-[10px] font-bold text-gray-600 mb-1">
+                      <span>ESPESSURA DA BORDA</span>
+                      <span>{{ customBtnConfig.borderWidth }}px</span>
+                    </div>
+                    <input type="range" min="0" max="6" v-model.number="customBtnConfig.borderWidth" class="w-full accent-secondary">
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-3">
+                    <!-- Border Style -->
+                    <div>
+                      <label class="block text-[10px] font-bold text-gray-600 mb-1">TIPO DE LINHA</label>
+                      <select v-model="customBtnConfig.borderStyle" class="w-full px-2 py-1 text-xs bg-white border border-[#DDD] rounded-lg focus:outline-none text-gray-800 font-medium">
+                        <option value="solid">Contínuo (Solid)</option>
+                        <option value="dashed">Tracejado (Dashed)</option>
+                        <option value="dotted">Pontilhado (Dotted)</option>
+                        <option value="double">Duplo (Double)</option>
+                      </select>
+                    </div>
+
+                    <!-- Border Color -->
+                    <div>
+                      <label class="block text-[10px] font-bold text-gray-600 mb-1">COR DA BORDA</label>
+                      <div class="flex items-center gap-2">
+                        <input type="color" v-model="customBtnConfig.borderColor" class="w-6 h-6 rounded-md border border-gray-200 cursor-pointer">
+                        <span class="text-[10px] font-mono uppercase text-gray-700 font-semibold">{{ customBtnConfig.borderColor }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Shadow Type -->
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-600 mb-1">TIPO DE SOMBRA / BRILHO</label>
+                    <div class="grid grid-cols-4 gap-1">
+                      <button v-for="st in [
+                        { id: 'none', label: 'Nenhuma' },
+                        { id: 'drop', label: 'Suave' },
+                        { id: 'brutal', label: '3D' },
+                        { id: 'neon', label: 'Neon' }
+                      ]" :key="st.id" @click="customBtnConfig.shadowType = st.id"
+                        :class="['py-1 text-[10px] border rounded-lg transition-all text-center', customBtnConfig.shadowType === st.id ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] bg-white text-gray-600']">
+                        {{ st.label }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Shadow Detailed Sliders -->
+                  <div v-if="customBtnConfig.shadowType !== 'none'" class="space-y-3 p-3 bg-white rounded-xl border border-gray-100">
+                    <div class="grid grid-cols-2 gap-2">
+                      <!-- Shadow Color -->
+                      <div>
+                        <label class="block text-[9px] font-bold text-gray-500 mb-1">COR DA SOMBRA</label>
+                        <input type="color" v-model="customBtnConfig.shadowColor" class="w-full h-6 rounded-md border border-gray-200 cursor-pointer">
+                      </div>
+
+                      <!-- Blur (for Neon & Drop) -->
+                      <div v-if="customBtnConfig.shadowType === 'drop' || customBtnConfig.shadowType === 'neon'">
+                        <div class="flex justify-between text-[9px] font-bold text-gray-500 mb-1">
+                          <span>DESFOQUE</span>
+                          <span>{{ customBtnConfig.shadowBlur }}px</span>
+                        </div>
+                        <input type="range" min="1" max="24" v-model.number="customBtnConfig.shadowBlur" class="w-full accent-secondary">
+                      </div>
+                    </div>
+
+                    <!-- Offset (for Brutal & Drop) -->
+                    <div v-if="customBtnConfig.shadowType === 'drop' || customBtnConfig.shadowType === 'brutal'" class="grid grid-cols-2 gap-2">
+                      <div>
+                        <div class="flex justify-between text-[9px] font-bold text-gray-500 mb-1">
+                          <span>DESLOCAMENTO X</span>
+                          <span>{{ customBtnConfig.shadowOffsetX }}px</span>
+                        </div>
+                        <input type="range" min="-12" max="12" v-model.number="customBtnConfig.shadowOffsetX" class="w-full accent-secondary">
+                      </div>
+                      <div>
+                        <div class="flex justify-between text-[9px] font-bold text-gray-500 mb-1">
+                          <span>DESLOCAMENTO Y</span>
+                          <span>{{ customBtnConfig.shadowOffsetY }}px</span>
+                        </div>
+                        <input type="range" min="-12" max="12" v-model.number="customBtnConfig.shadowOffsetY" class="w-full accent-secondary">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Hover Effect -->
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-600 mb-1">ANIMAÇÃO HOVER</label>
+                    <select v-model="customBtnConfig.hoverEffect" class="w-full px-2 py-1.5 text-xs bg-white border border-[#DDD] rounded-lg focus:outline-none text-gray-800 font-medium">
+                      <option value="none">Nenhuma Animação</option>
+                      <option value="hover:scale-[1.04]">Aumentar levemente (Zoom Out)</option>
+                      <option value="hover:-translate-y-1">Subir levemente (Float)</option>
+                      <option value="hover:rotate-1">Inclinada divertida (Tilt)</option>
+                      <option value="hover:skew-x-1">Entortar (Skew)</option>
+                      <option value="hover:scale-95">Encolher levemente (Push)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Standard Presets grid if not custom -->
+                <div v-else class="grid grid-cols-3 gap-2 mb-4">
                   <button v-for="btn in [
                     { val: 'rounded-none', label: 'Quadrado' },
                     { val: 'rounded-md', label: 'Suave' },
@@ -837,7 +1075,7 @@ async function logout() {
                     { val: 'btn-angled', label: '📐 Inclinado' },
                     { val: 'btn-double-border', label: '🎫 Borda Dupla' },
                     { val: 'btn-neon-glow', label: '🔋 Brilho Neon' },
-                  ]" :key="btn.val" @click="customRoundness = btn.val"
+                  ]" :key="btn.val" @click="customRoundness = btn.val; customBtnBorder = ''"
                     :class="['py-2 px-2 text-[11px] border rounded-xl transition-all flex items-center justify-center gap-1', customRoundness === btn.val ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">
                     {{ btn.label }}
                   </button>
@@ -859,6 +1097,41 @@ async function logout() {
                   <button @click="customFontClass = 'font-chalkboard'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-chalkboard', customFontClass === 'font-chalkboard' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Chalkboard</button>
                   <button @click="customFontClass = 'font-syne'" :class="['py-1.5 px-2 text-[10px] border rounded-xl transition-all font-syne', customFontClass === 'font-syne' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Syne</button>
                   <button @click="customFontClass = 'font-pixel'" :class="['py-1.5 px-2 text-[9px] border rounded-xl transition-all font-pixel', customFontClass === 'font-pixel' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Retro 8bit</button>
+                </div>
+
+                <!-- Google Fonts Autocomplete dropdown -->
+                <div class="mt-4 border-t border-gray-150 pt-3.5">
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">🔍 Buscar outras 1.500+ fontes do Google</label>
+                  <div class="relative">
+                    <input
+                      type="text"
+                      v-model="searchFontQuery"
+                      @focus="fetchGoogleFonts"
+                      placeholder="Pesquise: Bungee, Roboto, Lora, Lobster..."
+                      class="w-full px-3.5 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white"
+                    >
+                    <!-- Google Font Selection Indicator -->
+                    <div v-if="customFontClass.startsWith('custom:')" class="mt-2 flex items-center justify-between bg-secondary/10 px-3.5 py-2 rounded-xl border border-secondary/20">
+                      <span class="text-xs text-secondary font-bold">Fonte Ativa: {{ customFontClass.slice(7) }}</span>
+                      <button @click="customFontClass = 'font-sans'" class="text-[10px] text-gray-400 hover:text-red-500 font-bold uppercase">Remover</button>
+                    </div>
+
+                    <!-- Dropdown Font list -->
+                    <div v-if="searchFontQuery.trim() && filteredFonts.length > 0" class="absolute left-0 right-0 mt-1.5 max-h-48 overflow-y-auto bg-white border border-[#DDD] rounded-xl shadow-lg z-30 divide-y divide-gray-50 hide-scrollbar">
+                      <button
+                        v-for="font in filteredFonts"
+                        :key="font.id"
+                        @click="selectCustomFont(font.family); searchFontQuery = ''"
+                        class="w-full text-left px-3.5 py-2.5 text-xs hover:bg-slate-50 transition-colors flex items-center justify-between"
+                      >
+                        <span class="font-bold text-gray-850">{{ font.family }}</span>
+                        <span class="text-[9px] text-gray-400 font-mono">{{ font.category }}</span>
+                      </button>
+                    </div>
+                    <div v-else-if="loadingFonts" class="absolute left-0 right-0 mt-1.5 p-3 text-center text-xs text-gray-400 bg-white border border-[#DDD] rounded-xl z-30 shadow-md">
+                      Carregando catálogo de fontes do Google...
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1016,7 +1289,8 @@ async function logout() {
             </div>
 
             <!-- Phone Screen -->
-            <div class="w-full h-full rounded-[38px] overflow-y-auto overflow-x-hidden pt-14 pb-8 px-5 relative transition-all duration-500 hide-scrollbar" :style="customBgStyle">
+            <div class="w-full h-full rounded-[38px] overflow-y-auto overflow-x-hidden pt-14 pb-8 px-5 relative transition-all duration-500 hide-scrollbar" 
+              :style="[typeof customBgStyle === 'string' ? { background: customBgStyle } : customBgStyle, customFontClass.startsWith('custom:') ? { fontFamily: customFontClass.slice(7) } : {}]">
               <div class="relative z-10 flex flex-col items-center h-full">
                 <!-- Avatar -->
                 <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-black/10 shadow-sm bg-slate-200 mb-4 flex items-center justify-center shrink-0">
@@ -1025,10 +1299,10 @@ async function logout() {
 
                 <!-- Username & Bio -->
                 <div class="space-y-1.5 text-center mb-6">
-                  <h3 class="text-lg font-bold transition-all duration-300" :class="customFontClass" :style="{ color: customTextColor }">
+                  <h3 class="text-lg font-bold transition-all duration-300" :class="customFontClass.startsWith('custom:') ? '' : customFontClass" :style="{ color: customTextColor }">
                     @{{ profileUsername }}
                   </h3>
-                  <p class="text-xs leading-relaxed max-w-[240px] mx-auto opacity-85 transition-all duration-300 font-medium" :class="customFontClass" :style="{ color: customTextColor }">
+                  <p class="text-xs leading-relaxed max-w-[240px] mx-auto opacity-85 transition-all duration-300 font-medium" :class="customFontClass.startsWith('custom:') ? '' : customFontClass" :style="{ color: customTextColor }">
                     {{ customBio || 'Sua bio aqui...' }}
                   </p>
                 </div>
@@ -1041,8 +1315,12 @@ async function logout() {
                 <!-- Links Buttons -->
                 <div class="space-y-3.5 w-full">
                   <a v-for="link in links" :key="link.id" href="#"
-                    :class="['w-full py-3 px-4 text-center font-bold text-xs md:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 hover:scale-[1.02] shadow-sm', customRoundness, customBtnBorder, customFontClass]"
-                    :style="{ backgroundColor: customBtnBgColor, color: customBtnTextColor }">
+                    :class="[
+                      'w-full py-3 px-4 text-center font-bold text-xs md:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm', 
+                      computedButtonClasses, 
+                      customFontClass.startsWith('custom:') ? '' : customFontClass
+                    ]"
+                    :style="computedButtonStyles">
                     <div v-if="link.icon && brandIcons[link.icon]" class="w-4 h-4 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
                     <span>{{ link.title }}</span>
                   </a>
@@ -1050,7 +1328,7 @@ async function logout() {
 
                 <!-- Branding Footer -->
                 <div class="mt-auto pt-10 text-center">
-                  <span class="inline-flex items-center gap-1 text-[10px] font-bold opacity-40" :class="customFontClass" :style="{ color: customTextColor }">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold opacity-40" :class="customFontClass.startsWith('custom:') ? '' : customFontClass" :style="{ color: customTextColor }">
                     <span class="material-symbols-outlined text-[12px] font-bold">eco</span>
                     Powered by Avyro Link-in-Bio
                   </span>

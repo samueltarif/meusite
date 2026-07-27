@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { supabase } from '~/composables/useSupabase'
 import { brandIcons } from '~/utils/brandIcons'
 
@@ -81,6 +81,85 @@ async function handleClick(link: LinkItem) {
   }
 }
 
+// ─── Custom Font & Custom Button Decoding ───
+const computedFontFamily = computed(() => {
+  if (profile.value?.font_class?.startsWith('custom:')) {
+    return profile.value.font_class.slice(7)
+  }
+  return ''
+})
+
+function loadGoogleFont(family: string) {
+  if (import.meta.server) return
+  const id = `gfont-${family.replace(/\s+/g, '-').toLowerCase()}`
+  if (document.getElementById(id)) return
+
+  const link = document.createElement('link')
+  link.id = id
+  link.rel = 'stylesheet'
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@400;700&display=swap`
+  document.head.appendChild(link)
+}
+
+watch(computedFontFamily, (newFamily) => {
+  if (newFamily) {
+    loadGoogleFont(newFamily)
+  }
+}, { immediate: true })
+
+const isCustomBtn = computed(() => {
+  return profile.value?.roundness?.startsWith('custom:')
+})
+
+const customBtnConfig = computed(() => {
+  if (!isCustomBtn.value) return null
+  try {
+    return JSON.parse(profile.value.roundness.slice(7))
+  } catch (e) {
+    return null
+  }
+})
+
+const computedButtonClasses = computed(() => {
+  if (isCustomBtn.value) {
+    return customBtnConfig.value?.hoverEffect || ''
+  }
+  return [
+    profile.value?.roundness || 'rounded-full',
+    profile.value?.btn_border || ''
+  ]
+})
+
+const computedButtonStyles = computed(() => {
+  const base = {
+    backgroundColor: profile.value?.btn_bg_color || '#ffffff',
+    color: profile.value?.btn_text_color || '#111111',
+    fontFamily: computedFontFamily.value || undefined
+  }
+  if (!isCustomBtn.value) return base
+
+  const c = customBtnConfig.value
+  if (!c) return base
+
+  let shadowStr = undefined
+  if (c.shadowType === 'drop') {
+    shadowStr = `${c.shadowOffsetX}px ${c.shadowOffsetY}px ${c.shadowBlur}px ${c.shadowColor}`
+  } else if (c.shadowType === 'brutal') {
+    shadowStr = `${c.shadowOffsetX}px ${c.shadowOffsetY}px 0px ${c.shadowColor}`
+  } else if (c.shadowType === 'neon') {
+    shadowStr = `0 0 ${c.shadowBlur}px ${c.shadowColor}`
+  }
+
+  return {
+    ...base,
+    borderRadius: `${c.borderRadius}px`,
+    borderWidth: `${c.borderWidth}px`,
+    borderStyle: c.borderStyle,
+    borderColor: c.borderColor,
+    boxShadow: shadowStr
+  }
+})
+
 // Background style engine matching playground
 const pageCssStyle = computed(() => {
   if (!profile.value) return ''
@@ -96,8 +175,8 @@ const pageCssStyle = computed(() => {
 <template>
   <div
     class="min-h-screen w-full flex flex-col items-center justify-between px-4 py-12 transition-all duration-500 relative"
-    :style="pageCssStyle"
-    :class="profile?.font_class || 'font-sans'"
+    :style="[typeof pageCssStyle === 'string' ? { background: pageCssStyle } : pageCssStyle, computedFontFamily ? { fontFamily: computedFontFamily } : {}]"
+    :class="profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')"
   >
     <!-- Loading State -->
     <div v-if="loading" class="flex flex-col items-center justify-center flex-1 my-auto">
@@ -157,15 +236,11 @@ const pageCssStyle = computed(() => {
           target="_blank"
           @click="handleClick(link)"
           :class="[
-            'w-full py-3.5 px-5 text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 hover:scale-[1.02] shadow-sm',
-            profile?.roundness || 'rounded-full',
-            profile?.btn_border || '',
-            profile?.font_class || 'font-sans'
+            'w-full py-3.5 px-5 text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm',
+            computedButtonClasses,
+            profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')
           ]"
-          :style="{
-            backgroundColor: profile?.btn_bg_color || '#ffffff',
-            color: profile?.btn_text_color || '#111111'
-          }"
+          :style="computedButtonStyles"
         >
           <div v-if="link.icon && brandIcons[link.icon]" class="w-5 h-5 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
           <span v-else-if="link.icon" class="material-symbols-outlined text-[18px] shrink-0">{{ link.icon }}</span>
