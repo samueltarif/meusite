@@ -1289,7 +1289,7 @@ async function logout() {
 
             <!-- Phone Screen -->
             <div class="w-full h-full rounded-[38px] overflow-y-auto overflow-x-hidden pt-14 pb-8 px-5 relative transition-all duration-500 hide-scrollbar" 
-              :style="[typeof customBgStyle === 'string' ? { background: customBgStyle } : customBgStyle, customFontClass.startsWith('custom:') ? { fontFamily: customFontClass.slice(7) } : {}]">
+              :style="[customBgStyle, customFontClass.startsWith('custom:') ? { fontFamily: customFontClass.slice(7) } : {}]">
               <div class="relative z-10 flex flex-col items-center h-full">
                 <!-- Avatar -->
                 <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-black/10 shadow-sm bg-slate-200 mb-4 flex items-center justify-center shrink-0">

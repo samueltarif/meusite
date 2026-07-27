@@ -175,7 +175,7 @@ const pageCssStyle = computed(() => {
 <template>
   <div
     class="min-h-screen w-full flex flex-col items-center justify-between px-4 py-12 transition-all duration-500 relative"
-    :style="[typeof pageCssStyle === 'string' ? { background: pageCssStyle } : pageCssStyle, computedFontFamily ? { fontFamily: computedFontFamily } : {}]"
+    :style="[pageCssStyle, computedFontFamily ? { fontFamily: computedFontFamily } : {}]"
     :class="profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')"
   >
     <!-- Loading State -->
