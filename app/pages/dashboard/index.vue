@@ -188,10 +188,10 @@ const standaloneR2Url = ref('')
 const copySuccess = ref(false)
 const copyBioSuccess = ref(false)
 
-// ─── Photo Search Modal State (Pexels & Unsplash) ───
+// ─── Photo & GIF Search Modal State (Pexels, Unsplash & Giphy) ───
 const showPhotoModal = ref(false)
 const photoSearchQuery = ref('')
-const photoSource = ref<'pexels' | 'unsplash'>('pexels')
+const photoSource = ref<'pexels' | 'unsplash' | 'giphy'>('pexels')
 const photoResults = ref<any[]>([])
 const searchingPhotos = ref(false)
 const photoPage = ref(1)
@@ -237,6 +237,25 @@ async function fetchPhotos(isNewSearch = true) {
         if (newItems.length < 28) hasMorePhotos.value = false
         photoResults.value = isNewSearch ? newItems : [...photoResults.value, ...newItems]
       }
+    } else if (photoSource.value === 'giphy') {
+      try {
+        const res = await $fetch<any>('/api/giphy/search', {
+          query: { q: queryTerm, per_page: 28, page: photoPage.value }
+        })
+        if (res && res.gifs) {
+          const newItems = res.gifs.map((g: any) => ({
+            id: `${g.id}-${photoPage.value}`,
+            url: g.url,
+            thumb: g.thumb,
+            author: g.author,
+          }))
+          if (newItems.length < 28) hasMorePhotos.value = false
+          photoResults.value = isNewSearch ? newItems : [...photoResults.value, ...newItems]
+        }
+      } catch (gErr: any) {
+        console.warn('Giphy API error, key propagating:', gErr)
+        unsplashNotice.value = 'Chave do Giphy em fase de ativação na plataforma. Experimente Pexels enquanto isso.'
+      }
     } else {
       try {
         const res = await $fetch<any>('/api/unsplash/search', {
@@ -278,7 +297,7 @@ function selectCategory(q: string) {
   fetchPhotos(true)
 }
 
-function openPhotoModal(source: 'pexels' | 'unsplash') {
+function openPhotoModal(source: 'pexels' | 'unsplash' | 'giphy') {
   photoSource.value = source
   showPhotoModal.value = true
   if (photoResults.value.length === 0) {
@@ -782,6 +801,9 @@ async function logout() {
                     <button @click="openPhotoModal('unsplash')" class="px-2 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
                       <span class="material-symbols-outlined text-[13px]">image</span> Unsplash
                     </button>
+                    <button @click="openPhotoModal('giphy')" class="px-2 py-0.5 bg-pink-500/10 hover:bg-pink-500/20 text-pink-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[13px]">gif</span> Giphy
+                    </button>
                     <label class="cursor-pointer px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
                       <span v-if="uploadingTarget === 'bg'" class="material-symbols-outlined animate-spin text-[13px]">progress_activity</span>
                       <span v-else class="material-symbols-outlined text-[13px]">cloud_upload</span>
@@ -1055,12 +1077,15 @@ async function logout() {
         <!-- Search Bar & Provider Switch + Category Chips -->
         <div class="p-4 bg-gray-50 border-b border-gray-100 space-y-3">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <button @click="photoSource = 'pexels'; fetchPhotos(true)" :class="['px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'pexels' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button @click="photoSource = 'pexels'; fetchPhotos(true)" :class="['px-3 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'pexels' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
                 <span class="material-symbols-outlined text-[14px]">search</span> Pexels
               </button>
-              <button @click="photoSource = 'unsplash'; fetchPhotos(true)" :class="['px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'unsplash' ? 'bg-cyan-600 text-white border-cyan-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
+              <button @click="photoSource = 'unsplash'; fetchPhotos(true)" :class="['px-3 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'unsplash' ? 'bg-cyan-600 text-white border-cyan-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
                 <span class="material-symbols-outlined text-[14px]">image</span> Unsplash
+              </button>
+              <button @click="photoSource = 'giphy'; fetchPhotos(true)" :class="['px-3 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'giphy' ? 'bg-pink-600 text-white border-pink-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
+                <span class="material-symbols-outlined text-[14px]">gif</span> Giphy (GIFs)
               </button>
             </div>
             <span class="text-[11px] text-gray-500 font-mono">{{ photoResults.length }} fotos exibidas</span>

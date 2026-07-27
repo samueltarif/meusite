@@ -39,6 +39,7 @@ export default defineNuxtConfig({
     r2PublicUrl: process.env.R2_PUBLIC_URL || '',
     pexelsApiKey: process.env.PEXELS_API_KEY || '',
     unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY || '',
+    giphyApiKey: process.env.GIPHY_API_KEY || '',
     public: {
       stripePublicKey: process.env.STRIPE_PUBLIC_KEY || ''
     }
