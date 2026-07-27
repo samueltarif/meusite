@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const q = (query.q as string) || 'aesthetic background'
     const page = (query.page as string) || '1'
-    const perPage = (query.per_page as string) || '16'
+    const perPage = (query.per_page as string) || '28'
 
     const config = useRuntimeConfig()
     const apiKey = config.pexelsApiKey || process.env.PEXELS_API_KEY

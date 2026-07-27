@@ -194,36 +194,70 @@ const photoSearchQuery = ref('')
 const photoSource = ref<'pexels' | 'unsplash'>('pexels')
 const photoResults = ref<any[]>([])
 const searchingPhotos = ref(false)
+const photoPage = ref(1)
+const hasMorePhotos = ref(true)
+const unsplashNotice = ref('')
 
-async function fetchPhotos() {
+const photoCategories = [
+  { label: '✨ Neon', q: 'neon background' },
+  { label: '🌊 Praia', q: 'ocean beach' },
+  { label: '🪴 Natureza', q: 'nature aesthetic' },
+  { label: '☕ Café', q: 'coffee mood' },
+  { label: '🏙️ Cidade', q: 'city lights' },
+  { label: '🏛️ Mármore', q: 'marble texture' },
+  { label: '🏎️ Carros', q: 'luxury sports car' },
+  { label: '🏋️ Fitness', q: 'gym workout' },
+  { label: '🎨 Abstrato', q: 'abstract background' },
+  { label: '🌌 Galáxia', q: 'galaxy space' },
+]
+
+async function fetchPhotos(isNewSearch = true) {
+  if (isNewSearch) {
+    photoPage.value = 1
+    photoResults.value = []
+    hasMorePhotos.value = true
+  }
+
   const queryTerm = photoSearchQuery.value.trim() || 'aesthetic background'
   searchingPhotos.value = true
-  photoResults.value = []
+  unsplashNotice.value = ''
 
   try {
     if (photoSource.value === 'pexels') {
       const res = await $fetch<any>('/api/pexels/search', {
-        query: { q: queryTerm, per_page: 16 }
+        query: { q: queryTerm, per_page: 28, page: photoPage.value }
       })
       if (res && res.photos) {
-        photoResults.value = res.photos.map((p: any) => ({
-          id: p.id,
+        const newItems = res.photos.map((p: any) => ({
+          id: `${p.id}-${photoPage.value}`,
           url: p.src.large2x || p.src.large,
           thumb: p.src.medium || p.src.small,
           author: p.photographer,
         }))
+        if (newItems.length < 28) hasMorePhotos.value = false
+        photoResults.value = isNewSearch ? newItems : [...photoResults.value, ...newItems]
       }
     } else {
-      const res = await $fetch<any>('/api/unsplash/search', {
-        query: { q: queryTerm, per_page: 16 }
-      })
-      if (res && res.results) {
-        photoResults.value = res.results.map((p: any) => ({
-          id: p.id,
-          url: p.urls.regular || p.urls.full,
-          thumb: p.urls.small || p.urls.thumb,
-          author: p.photographer,
-        }))
+      try {
+        const res = await $fetch<any>('/api/unsplash/search', {
+          query: { q: queryTerm, per_page: 28, page: photoPage.value }
+        })
+        if (res && res.results) {
+          const newItems = res.results.map((p: any) => ({
+            id: `${p.id}-${photoPage.value}`,
+            url: p.urls.regular || p.urls.full,
+            thumb: p.urls.small || p.urls.thumb,
+            author: p.photographer,
+          }))
+          if (newItems.length < 28) hasMorePhotos.value = false
+          photoResults.value = isNewSearch ? newItems : [...photoResults.value, ...newItems]
+        }
+      } catch (uErr: any) {
+        console.warn('Unsplash API 401/error, falling back to Pexels:', uErr)
+        unsplashNotice.value = 'Unsplash em modo de confirmação de e-mail. Exibindo resultados da Pexels.'
+        photoSource.value = 'pexels'
+        fetchPhotos(isNewSearch)
+        return
       }
     }
   } catch (err: any) {
@@ -233,11 +267,22 @@ async function fetchPhotos() {
   }
 }
 
+function loadMorePhotos() {
+  if (searchingPhotos.value || !hasMorePhotos.value) return
+  photoPage.value++
+  fetchPhotos(false)
+}
+
+function selectCategory(q: string) {
+  photoSearchQuery.value = q
+  fetchPhotos(true)
+}
+
 function openPhotoModal(source: 'pexels' | 'unsplash') {
   photoSource.value = source
   showPhotoModal.value = true
   if (photoResults.value.length === 0) {
-    fetchPhotos()
+    fetchPhotos(true)
   }
 }
 
@@ -1007,50 +1052,87 @@ async function logout() {
           </button>
         </div>
 
-        <!-- Search Bar & Provider Switch -->
+        <!-- Search Bar & Provider Switch + Category Chips -->
         <div class="p-4 bg-gray-50 border-b border-gray-100 space-y-3">
-          <div class="flex items-center gap-2">
-            <button @click="photoSource = 'pexels'; fetchPhotos()" :class="['px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'pexels' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
-              <span class="material-symbols-outlined text-[14px]">search</span> Pexels
-            </button>
-            <button @click="photoSource = 'unsplash'; fetchPhotos()" :class="['px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'unsplash' ? 'bg-cyan-600 text-white border-cyan-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
-              <span class="material-symbols-outlined text-[14px]">image</span> Unsplash
-            </button>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <button @click="photoSource = 'pexels'; fetchPhotos(true)" :class="['px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'pexels' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
+                <span class="material-symbols-outlined text-[14px]">search</span> Pexels
+              </button>
+              <button @click="photoSource = 'unsplash'; fetchPhotos(true)" :class="['px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'unsplash' ? 'bg-cyan-600 text-white border-cyan-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
+                <span class="material-symbols-outlined text-[14px]">image</span> Unsplash
+              </button>
+            </div>
+            <span class="text-[11px] text-gray-500 font-mono">{{ photoResults.length }} fotos exibidas</span>
           </div>
-          <form @submit.prevent="fetchPhotos" class="flex gap-2">
-            <input v-model="photoSearchQuery" type="text" placeholder="Ex: praia, neon, estúdio, natureza, mármore, minimalista..." class="flex-1 px-4 py-2.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-secondary bg-white shadow-xs">
+
+          <!-- Unsplash Notice Toast if fallback occurs -->
+          <div v-if="unsplashNotice" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px] text-amber-600">info</span>
+            <span>{{ unsplashNotice }}</span>
+          </div>
+
+          <form @submit.prevent="fetchPhotos(true)" class="flex gap-2">
+            <input v-model="photoSearchQuery" type="text" placeholder="Digite para buscar: praia, neon, estúdio, natureza, mármore..." class="flex-1 px-4 py-2.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-secondary bg-white shadow-xs">
             <button type="submit" class="px-5 py-2.5 bg-secondary text-white font-bold text-xs rounded-xl hover:bg-secondary/90 transition-colors flex items-center gap-1 shrink-0">
               <span class="material-symbols-outlined text-base">search</span> Buscar
             </button>
           </form>
+
+          <!-- Quick Category Chips -->
+          <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pt-1 pb-0.5">
+            <button
+              v-for="cat in photoCategories"
+              :key="cat.label"
+              @click="selectCategory(cat.q)"
+              class="px-3 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:border-secondary hover:text-secondary text-[11px] font-bold whitespace-nowrap transition-all shadow-2xs"
+            >
+              {{ cat.label }}
+            </button>
+          </div>
         </div>
 
         <!-- Photos Grid -->
-        <div class="p-5 overflow-y-auto flex-1 hide-scrollbar">
-          <div v-if="searchingPhotos" class="py-16 text-center space-y-3">
+        <div class="p-5 overflow-y-auto flex-1 hide-scrollbar space-y-4">
+          <div v-if="searchingPhotos && photoResults.length === 0" class="py-16 text-center space-y-3">
             <span class="material-symbols-outlined text-3xl text-secondary animate-spin">progress_activity</span>
             <p class="text-xs text-gray-500 font-mono">Buscando fotos incríveis...</p>
           </div>
           <div v-else-if="photoResults.length === 0" class="py-16 text-center space-y-2">
             <span class="material-symbols-outlined text-4xl text-gray-300">image_search</span>
-            <p class="text-xs text-gray-500">Nenhuma foto encontrada. Tente pesquisar por termo em inglês ou português (ex: "minimalist", "nature").</p>
+            <p class="text-xs text-gray-500">Nenhuma foto encontrada. Tente clicar em uma das categorias acima ou busque outro termo.</p>
           </div>
-          <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div
-              v-for="photo in photoResults"
-              :key="photo.id"
-              @click="applyPhotoBg(photo.url)"
-              class="group relative h-36 rounded-2xl overflow-hidden cursor-pointer border border-gray-200 shadow-xs hover:shadow-md hover:scale-[1.03] transition-all"
-            >
-              <img :src="photo.thumb" :alt="photo.author" class="w-full h-full object-cover">
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
-                <span class="text-[10px] text-white font-bold truncate">Por: {{ photo.author }}</span>
-                <span class="text-[9px] text-cyan-300 font-bold flex items-center gap-0.5 mt-0.5">
-                  <span class="material-symbols-outlined text-[10px]">touch_app</span> Aplicar Fundo
-                </span>
+          <template v-else>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div
+                v-for="photo in photoResults"
+                :key="photo.id"
+                @click="applyPhotoBg(photo.url)"
+                class="group relative h-36 rounded-2xl overflow-hidden cursor-pointer border border-gray-200 shadow-xs hover:shadow-md hover:scale-[1.03] transition-all"
+              >
+                <img :src="photo.thumb" :alt="photo.author" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
+                  <span class="text-[10px] text-white font-bold truncate">Por: {{ photo.author }}</span>
+                  <span class="text-[9px] text-cyan-300 font-bold flex items-center gap-0.5 mt-0.5">
+                    <span class="material-symbols-outlined text-[10px]">touch_app</span> Aplicar Fundo
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+
+            <!-- Load More Button -->
+            <div v-if="hasMorePhotos" class="pt-4 text-center">
+              <button
+                @click="loadMorePhotos"
+                :disabled="searchingPhotos"
+                class="px-6 py-2.5 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary font-bold text-xs transition-all inline-flex items-center gap-2"
+              >
+                <span v-if="searchingPhotos" class="material-symbols-outlined text-base animate-spin">progress_activity</span>
+                <span v-else class="material-symbols-outlined text-base">expand_more</span>
+                {{ searchingPhotos ? 'Carregando mais...' : 'Carregar Mais Fotos' }}
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </div>
