@@ -148,6 +148,13 @@ const standaloneR2Url = ref('')
 const copySuccess = ref(false)
 const copyBioSuccess = ref(false)
 
+const currentDomainHost = computed(() => {
+  if (import.meta.client) {
+    return window.location.host
+  }
+  return 'tarif.com.br'
+})
+
 function copyBioLink() {
   const domain = import.meta.client ? window.location.origin : 'https://tarif.com.br'
   const cleanName = profileUsername.value.replace(/^@/, '')
@@ -449,7 +456,7 @@ async function logout() {
           <p class="text-xs text-[#666]">
             Seu link ultracurto para a bio do Insta/TikTok:
             <a :href="`/${profileUsername.replace(/^@/, '')}`" target="_blank" class="text-secondary font-bold hover:underline font-mono ml-1">
-              tarif.com.br/{{ profileUsername.replace(/^@/, '') }}
+              {{ currentDomainHost }}/{{ profileUsername.replace(/^@/, '') }}
             </a>
           </p>
         </div>
