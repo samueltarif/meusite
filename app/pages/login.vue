@@ -2,6 +2,10 @@
 import { ref } from 'vue'
 import { supabase } from '~/composables/useSupabase'
 
+definePageMeta({
+  layout: false
+})
+
 useSeoMeta({
   title: 'Entrar na sua Conta | Avyro Link-in-Bio',
   description: 'Faça login para gerenciar sua página de links e visualizar estatísticas de acessos.',
@@ -50,8 +54,8 @@ async function handleLogin() {
   <div class="min-h-screen bg-[#060318] text-white flex items-center justify-center px-4 py-20 relative overflow-hidden">
     <!-- Cosmic background elements -->
     <div class="absolute inset-0 -z-10 pointer-events-none">
-      <div class="absolute -left-32 top-1/4 w-[500px] h-[500px] rounded-full bg-purple-600/20 blur-[120px]" />
-      <div class="absolute -right-32 top-1/3 w-[500px] h-[500px] rounded-full bg-cyan-600/20 blur-[120px]" />
+      <div class="absolute -left-32 top-1/4 w-[500px] h-[500px] rounded-full bg-purple-600/20 blur-[120px]" style="transform: translate3d(0,0,0); backface-visibility: hidden; -webkit-backface-visibility: hidden;" />
+      <div class="absolute -right-32 top-1/3 w-[500px] h-[500px] rounded-full bg-cyan-600/20 blur-[120px]" style="transform: translate3d(0,0,0); backface-visibility: hidden; -webkit-backface-visibility: hidden;" />
     </div>
 
     <div class="w-full max-w-md bg-[#0d0928]/90 border border-purple-500/30 rounded-3xl p-8 shadow-2xl backdrop-blur-2xl">
