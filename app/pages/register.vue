@@ -32,7 +32,7 @@ async function handleRegister() {
 
   loading.value = true
   errorMessage.value = ''
-  successMessage.value = ''
+  registrationComplete.value = false
 
   try {
     // 1. Check if username exists in profiles
