@@ -52,6 +52,7 @@ async function handleRegister() {
       email: email.value,
       password: password.value,
       options: {
+        emailRedirectTo: `${window.location.origin}/login`,
         data: {
           username: formattedUsername,
         },
