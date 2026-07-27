@@ -188,6 +188,65 @@ const standaloneR2Url = ref('')
 const copySuccess = ref(false)
 const copyBioSuccess = ref(false)
 
+// ─── Photo Search Modal State (Pexels & Unsplash) ───
+const showPhotoModal = ref(false)
+const photoSearchQuery = ref('')
+const photoSource = ref<'pexels' | 'unsplash'>('pexels')
+const photoResults = ref<any[]>([])
+const searchingPhotos = ref(false)
+
+async function fetchPhotos() {
+  const queryTerm = photoSearchQuery.value.trim() || 'aesthetic background'
+  searchingPhotos.value = true
+  photoResults.value = []
+
+  try {
+    if (photoSource.value === 'pexels') {
+      const res = await $fetch<any>('/api/pexels/search', {
+        query: { q: queryTerm, per_page: 16 }
+      })
+      if (res && res.photos) {
+        photoResults.value = res.photos.map((p: any) => ({
+          id: p.id,
+          url: p.src.large2x || p.src.large,
+          thumb: p.src.medium || p.src.small,
+          author: p.photographer,
+        }))
+      }
+    } else {
+      const res = await $fetch<any>('/api/unsplash/search', {
+        query: { q: queryTerm, per_page: 16 }
+      })
+      if (res && res.results) {
+        photoResults.value = res.results.map((p: any) => ({
+          id: p.id,
+          url: p.urls.regular || p.urls.full,
+          thumb: p.urls.small || p.urls.thumb,
+          author: p.photographer,
+        }))
+      }
+    }
+  } catch (err: any) {
+    console.error('Photo search error:', err)
+  } finally {
+    searchingPhotos.value = false
+  }
+}
+
+function openPhotoModal(source: 'pexels' | 'unsplash') {
+  photoSource.value = source
+  showPhotoModal.value = true
+  if (photoResults.value.length === 0) {
+    fetchPhotos()
+  }
+}
+
+function applyPhotoBg(url: string) {
+  customBgImage.value = url
+  updateBgStyle()
+  showPhotoModal.value = false
+}
+
 const currentDomainHost = computed(() => {
   if (import.meta.client) {
     return window.location.host
@@ -669,16 +728,24 @@ async function logout() {
                 <input v-model="customAvatar" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="https://... (ou faça upload acima)">
               </div>
               <div>
-                <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                   <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider">Imagem de Fundo</label>
-                  <label class="cursor-pointer px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1">
-                    <span v-if="uploadingTarget === 'bg'" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
-                    <span v-else class="material-symbols-outlined text-[14px]">cloud_upload</span>
-                    {{ uploadingTarget === 'bg' ? 'Enviando...' : 'Upload R2 (HD)' }}
-                    <input type="file" accept="image/*" @change="e => handleFileUpload(e, 'bg')" class="hidden">
-                  </label>
+                  <div class="flex items-center gap-1.5">
+                    <button @click="openPhotoModal('pexels')" class="px-2 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[13px]">search</span> Pexels
+                    </button>
+                    <button @click="openPhotoModal('unsplash')" class="px-2 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[13px]">image</span> Unsplash
+                    </button>
+                    <label class="cursor-pointer px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
+                      <span v-if="uploadingTarget === 'bg'" class="material-symbols-outlined animate-spin text-[13px]">progress_activity</span>
+                      <span v-else class="material-symbols-outlined text-[13px]">cloud_upload</span>
+                      {{ uploadingTarget === 'bg' ? 'Enviando...' : 'Upload R2' }}
+                      <input type="file" accept="image/*" @change="e => handleFileUpload(e, 'bg')" class="hidden">
+                    </label>
+                  </div>
                 </div>
-                <input v-model="customBgImage" @input="updateBgStyle" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="https://... (ou faça upload acima)">
+                <input v-model="customBgImage" @input="updateBgStyle" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="URL da imagem (ou busque no Pexels/Unsplash acima)">
               </div>
             </div>
 
@@ -706,9 +773,12 @@ async function logout() {
 
               <div>
                 <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider mb-1.5">Estilo da Fonte</label>
-                <div class="grid grid-cols-2 gap-2">
-                  <button @click="customFontClass = 'font-sans'" :class="['py-2 px-3 text-xs border rounded-xl transition-all font-sans', customFontClass === 'font-sans' ? 'border-secondary bg-secondary/5 font-bold' : 'border-[#EEEEEE]']">Inter (Sans)</button>
-                  <button @click="customFontClass = 'font-serif'" :class="['py-2 px-3 text-xs border rounded-xl transition-all font-serif', customFontClass === 'font-serif' ? 'border-secondary bg-secondary/5 font-bold' : 'border-[#EEEEEE]']">Georgia (Serif)</button>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                  <button @click="customFontClass = 'font-sans'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-sans', customFontClass === 'font-sans' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Inter (Sans)</button>
+                  <button @click="customFontClass = 'font-serif'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-serif', customFontClass === 'font-serif' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Playfair (Serif)</button>
+                  <button @click="customFontClass = 'font-outfit'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-outfit', customFontClass === 'font-outfit' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Outfit (Moderna)</button>
+                  <button @click="customFontClass = 'font-space'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-space', customFontClass === 'font-space' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Space (Tech)</button>
+                  <button @click="customFontClass = 'font-handwriting'" :class="['py-1.5 px-2 text-[11px] border rounded-xl transition-all font-handwriting', customFontClass === 'font-handwriting' ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">Pacifico (Arte)</button>
                 </div>
               </div>
 
@@ -914,6 +984,75 @@ async function logout() {
         </div>
       </div>
 
+    </div>
+
+    <!-- Pexels & Unsplash Photo Picker Modal -->
+    <div v-if="showPhotoModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-gray-100 animate-fadeIn">
+        <!-- Modal Header -->
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+              <span class="material-symbols-outlined text-xl">photo_library</span>
+            </div>
+            <div>
+              <h3 class="font-heading font-extrabold text-base text-gray-900">
+                Buscar Fundo no {{ photoSource === 'pexels' ? 'Pexels' : 'Unsplash' }}
+              </h3>
+              <p class="text-xs text-gray-500">Milhões de fotos em HD para uso livre</p>
+            </div>
+          </div>
+          <button @click="showPhotoModal = false" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors">
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        <!-- Search Bar & Provider Switch -->
+        <div class="p-4 bg-gray-50 border-b border-gray-100 space-y-3">
+          <div class="flex items-center gap-2">
+            <button @click="photoSource = 'pexels'; fetchPhotos()" :class="['px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'pexels' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
+              <span class="material-symbols-outlined text-[14px]">search</span> Pexels
+            </button>
+            <button @click="photoSource = 'unsplash'; fetchPhotos()" :class="['px-3.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'unsplash' ? 'bg-cyan-600 text-white border-cyan-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
+              <span class="material-symbols-outlined text-[14px]">image</span> Unsplash
+            </button>
+          </div>
+          <form @submit.prevent="fetchPhotos" class="flex gap-2">
+            <input v-model="photoSearchQuery" type="text" placeholder="Ex: praia, neon, estúdio, natureza, mármore, minimalista..." class="flex-1 px-4 py-2.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-secondary bg-white shadow-xs">
+            <button type="submit" class="px-5 py-2.5 bg-secondary text-white font-bold text-xs rounded-xl hover:bg-secondary/90 transition-colors flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-base">search</span> Buscar
+            </button>
+          </form>
+        </div>
+
+        <!-- Photos Grid -->
+        <div class="p-5 overflow-y-auto flex-1 hide-scrollbar">
+          <div v-if="searchingPhotos" class="py-16 text-center space-y-3">
+            <span class="material-symbols-outlined text-3xl text-secondary animate-spin">progress_activity</span>
+            <p class="text-xs text-gray-500 font-mono">Buscando fotos incríveis...</p>
+          </div>
+          <div v-else-if="photoResults.length === 0" class="py-16 text-center space-y-2">
+            <span class="material-symbols-outlined text-4xl text-gray-300">image_search</span>
+            <p class="text-xs text-gray-500">Nenhuma foto encontrada. Tente pesquisar por termo em inglês ou português (ex: "minimalist", "nature").</p>
+          </div>
+          <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div
+              v-for="photo in photoResults"
+              :key="photo.id"
+              @click="applyPhotoBg(photo.url)"
+              class="group relative h-36 rounded-2xl overflow-hidden cursor-pointer border border-gray-200 shadow-xs hover:shadow-md hover:scale-[1.03] transition-all"
+            >
+              <img :src="photo.thumb" :alt="photo.author" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
+                <span class="text-[10px] text-white font-bold truncate">Por: {{ photo.author }}</span>
+                <span class="text-[9px] text-cyan-300 font-bold flex items-center gap-0.5 mt-0.5">
+                  <span class="material-symbols-outlined text-[10px]">touch_app</span> Aplicar Fundo
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

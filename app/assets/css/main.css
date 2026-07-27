@@ -55,6 +55,18 @@ body {
   .action-gradient-bg {
     background: linear-gradient(90deg, #2393E6 0%, #4EBEF6 100%);
   }
+
+  .font-outfit {
+    font-family: 'Outfit', sans-serif !important;
+  }
+
+  .font-space {
+    font-family: 'Space Grotesk', sans-serif !important;
+  }
+
+  .font-handwriting {
+    font-family: 'Pacifico', cursive !important;
+  }
 }
 
 /* ===== Animações & Estilos Globais ===== */
