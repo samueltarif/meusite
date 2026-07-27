@@ -7,7 +7,7 @@ const stats = [
 ]
 
 const testimonial = {
-  quote: 'A equipe da Tarif Grownt Company transformou nossa presença digital. Nosso novo site não apenas ficou incrível esteticamente, mas também dobrou nosso volume de orçamentos no primeiro mês. Profissionalismo e técnica impecáveis.',
+  quote: 'A equipe da Avyro Growth Company transformou nossa presença digital. Nosso novo site não apenas ficou incrível esteticamente, mas também dobrou nosso volume de orçamentos no primeiro mês. Profissionalismo e técnica impecáveis.',
   avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBlvZo4rj8Ll87fuJMncndNjAlK5nhiUzc_oW-sAKHDevFUqR7M4jNXfOLxg7dpJJMwoK9GO6Dd_Xpg7KDpmGsECmiDJWKnMu71cFO6kxzectLPBlvjalrhydAsG_0aZ4lMqpeBGgWxL_AgV8qxvK-75Hsh14QEPm4neG6ki8I0EDdRnDlz_PB-76s6I_kQzFTLcbinh3Yzw1qA8PZdgOWQoLeIdvhMKb_-B11eAboBaa2TX3QIf7Zc0xSkK5Aoo3MeZXXGWV5XVGM',
   avatarAlt: 'Foto de Carlos Eduardo, CEO da TechSolutions',
   name: 'Carlos Eduardo',

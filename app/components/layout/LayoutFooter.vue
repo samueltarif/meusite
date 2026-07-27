@@ -23,7 +23,7 @@ const currentYear = new Date().getFullYear()
     <div class="max-w-container-max mx-auto flex flex-col items-center text-center px-margin-mobile lg:px-gutter pt-16 pb-6 gap-4">
       <!-- Logo -->
       <span class="font-heading text-headline-sm text-on-primary mb-4">
-        Tarif Grownt Company
+        Avyro Growth Company
       </span>
 
       <!-- Contact Links -->
@@ -43,7 +43,7 @@ const currentYear = new Date().getFullYear()
 
       <!-- Divider + Copyright -->
       <p class="font-body text-body-md text-on-primary/60 text-sm pt-8 border-t border-on-primary/10 w-full">
-        © {{ currentYear }} Tarif Grownt Company. CNPJ 66.818.617/0001-27
+        © {{ currentYear }} Avyro Growth Company. CNPJ 66.818.617/0001-27
       </p>
     </div>
   </footer>

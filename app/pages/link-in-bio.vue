@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 
 useSeoMeta({
-  title: 'Templates LinkChameleon - Link in Bio | Tarif Grownt',
+  title: 'Templates LinkChameleon - Link in Bio | Avyro Growth',
   description: 'Escolha seu tema de link na bio e adicione suas plataformas com ícones oficiais. Playground interativo premium para customizar sua presença digital.',
 })
 

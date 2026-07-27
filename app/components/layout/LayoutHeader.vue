@@ -20,14 +20,14 @@ function closeMenu() {
   <header class="fixed top-3 sm:top-5 left-0 w-full z-50 px-3 sm:px-8 pointer-events-none">
     <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0d0928]/70 backdrop-blur-2xl border border-purple-500/20 rounded-[20px] shadow-[0_10px_35px_rgba(0,0,0,0.6)] px-5 sm:px-6 py-3 flex justify-between items-center transition-all duration-300">
       
-      <!-- Logo: T Tarif matching Stitch screenshot -->
+      <!-- Logo: A Avyro matching Stitch screenshot -->
       <NuxtLink to="/" class="flex items-center gap-2.5 group">
         <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.8)] p-[1.5px]">
           <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
-            <span class="font-heading font-black text-[#00f0ff] text-sm tracking-tighter">T</span>
+            <span class="font-heading font-black text-[#00f0ff] text-sm tracking-tighter">A</span>
           </div>
         </div>
-        <span class="font-heading text-xl font-extrabold text-white tracking-tight">Tarif</span>
+        <span class="font-heading text-xl font-extrabold text-white tracking-tight">Avyro</span>
       </NuxtLink>
 
       <!-- Desktop Nav matching Stitch exact colors -->

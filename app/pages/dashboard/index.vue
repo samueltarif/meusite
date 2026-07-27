@@ -4,8 +4,8 @@ import { supabase } from '~/composables/useSupabase'
 import { brandIcons } from '~/utils/brandIcons'
 
 useSeoMeta({
-  title: 'Painel do Cliente | Tarif Link-in-Bio SaaS',
-  description: 'Gerencie seus links, personalize seu tema e acompanhe estatísticas de cliques.',
+  title: 'Painel do Cliente | Avyro Link-in-Bio SaaS',
+  description: 'Gerencie seus links, personalize seu tema e acompanhe métricas de cliques.',
 })
 
 export interface LinkItem {

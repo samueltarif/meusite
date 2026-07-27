@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 
 useSeoMeta({
-  title: 'Modelos de Sites Profissionais Prontos | Tarif Growth Company',
+  title: 'Modelos de Sites Profissionais Prontos | Avyro Growth Company',
   description: 'Explore nossos modelos de sites profissionais prontos e otimizados para alta conversão em diversos nichos de mercado.',
 })
 
