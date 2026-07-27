@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
       mode: 'subscription',
       customer_email: userEmail,
       client_reference_id: userId,
+      allow_promotion_codes: true,
       subscription_data: {
         trial_period_days: 30, // 30 Dias Grátis (1º mês grátis)
       },

@@ -466,6 +466,46 @@ const newVideoThumbUrl = ref('')
 const uploadingVideo = ref(false)
 const uploadingThumb = ref(false)
 
+// ─── Coupon Redemption State ───
+const showCouponModal = ref(false)
+const couponInput = ref('')
+const redeemingCoupon = ref(false)
+const couponSuccessMsg = ref('')
+const couponErrorMsg = ref('')
+
+async function redeemCoupon() {
+  if (!couponInput.value.trim() || !currentUser.value) return
+  redeemingCoupon.value = true
+  couponErrorMsg.value = ''
+  couponSuccessMsg.value = ''
+  
+  try {
+    const res = await $fetch<{ success: boolean; message: string }>('/api/coupons/redeem', {
+      method: 'POST',
+      body: {
+        userId: currentUser.value.id,
+        couponCode: couponInput.value.trim()
+      }
+    })
+    
+    if (res.success) {
+      couponSuccessMsg.value = res.message
+      subscriptionStatus.value = 'active'
+      activatedSuccess.value = true
+      setTimeout(() => {
+        showCouponModal.value = false
+        couponInput.value = ''
+        couponSuccessMsg.value = ''
+      }, 3000)
+    }
+  } catch (err: any) {
+    couponErrorMsg.value = err.data?.statusMessage || err.message || 'Erro ao resgatar o cupom.'
+  } finally {
+    redeemingCoupon.value = false
+  }
+}
+
+
 // ─── Lifecycle ───
 onMounted(async () => {
   const { data: { session } } = await supabase.auth.getSession()
@@ -858,6 +898,10 @@ async function logout() {
           </p>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
+          <button @click="showCouponModal = true" class="px-4 py-2.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 border border-amber-500/30 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 shadow-2xs">
+            <span class="material-symbols-outlined text-[16px]">confirmation_number</span>
+            Resgatar Cupom
+          </button>
           <button @click="copyBioLink" class="px-5 py-2.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md hover:scale-105 transition-all flex items-center gap-2">
             <span class="material-symbols-outlined text-[16px]">{{ copyBioSuccess ? 'check' : 'content_copy' }}</span>
             {{ copyBioSuccess ? 'Link Copiado!' : 'Copiar Link da Bio' }}
@@ -1697,6 +1741,59 @@ async function logout() {
             </div>
           </template>
         </div>
+      </div>
+    </div>
+
+    <!-- Coupon Modal -->
+    <div v-if="showCouponModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 relative space-y-6">
+        
+        <button @click="showCouponModal = false" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center transition-colors">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+
+        <div class="text-center space-y-2">
+          <div class="w-14 h-14 bg-gradient-to-tr from-amber-500 to-yellow-400 text-white rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-amber-500/20">
+            <span class="material-symbols-outlined text-3xl">confirmation_number</span>
+          </div>
+          <h3 class="font-heading font-extrabold text-2xl text-gray-900">Resgatar Cupom Pro</h3>
+          <p class="text-xs text-gray-500 max-w-xs mx-auto">
+            Digite seu código promocional abaixo para ativar seu plano sem precisar de cartão de crédito.
+          </p>
+        </div>
+
+        <div v-if="couponSuccessMsg" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs flex items-center gap-3">
+          <span class="material-symbols-outlined text-xl text-emerald-600">verified</span>
+          <span>{{ couponSuccessMsg }}</span>
+        </div>
+
+        <div v-if="couponErrorMsg" class="p-4 rounded-2xl bg-red-50 border border-red-300 text-red-700 text-xs flex items-center gap-3">
+          <span class="material-symbols-outlined text-xl text-red-500">error</span>
+          <span>{{ couponErrorMsg }}</span>
+        </div>
+
+        <form @submit.prevent="redeemCoupon" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Código do Cupom</label>
+            <input
+              v-model="couponInput"
+              type="text"
+              placeholder="Ex: VIP1ANO, 1ANOGRATIS..."
+              class="w-full px-4 py-3 text-sm font-mono tracking-widest font-bold uppercase border border-gray-300 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all bg-gray-50/50"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            :disabled="redeemingCoupon || !couponInput.trim()"
+            class="w-full py-3.5 px-6 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <span v-if="redeemingCoupon" class="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+            <span v-else class="material-symbols-outlined text-lg">check_circle</span>
+            {{ redeemingCoupon ? 'Validando Cupom...' : 'Ativar Plano Pro Grátis' }}
+          </button>
+        </form>
       </div>
     </div>
   </div>
