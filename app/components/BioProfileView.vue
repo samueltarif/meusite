@@ -123,23 +123,43 @@ onMounted(() => {
   }
 })
 
-async function handleClick(link: LinkItem) {
-  try {
-    const platform = detectClickPlatform()
-    await $fetch('/api/analytics/track-click', {
-      method: 'POST',
-      body: {
-        linkId: link.id,
-        profileId: profile.value?.id || null,
-        platform,
-        referrer: import.meta.client ? document.referrer : ''
-      }
-    })
-  } catch (err) {
-    try {
-      await supabase.rpc('increment_link_click', { link_id: link.id })
-    } catch (e) {}
+function trackClickAnalytics(link: LinkItem) {
+  if (import.meta.server) return
+  const platform = detectClickPlatform()
+  const payload = {
+    linkId: link.id,
+    profileId: profile.value?.id || null,
+    platform,
+    referrer: document.referrer || ''
   }
+
+  try {
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/analytics/track-click', blob)
+    } else {
+      fetch('/api/analytics/track-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true
+      }).catch(() => {})
+    }
+  } catch (e) {
+    $fetch('/api/analytics/track-click', {
+      method: 'POST',
+      body: payload
+    }).catch(() => {})
+  }
+
+  // Backup direct RPC call for main clicks count
+  try {
+    supabase.rpc('increment_link_click', { link_id: link.id }).catch(() => {})
+  } catch (err) {}
+}
+
+async function handleClick(link: LinkItem) {
+  trackClickAnalytics(link)
 }
 
 // ─── Custom Font & Custom Button Decoding ───

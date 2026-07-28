@@ -1,8 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { linkId, profileId, platform, referrer } = body
+  let body: any = {}
+  try {
+    body = await readBody(event)
+    if (typeof body === 'string') {
+      body = JSON.parse(body)
+    }
+  } catch (e) {
+    try {
+      const raw = await readRawBody(event, 'utf-8')
+      if (raw) body = JSON.parse(raw)
+    } catch (err2) {}
+  }
+
+  const { linkId, profileId, platform, referrer } = body || {}
 
   if (!linkId) {
     throw createError({ statusCode: 400, statusMessage: 'ID do link é obrigatório.' })
@@ -40,7 +52,7 @@ export default defineEventHandler(async (event) => {
     } catch (err2) {}
   }
 
-  // 2. Registrar o clique no banco de dados com a plataforma de origem (Instagram, TikTok, WhatsApp, etc.)
+  // 2. Registrar o clique na tabela link_clicks com a plataforma de origem (Instagram, TikTok, WhatsApp, etc.)
   try {
     const { error: insErr } = await supabaseAdmin.from('link_clicks').insert({
       link_id: linkId,

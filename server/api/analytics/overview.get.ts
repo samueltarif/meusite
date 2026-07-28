@@ -44,35 +44,38 @@ export default defineEventHandler(async (event) => {
     .order('position', { ascending: true })
 
   const totalClicks = (links || []).reduce((sum: number, l: any) => sum + (l.clicks_count || 0), 0)
-  const linkIds = (links || []).map((l: any) => l.id)
+  const linkIds = (links || []).map((l: any) => l.id).filter(Boolean)
 
   // 3. Get detailed click analytics from link_clicks table
   let clicksByPlatform: Record<string, number> = {}
   let clicksByDay: { date: string; clicks: number }[] = []
   let clicksByLink: { linkId: string; title: string; icon: string; clicks: number }[] = []
   let topReferrers: { referrer: string; clicks: number }[] = []
-  let hasAnalyticsTable = false
+  let clicksData: any[] = []
 
   try {
-    let clicksQuery = supabaseAdmin
-      .from('link_clicks')
-      .select('*')
+    let queryByProfile = supabaseAdmin.from('link_clicks').select('*').eq('profile_id', userId)
+    if (startDate) queryByProfile = queryByProfile.gte('created_at', startDate)
+    
+    const { data: pData } = await queryByProfile
+    if (pData) clicksData = [...pData]
 
     if (linkIds.length > 0) {
-      clicksQuery = clicksQuery.or(`profile_id.eq.${userId},link_id.in.(${linkIds.join(',')})`)
-    } else {
-      clicksQuery = clicksQuery.eq('profile_id', userId)
+      let queryByLinks = supabaseAdmin.from('link_clicks').select('*').in('link_id', linkIds)
+      if (startDate) queryByLinks = queryByLinks.gte('created_at', startDate)
+
+      const { data: lData } = await queryByLinks
+      if (lData && lData.length > 0) {
+        const existingIds = new Set(clicksData.map(c => c.id))
+        lData.forEach(c => {
+          if (!existingIds.has(c.id)) {
+            clicksData.push(c)
+          }
+        })
+      }
     }
 
-    if (startDate) {
-      clicksQuery = clicksQuery.gte('created_at', startDate)
-    }
-
-    const { data: clicksData, error: clicksError } = await clicksQuery.order('created_at', { ascending: false })
-
-    if (!clicksError && clicksData) {
-      hasAnalyticsTable = true
-
+    if (clicksData.length > 0) {
       // Group by platform
       const platformMap: Record<string, number> = {}
       clicksData.forEach((c: any) => {
@@ -122,7 +125,7 @@ export default defineEventHandler(async (event) => {
         .slice(0, 10)
     }
   } catch (err: any) {
-    console.error('Error fetching analytics overview:', err)
+    console.error('Error fetching link_clicks overview:', err)
   }
 
   // Fallback to links data if clicksByLink is empty
@@ -147,7 +150,7 @@ export default defineEventHandler(async (event) => {
     clicksByDay,
     clicksByLink,
     topReferrers,
-    hasAnalyticsTable,
+    hasAnalyticsTable: true,
     range
   }
 })
