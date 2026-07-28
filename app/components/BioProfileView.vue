@@ -73,11 +73,40 @@ if (profile.value) {
   })
 }
 
+function detectClickPlatform(): string {
+  if (import.meta.server) return 'Direto'
+  const referrer = (document.referrer || '').toLowerCase()
+  const searchParams = new URLSearchParams(window.location.search)
+  const utmSource = (searchParams.get('utm_source') || searchParams.get('ref') || searchParams.get('source') || '').toLowerCase()
+
+  if (utmSource.includes('instagram') || referrer.includes('instagram.com')) return 'Instagram'
+  if (utmSource.includes('tiktok') || referrer.includes('tiktok.com')) return 'TikTok'
+  if (utmSource.includes('whatsapp') || referrer.includes('whatsapp.com') || referrer.includes('wa.me')) return 'WhatsApp'
+  if (utmSource.includes('youtube') || referrer.includes('youtube.com') || referrer.includes('youtu.be')) return 'YouTube'
+  if (utmSource.includes('twitter') || utmSource.includes('x') || referrer.includes('t.co') || referrer.includes('twitter.com') || referrer.includes('x.com')) return 'X (Twitter)'
+  if (utmSource.includes('facebook') || referrer.includes('facebook.com') || referrer.includes('fb.com')) return 'Facebook'
+  if (utmSource.includes('pinterest') || referrer.includes('pinterest.com')) return 'Pinterest'
+  if (referrer.includes('google.com')) return 'Google'
+  if (referrer) return 'Outro Site'
+  return 'Direto'
+}
+
 async function handleClick(link: LinkItem) {
   try {
-    await supabase.rpc('increment_link_click', { link_id: link.id })
+    const platform = detectClickPlatform()
+    await $fetch('/api/analytics/track-click', {
+      method: 'POST',
+      body: {
+        linkId: link.id,
+        profileId: profile.value?.id || null,
+        platform,
+        referrer: import.meta.client ? document.referrer : ''
+      }
+    })
   } catch (err) {
-    console.error('Click track error:', err)
+    try {
+      await supabase.rpc('increment_link_click', { link_id: link.id })
+    } catch (e) {}
   }
 }
 
