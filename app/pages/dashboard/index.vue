@@ -1531,8 +1531,8 @@ async function logout() {
 
             <!-- List of links -->
             <div class="space-y-3.5 mb-6">
-              <div v-for="(link, idx) in links" :key="link.id" class="flex items-center justify-between p-3.5 bg-[#FAFAFA] rounded-2xl border border-[#EEEEEE] group hover:border-secondary/30 transition-all">
-                <div class="flex items-center gap-3 min-w-0 flex-1 pr-3">
+              <div v-for="(link, idx) in links" :key="link.id" class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-[#FAFAFA] rounded-2xl border border-[#EEEEEE] group hover:border-secondary/30 transition-all gap-3">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
                   <!-- Position Controls -->
                   <div class="flex flex-col gap-0.5 shrink-0">
                     <button
@@ -1569,19 +1569,26 @@ async function logout() {
                   <div v-else class="w-8 h-8 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
                     <span class="material-symbols-outlined text-[18px]">link</span>
                   </div>
+
                   <div class="min-w-0 flex-1">
                     <p class="text-sm font-semibold text-[#111111] truncate">{{ link.title }}</p>
                     <p class="text-xs text-[#888888] truncate font-mono">{{ link.url }}</p>
                   </div>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <span class="text-[10px] font-mono text-secondary bg-secondary/10 px-2 py-0.5 rounded-full">{{ link.clicks_count || 0 }} cliques</span>
-                  <button @click="openEditLinkModal(link)" title="Editar link e imagem" class="text-secondary hover:bg-secondary/10 p-2 rounded-full transition-colors">
-                    <span class="material-symbols-outlined text-[18px]">edit</span>
-                  </button>
-                  <button @click="removeLink(link.id)" title="Excluir link" class="text-red-400 hover:bg-red-50 p-2 rounded-full transition-colors">
-                    <span class="material-symbols-outlined text-[18px]">delete</span>
-                  </button>
+
+                <!-- Right / Bottom Action Controls -->
+                <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200/60 w-full sm:w-auto">
+                  <span class="text-[11px] font-mono text-secondary bg-secondary/10 px-2.5 py-1 rounded-full font-bold">{{ link.clicks_count || 0 }} cliques</span>
+                  <div class="flex items-center gap-1">
+                    <button @click="openEditLinkModal(link)" title="Editar link e imagem" class="text-secondary hover:bg-secondary/10 p-2 rounded-full transition-colors flex items-center gap-1 text-xs font-bold">
+                      <span class="material-symbols-outlined text-[18px]">edit</span>
+                      <span class="sm:hidden">Editar</span>
+                    </button>
+                    <button @click="removeLink(link.id)" title="Excluir link" class="text-red-400 hover:bg-red-50 p-2 rounded-full transition-colors flex items-center gap-1 text-xs font-bold">
+                      <span class="material-symbols-outlined text-[18px]">delete</span>
+                      <span class="sm:hidden">Excluir</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
