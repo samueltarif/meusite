@@ -343,6 +343,7 @@ const customFontClass = ref('font-serif')
 const customUsername = ref('')
 const customBio = ref('')
 const customAvatar = ref('')
+const isAnimatedAvatar = ref(false)
 const selectedSocials = ref<string[]>(['tiktok', 'youtube', 'instagram'])
 const links = ref<LinkItem[]>([])
 
@@ -665,7 +666,13 @@ async function loadUserData(userId: string) {
     profileUsername.value = p.username || ''
     customUsername.value = p.display_name || p.username || ''
     customBio.value = p.bio_description || ''
-    customAvatar.value = p.avatar_url || ''
+    if (p.avatar_url && p.avatar_url.startsWith('animated:')) {
+      isAnimatedAvatar.value = true
+      customAvatar.value = p.avatar_url.replace('animated:', '')
+    } else {
+      isAnimatedAvatar.value = false
+      customAvatar.value = p.avatar_url || ''
+    }
     subscriptionStatus.value = p.subscription_status || 'free'
     activeThemeId.value = p.theme_id || 'monica-vera'
     customBgColor.value = p.bg_color || '#4b3e34'
@@ -981,10 +988,17 @@ async function saveProfile() {
     ? `custom:${JSON.stringify(customBtnConfig.value)}`
     : customRoundness.value
 
+  let finalAvatarUrl = customAvatar.value
+  if (isAnimatedAvatar.value && finalAvatarUrl) {
+    if (!finalAvatarUrl.startsWith('animated:')) {
+      finalAvatarUrl = 'animated:' + finalAvatarUrl
+    }
+  }
+
   await supabase.from('profiles').update({
     display_name: customUsername.value,
     bio_description: customBio.value,
-    avatar_url: customAvatar.value,
+    avatar_url: finalAvatarUrl,
     theme_id: activeThemeId.value,
     bg_color: customBgColor.value,
     bg_image_url: customBgImage.value,
@@ -1278,6 +1292,18 @@ async function logout() {
                   </label>
                 </div>
                 <input v-model="customAvatar" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="https://... (ou clique em 'Carregar Foto' acima)">
+                
+                <!-- Toggle animated avatar mode -->
+                <div class="mt-2.5 flex items-center justify-between flex-wrap gap-2">
+                  <label class="flex items-center gap-1.5 cursor-pointer relative">
+                    <input type="checkbox" v-model="isAnimatedAvatar" class="sr-only peer">
+                    <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary relative"></div>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">✨ Modo Adesivo/Avatar Animado (Sem contorno/fundo)</span>
+                  </label>
+                  <button @click="openPhotoModal('giphy_stickers')" class="px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 text-[9px] font-bold rounded-md transition-all flex items-center gap-1 shrink-0" title="Buscar adesivos animados">
+                    <span class="material-symbols-outlined text-[11px]">auto_awesome</span> Buscar Sticker
+                  </button>
+                </div>
               </div>
               <div>
                 <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
@@ -1826,7 +1852,10 @@ async function logout() {
               :style="[customBgStyle, customFontClass.startsWith('custom:') ? { fontFamily: customFontClass.slice(7) } : {}]">
               <div class="relative z-10 flex flex-col items-center h-full">
                 <!-- Avatar -->
-                <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-black/10 shadow-sm bg-slate-200 mb-4 flex items-center justify-center shrink-0">
+                <div v-if="isAnimatedAvatar" class="w-20 h-20 mb-4 flex items-center justify-center shrink-0">
+                  <img :src="customAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'" alt="Avatar" class="w-full h-full object-contain">
+                </div>
+                <div v-else class="w-20 h-20 rounded-full overflow-hidden border-2 border-black/10 shadow-sm bg-slate-200 mb-4 flex items-center justify-center shrink-0">
                   <img :src="customAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'" alt="Avatar" class="w-full h-full object-cover">
                 </div>
 

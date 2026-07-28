@@ -331,7 +331,14 @@ const pageCssStyle = computed(() => {
     <div v-else class="w-full max-w-md mx-auto flex flex-col items-center text-center my-auto pt-4 pb-8">
 
       <!-- Avatar Photo -->
-      <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-black/10 shadow-lg bg-slate-200 mb-4 flex items-center justify-center shrink-0">
+      <div v-if="profile?.avatar_url?.startsWith('animated:')" class="w-24 h-24 sm:w-28 sm:h-28 mb-4 flex items-center justify-center shrink-0">
+        <img
+          :src="profile.avatar_url.replace('animated:', '')"
+          :alt="profile?.display_name"
+          class="w-full h-full object-contain"
+        />
+      </div>
+      <div v-else class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-black/10 shadow-lg bg-slate-200 mb-4 flex items-center justify-center shrink-0">
         <img
           :src="profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'"
           :alt="profile?.display_name"
