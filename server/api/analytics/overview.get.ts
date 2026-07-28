@@ -79,7 +79,19 @@ export default defineEventHandler(async (event) => {
       // Group by platform
       const platformMap: Record<string, number> = {}
       clicksData.forEach((c: any) => {
-        const p = c.platform || 'Direto'
+        let p = c.platform || 'Direto'
+        const ref = (c.referrer || '').toLowerCase()
+        if (p === 'Outro Site' || p === 'Direto') {
+          if (ref.includes('wl.co') || ref.includes('whatsapp') || ref.includes('wa.me') || ref.includes('com.whatsapp')) {
+            p = 'WhatsApp'
+          } else if (ref.includes('threads') || ref.includes('barcelona')) {
+            p = 'Threads'
+          } else if (ref.includes('instagram') || ref.includes('com.instagram')) {
+            p = 'Instagram'
+          } else if (ref.includes('tiktok') || ref.includes('musically') || ref.includes('zhiliaoapp')) {
+            p = 'TikTok'
+          }
+        }
         platformMap[p] = (platformMap[p] || 0) + 1
       })
       clicksByPlatform = platformMap

@@ -83,32 +83,45 @@ function detectClickPlatform(): string {
   const userAgent = (navigator.userAgent || '').toLowerCase()
   const searchStr = (window.location.search || '').toLowerCase()
 
-  // 1. WhatsApp (Detects android-app://com.whatsapp, android-app://com.whatsapp.w4b, wa.me, web.whatsapp, and in-app User-Agent)
+  // 1. WhatsApp (Detects l.wl.co, wl.co, android-app://com.whatsapp, wa.me, web.whatsapp, and in-app User-Agent)
   if (
     searchStr.includes('whatsapp') ||
     searchStr.includes('wa.me') ||
     referrer.includes('whatsapp') ||
     referrer.includes('wa.me') ||
+    referrer.includes('wl.co') ||
     referrer.includes('com.whatsapp') ||
     userAgent.includes('whatsapp')
   ) {
     return 'WhatsApp'
   }
 
-  // 2. TikTok (Detects android-app://com.zhiliaoapp.musically, ttclid, tiktok.com, and User-Agent)
+  // 2. Threads (Detects l.threads.com, threads.net, threads.com, com.instagram.barcelona, and User-Agent)
+  if (
+    searchStr.includes('threads') ||
+    referrer.includes('threads') ||
+    referrer.includes('barcelona') ||
+    userAgent.includes('threads') ||
+    userAgent.includes('barcelona')
+  ) {
+    return 'Threads'
+  }
+
+  // 3. TikTok (Detects android-app://com.zhiliaoapp.musically, ttclid, tiktok.com, and User-Agent)
   if (
     searchStr.includes('ttclid=') ||
     searchStr.includes('tiktok') ||
     referrer.includes('tiktok') ||
     referrer.includes('musically') ||
     referrer.includes('zhiliaoapp') ||
+    referrer.includes('trill') ||
     userAgent.includes('tiktok') ||
     userAgent.includes('musical_ly')
   ) {
     return 'TikTok'
   }
 
-  // 3. Instagram (Detects android-app://com.instagram.android, instagram.com, l.instagram.com, and User-Agent)
+  // 4. Instagram (Detects android-app://com.instagram.android, instagram.com, l.instagram.com, and User-Agent)
   if (
     searchStr.includes('utm_source=instagram') ||
     searchStr.includes('utm_source=insta') ||
@@ -120,14 +133,15 @@ function detectClickPlatform(): string {
     return 'Instagram'
   }
 
-  // Meta's fbclid parameter is automatically added to bio links clicked on Instagram/Facebook
+  // Meta's fbclid parameter is automatically added to bio links clicked on Instagram/Facebook/Threads
   if (searchStr.includes('fbclid=')) {
+    if (referrer.includes('threads')) return 'Threads'
     if (referrer.includes('instagram') || userAgent.includes('instagram')) return 'Instagram'
     if (referrer.includes('facebook') || userAgent.includes('facebook')) return 'Facebook'
     return 'Instagram'
   }
 
-  // 4. Other Networks
+  // 5. Other Networks
   if (searchStr.includes('youtube') || referrer.includes('youtube.com') || referrer.includes('youtu.be')) return 'YouTube'
   if (searchStr.includes('twitter') || searchStr.includes('x.com') || referrer.includes('t.co') || referrer.includes('twitter.com') || referrer.includes('x.com') || referrer.includes('com.twitter')) return 'X (Twitter)'
   if (referrer.includes('facebook') || referrer.includes('fb.com') || referrer.includes('com.facebook')) return 'Facebook'
