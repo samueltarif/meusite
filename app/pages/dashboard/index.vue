@@ -194,7 +194,7 @@ const mobileViewMode = ref<'editor' | 'preview'>('editor')
 // ─── Photo & GIF Search Modal State (Pexels, Unsplash & Giphy) ───
 const showPhotoModal = ref(false)
 const photoSearchQuery = ref('')
-const photoSource = ref<'pexels' | 'unsplash' | 'giphy'>('pexels')
+const photoSource = ref<'pexels' | 'unsplash' | 'giphy' | 'giphy_stickers'>('pexels')
 const photoResults = ref<any[]>([])
 const searchingPhotos = ref(false)
 const photoPage = ref(1)
@@ -240,10 +240,11 @@ async function fetchPhotos(isNewSearch = true) {
         if (newItems.length < 28) hasMorePhotos.value = false
         photoResults.value = isNewSearch ? newItems : [...photoResults.value, ...newItems]
       }
-    } else if (photoSource.value === 'giphy') {
+    } else if (photoSource.value === 'giphy' || photoSource.value === 'giphy_stickers') {
       try {
+        const isStickers = photoSource.value === 'giphy_stickers'
         const res = await $fetch<any>('/api/giphy/search', {
-          query: { q: queryTerm, per_page: 28, page: photoPage.value }
+          query: { q: queryTerm, per_page: 28, page: photoPage.value, type: isStickers ? 'stickers' : 'gifs' }
         })
         if (res && res.gifs) {
           const newItems = res.gifs.map((g: any) => ({
@@ -300,12 +301,10 @@ function selectCategory(q: string) {
   fetchPhotos(true)
 }
 
-function openPhotoModal(source: 'pexels' | 'unsplash' | 'giphy') {
+function openPhotoModal(source: 'pexels' | 'unsplash' | 'giphy' | 'giphy_stickers') {
   photoSource.value = source
   showPhotoModal.value = true
-  if (photoResults.value.length === 0) {
-    fetchPhotos(true)
-  }
+  fetchPhotos(true)
 }
 
 function applyPhotoBg(url: string) {
@@ -1293,6 +1292,9 @@ async function logout() {
                     <button @click="openPhotoModal('giphy')" class="px-2.5 py-1 bg-pink-500/10 hover:bg-pink-500/20 text-pink-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Buscar GIFs no Giphy">
                       <span class="material-symbols-outlined text-[13px]">gif</span> GIFs Animados
                     </button>
+                    <button @click="openPhotoModal('giphy_stickers')" class="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Buscar Animações no Giphy">
+                      <span class="material-symbols-outlined text-[13px]">auto_awesome</span> ✨ Animações
+                    </button>
                     <label class="cursor-pointer px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Enviar foto do seu dispositivo">
                       <span v-if="uploadingTarget === 'bg'" class="material-symbols-outlined animate-spin text-[13px]">progress_activity</span>
                       <span v-else class="material-symbols-outlined text-[13px]">upload_file</span>
@@ -1945,6 +1947,9 @@ async function logout() {
               </button>
               <button @click="photoSource = 'giphy'; fetchPhotos(true)" :class="['px-3 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'giphy' ? 'bg-pink-600 text-white border-pink-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
                 <span class="material-symbols-outlined text-[14px]">gif</span> Giphy (GIFs)
+              </button>
+              <button @click="photoSource = 'giphy_stickers'; fetchPhotos(true)" :class="['px-3 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5', photoSource === 'giphy_stickers' ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300']">
+                <span class="material-symbols-outlined text-[14px]">auto_awesome</span> ✨ Animações
               </button>
             </div>
             <span class="text-[11px] text-gray-500 font-mono">{{ photoResults.length }} fotos exibidas</span>

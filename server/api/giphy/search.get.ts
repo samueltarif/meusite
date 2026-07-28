@@ -4,6 +4,7 @@ export default defineEventHandler(async (event) => {
     const q = (query.q as string) || 'aesthetic background'
     const page = parseInt((query.page as string) || '1', 10)
     const perPage = parseInt((query.per_page as string) || '28', 10)
+    const type = (query.type as string) || 'gifs'
     const offset = (page - 1) * perPage
 
     const config = useRuntimeConfig()
@@ -16,7 +17,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const data = await $fetch<any>(`https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(q)}&limit=${perPage}&offset=${offset}&rating=g`)
+    const apiPath = type === 'stickers' ? 'stickers/search' : 'gifs/search'
+    const data = await $fetch<any>(`https://api.giphy.com/v1/${apiPath}?api_key=${apiKey}&q=${encodeURIComponent(q)}&limit=${perPage}&offset=${offset}&rating=g`)
 
     return {
       success: true,
