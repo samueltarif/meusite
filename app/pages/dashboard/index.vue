@@ -189,6 +189,7 @@ const uploadingTarget = ref<'avatar' | 'bg' | 'standalone' | null>(null)
 const standaloneR2Url = ref('')
 const copySuccess = ref(false)
 const copyBioSuccess = ref(false)
+const mobileViewMode = ref<'editor' | 'preview'>('editor')
 
 // ─── Photo & GIF Search Modal State (Pexels, Unsplash & Giphy) ───
 const showPhotoModal = ref(false)
@@ -1048,46 +1049,54 @@ async function logout() {
         </div>
       </div>
 
-      <!-- Top Status Bar -->
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-        <div>
-          <div class="flex items-center gap-3 mb-1">
-            <span :class="[
-              'px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider',
-              subscriptionStatus === 'active'
-                ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
-                : 'bg-amber-100 text-amber-700 border border-amber-300'
-            ]">
-              {{ subscriptionStatus === 'active' ? '✨ Plano Pro Ativo' : '🔒 Plano Gratuito' }}
-            </span>
-            <span class="text-xs text-[#999] font-mono">@{{ profileUsername }}</span>
+      <!-- Top Status Bar (Mobile First Responsive Card) -->
+      <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4 mb-8">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span :class="[
+                'px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider',
+                subscriptionStatus === 'active'
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                  : 'bg-amber-100 text-amber-700 border border-amber-300'
+              ]">
+                {{ subscriptionStatus === 'active' ? '✨ Plano Pro Ativo' : '🔒 Plano Gratuito' }}
+              </span>
+              <span class="text-xs font-extrabold text-gray-900 font-mono">@{{ profileUsername }}</span>
+            </div>
+            <p class="text-xs text-gray-500 font-medium">
+              Link da Bio:
+              <a :href="`/${profileUsername.replace(/^@/, '')}`" target="_blank" class="text-secondary font-bold hover:underline font-mono ml-1 break-all">
+                {{ currentDomainHost }}/{{ profileUsername.replace(/^@/, '') }}
+              </a>
+            </p>
           </div>
-          <p class="text-xs text-[#666]">
-            Seu link ultracurto para a bio do Insta/TikTok:
-            <a :href="`/${profileUsername.replace(/^@/, '')}`" target="_blank" class="text-secondary font-bold hover:underline font-mono ml-1">
-              {{ currentDomainHost }}/{{ profileUsername.replace(/^@/, '') }}
-            </a>
-          </p>
+
+          <button @click="logout" class="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 self-end sm:self-auto pt-1 sm:pt-0">
+            <span class="material-symbols-outlined text-[16px]">logout</span> Sair da Conta
+          </button>
         </div>
-        <div class="flex items-center gap-3 flex-wrap">
-          <NuxtLink to="/dashboard/analytics" class="px-4.5 py-2.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md hover:scale-105 transition-all flex items-center gap-2">
+
+        <!-- Mobile-first Action Bar Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+          <NuxtLink to="/dashboard/analytics" class="w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-[18px]">analytics</span>
-            Métricas & Analytics
+            <span>Métricas & Analytics</span>
           </NuxtLink>
-          <button @click="showCouponModal = true" class="px-4 py-2.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 border border-amber-500/30 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 shadow-2xs">
-            <span class="material-symbols-outlined text-[16px]">confirmation_number</span>
-            Resgatar Cupom
+
+          <button @click="copyBioLink" class="w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">{{ copyBioSuccess ? 'check' : 'content_copy' }}</span>
+            <span>{{ copyBioSuccess ? 'Copiado!' : 'Copiar Link' }}</span>
           </button>
-          <button @click="copyBioLink" class="px-5 py-2.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md hover:scale-105 transition-all flex items-center gap-2">
-            <span class="material-symbols-outlined text-[16px]">{{ copyBioSuccess ? 'check' : 'content_copy' }}</span>
-            {{ copyBioSuccess ? 'Link Copiado!' : 'Copiar Link da Bio' }}
-          </button>
-          <a :href="`/${profileUsername.replace(/^@/, '')}`" target="_blank" class="px-5 py-2.5 rounded-full text-xs font-bold bg-white text-[#333] border border-[#DDD] hover:border-secondary/40 transition-all flex items-center gap-2">
-            <span class="material-symbols-outlined text-[16px]">open_in_new</span>
-            Ver Minha Página
+
+          <a :href="`/${profileUsername.replace(/^@/, '')}`" target="_blank" class="w-full py-2.5 px-3 rounded-2xl text-xs font-bold bg-gray-50 text-gray-800 border border-gray-200 hover:bg-gray-100 active:scale-95 transition-all flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+            <span>Ver Minha Página</span>
           </a>
-          <button @click="logout" class="px-4 py-2.5 rounded-full text-xs font-bold text-[#999] hover:text-red-500 hover:bg-red-50 transition-all flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-[16px]">logout</span> Sair
+
+          <button @click="showCouponModal = true" class="w-full py-2.5 px-3 rounded-2xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 active:scale-95 transition-all flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">confirmation_number</span>
+            <span>Resgatar Cupom</span>
           </button>
         </div>
       </div>
@@ -1213,7 +1222,7 @@ async function logout() {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
         <!-- Left Column: Customizer Controls (7 cols) -->
-        <div class="lg:col-span-7 bg-white p-8 rounded-3xl border border-[#EEEEEE] shadow-sm space-y-8">
+        <div :class="['lg:col-span-7 bg-white p-4 sm:p-8 rounded-3xl border border-[#EEEEEE] shadow-sm space-y-8', mobileViewMode === 'preview' ? 'hidden lg:block' : 'block']">
           <div>
             <h2 class="font-heading text-xl font-extrabold text-[#111111] mb-1 flex items-center gap-2">
               <span class="material-symbols-outlined text-secondary">tune</span>
@@ -1782,7 +1791,7 @@ async function logout() {
         </div>
 
         <!-- Right Column: Interactive Phone Preview (5 cols) -->
-        <div class="lg:col-span-5 lg:sticky lg:top-8 flex justify-center">
+        <div :class="['lg:col-span-5 lg:sticky lg:top-8 flex justify-center', mobileViewMode === 'editor' ? 'hidden lg:flex' : 'flex']">
           <div class="relative w-[340px] h-[680px] bg-slate-950 rounded-[48px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] p-[12px] border-4 border-slate-800">
             <!-- Speaker & Camera -->
             <div class="absolute top-[22px] left-1/2 -translate-x-1/2 w-32 h-[20px] bg-slate-900 rounded-full flex items-center justify-center gap-2 z-30">
@@ -1882,6 +1891,35 @@ async function logout() {
         </div>
       </div>
 
+    </div>
+
+    <!-- Mobile Floating Live Preview Switcher -->
+    <div class="lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-xl border border-white/20 p-1.5 rounded-full shadow-2xl flex items-center gap-1.5 w-[90%] max-w-[340px]">
+      <button
+        @click="mobileViewMode = 'editor'"
+        :class="[
+          'flex-1 py-2.5 px-3 rounded-full text-xs font-extrabold transition-all flex items-center justify-center gap-1.5',
+          mobileViewMode === 'editor'
+            ? 'bg-secondary text-white shadow-md'
+            : 'text-gray-400 hover:text-white'
+        ]"
+      >
+        <span class="material-symbols-outlined text-[16px]">edit</span>
+        <span>Personalizar</span>
+      </button>
+
+      <button
+        @click="mobileViewMode = 'preview'"
+        :class="[
+          'flex-1 py-2.5 px-3 rounded-full text-xs font-extrabold transition-all flex items-center justify-center gap-1.5',
+          mobileViewMode === 'preview'
+            ? 'bg-purple-600 text-white shadow-md'
+            : 'text-gray-400 hover:text-white'
+        ]"
+      >
+        <span class="material-symbols-outlined text-[16px]">smartphone</span>
+        <span>Preview Vivo</span>
+      </button>
     </div>
 
     <!-- Pexels & Unsplash Photo Picker Modal -->

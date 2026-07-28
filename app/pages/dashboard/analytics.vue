@@ -203,7 +203,7 @@ function formatDayLabel(dateStr: string) {
         </div>
 
         <!-- KPI Cards Grid (Linktree Core Metrics) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           <!-- Card 1: Total Views -->
           <div class="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-3 relative overflow-hidden group">
             <div class="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
