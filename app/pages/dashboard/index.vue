@@ -195,6 +195,7 @@ const mobileViewMode = ref<'editor' | 'preview'>('editor')
 const showPhotoModal = ref(false)
 const photoSearchQuery = ref('')
 const photoSource = ref<'pexels' | 'unsplash' | 'giphy' | 'giphy_stickers'>('pexels')
+const mediaModalTarget = ref<'bg' | 'avatar'>('bg')
 const photoResults = ref<any[]>([])
 const searchingPhotos = ref(false)
 const photoPage = ref(1)
@@ -301,15 +302,24 @@ function selectCategory(q: string) {
   fetchPhotos(true)
 }
 
-function openPhotoModal(source: 'pexels' | 'unsplash' | 'giphy' | 'giphy_stickers') {
+function openPhotoModal(source: 'pexels' | 'unsplash' | 'giphy' | 'giphy_stickers', target: 'bg' | 'avatar' = 'bg') {
+  mediaModalTarget.value = target
   photoSource.value = source
   showPhotoModal.value = true
   fetchPhotos(true)
 }
 
 function applyPhotoBg(url: string) {
-  customBgImage.value = url
-  updateBgStyle()
+  if (mediaModalTarget.value === 'avatar') {
+    customAvatar.value = url
+    // If a Giphy Sticker is selected, automatically activate animated sticker mode
+    if (photoSource.value === 'giphy_stickers') {
+      isAnimatedAvatar.value = true
+    }
+  } else {
+    customBgImage.value = url
+    updateBgStyle()
+  }
   showPhotoModal.value = false
 }
 
@@ -1282,16 +1292,27 @@ async function logout() {
                 <textarea v-model="customBio" rows="3" class="w-full px-3 py-2.5 text-sm border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary resize-none leading-relaxed font-medium"></textarea>
               </div>
               <div>
-                <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                   <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider">Foto de Perfil</label>
-                  <label class="cursor-pointer px-3 py-1 bg-secondary/10 hover:bg-secondary/20 text-secondary text-[11px] font-bold rounded-lg transition-all flex items-center gap-1">
-                    <span v-if="uploadingTarget === 'avatar'" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
-                    <span v-else class="material-symbols-outlined text-[14px]">add_a_photo</span>
-                    {{ uploadingTarget === 'avatar' ? 'Enviando...' : 'Carregar Foto' }}
-                    <input type="file" accept="image/*" @change="e => handleFileUpload(e, 'avatar')" class="hidden">
-                  </label>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <!-- File Upload -->
+                    <label class="cursor-pointer px-2.5 py-1 bg-secondary/10 hover:bg-secondary/20 text-secondary text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
+                      <span v-if="uploadingTarget === 'avatar'" class="material-symbols-outlined animate-spin text-[13px]">progress_activity</span>
+                      <span v-else class="material-symbols-outlined text-[13px]">upload</span>
+                      {{ uploadingTarget === 'avatar' ? 'Enviando...' : 'Carregar Foto' }}
+                      <input type="file" accept="image/*" @change="e => handleFileUpload(e, 'avatar')" class="hidden">
+                    </label>
+                    <!-- Search Sticker -->
+                    <button @click="openPhotoModal('giphy_stickers', 'avatar')" class="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Buscar stickers animados no Giphy">
+                      <span class="material-symbols-outlined text-[13px]">auto_awesome</span> ✨ Buscar Sticker
+                    </button>
+                    <!-- Search Photo -->
+                    <button @click="openPhotoModal('unsplash', 'avatar')" class="px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Buscar fotos no Unsplash">
+                      <span class="material-symbols-outlined text-[13px]">search</span> Buscar Foto
+                    </button>
+                  </div>
                 </div>
-                <input v-model="customAvatar" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="https://... (ou clique em 'Carregar Foto' acima)">
+                <input v-model="customAvatar" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="https://... (ou escolha uma das opções acima)">
                 
                 <!-- Toggle animated avatar mode -->
                 <div class="mt-2.5 flex items-center justify-between flex-wrap gap-2">
@@ -1300,9 +1321,6 @@ async function logout() {
                     <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary relative"></div>
                     <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">✨ Modo Adesivo/Avatar Animado (Sem contorno/fundo)</span>
                   </label>
-                  <button @click="openPhotoModal('giphy_stickers')" class="px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 text-[9px] font-bold rounded-md transition-all flex items-center gap-1 shrink-0" title="Buscar adesivos animados">
-                    <span class="material-symbols-outlined text-[11px]">auto_awesome</span> Buscar Sticker
-                  </button>
                 </div>
               </div>
               <div>
