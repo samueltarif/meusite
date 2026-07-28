@@ -2501,12 +2501,14 @@ async function logout() {
                 <!-- Shop Product Grid -->
                 <div v-else-if="activePreviewTab === 'shop'" class="grid grid-cols-2 gap-3 w-full">
                   <div v-for="link in links.filter(l => l.icon === 'shop_product')" :key="link.id" 
-                    class="p-2.5 flex flex-col justify-between text-left relative transition-all duration-300 shadow-xs overflow-hidden"
+                    class="rounded-2xl p-2.5 flex flex-col justify-between text-left relative transition-all duration-300 shadow-xs overflow-hidden border border-black/5 dark:border-white/5"
                     :class="[
-                      computedButtonClasses,
                       customFontClass.startsWith('custom:') ? '' : customFontClass
                     ]"
-                    :style="computedButtonStyles">
+                    :style="{
+                      ...computedButtonStyles,
+                      borderRadius: '16px'
+                    }">
                     <div>
                       <div class="w-full aspect-square rounded-[14px] overflow-hidden bg-slate-100/50 border border-white/10 mb-2">
                         <img v-if="parseProductPayload(link.url).imageUrl" :src="parseProductPayload(link.url).imageUrl" class="w-full h-full object-cover">

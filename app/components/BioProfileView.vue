@@ -559,12 +559,14 @@ const pageCssStyle = computed(() => {
         <div
           v-for="link in links.filter(l => l.icon === 'shop_product')"
           :key="link.id"
-          class="p-3.5 flex flex-col justify-between text-left relative transition-all duration-300 shadow-sm group hover:scale-[1.02] overflow-hidden"
+          class="rounded-[20px] p-3.5 flex flex-col justify-between text-left relative transition-all duration-300 shadow-sm group hover:scale-[1.02] overflow-hidden border border-black/5 dark:border-white/5"
           :class="[
-            computedButtonClasses,
             profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')
           ]"
-          :style="computedButtonStyles"
+          :style="{
+            ...computedButtonStyles,
+            borderRadius: '20px'
+          }"
         >
           <div>
             <!-- Image with Zoom Icon Overlay -->
