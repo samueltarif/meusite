@@ -1543,39 +1543,37 @@ async function logout() {
             </div>
           </div>
 
-          <!-- Cloudflare R2 Standalone Upload Box -->
+          <!-- Avyro Standalone Image Upload Box (Clean & Minimal) -->
           <div class="border-t border-[#EEEEEE] pt-8">
-            <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-5 shadow-lg space-y-4">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-amber-400 text-2xl">cloud_upload</span>
+            <div class="bg-white rounded-2xl p-5 border border-[#EEEEEE] shadow-xs hover:border-secondary/30 transition-all space-y-4">
+              <div class="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-xl">cloud_upload</span>
+                  </div>
                   <div>
-                    <h4 class="font-heading text-sm font-extrabold">Upload Cloudflare R2 (Resolução Máxima)</h4>
-                    <p class="text-[11px] text-slate-300">Gere URLs públicas permanentes para qualquer foto sem perda de qualidade.</p>
+                    <h4 class="font-heading text-sm font-bold text-[#111111]">Upload de Imagem</h4>
+                    <p class="text-xs text-[#888888]">Gere um link direto para suas imagens em alta resolução.</p>
                   </div>
                 </div>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">unajoya</span>
-              </div>
 
-              <div class="flex items-center gap-3">
-                <label class="cursor-pointer px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-90 font-bold text-xs rounded-xl shadow transition-all flex items-center gap-2 shrink-0">
+                <label class="cursor-pointer px-4 py-2 bg-secondary text-white font-heading text-xs font-bold rounded-xl hover:bg-secondary/90 shadow-sm transition-all flex items-center gap-2 shrink-0">
                   <span v-if="uploadingTarget === 'standalone'" class="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
                   <span v-else class="material-symbols-outlined text-[16px]">upload_file</span>
-                  {{ uploadingTarget === 'standalone' ? 'Enviando...' : 'Selecionar Imagem HD' }}
+                  {{ uploadingTarget === 'standalone' ? 'Enviando...' : 'Fazer Upload' }}
                   <input type="file" accept="image/*" @change="e => handleFileUpload(e, 'standalone')" class="hidden">
                 </label>
-                <p class="text-[11px] text-slate-400 italic">Suporta JPG, PNG, WEBP, GIF em qualidade e resolução máxima</p>
               </div>
 
               <!-- Output URL with 1-click Copy -->
-              <div v-if="standaloneR2Url" class="p-3 bg-slate-800/80 rounded-xl border border-slate-700 flex items-center justify-between gap-2">
+              <div v-if="standaloneR2Url" class="p-3 bg-[#FAFAFA] rounded-xl border border-[#EEEEEE] flex items-center justify-between gap-2">
                 <div class="min-w-0 flex-1">
-                  <p class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-0.5">URL Pública Cloudflare R2:</p>
-                  <p class="text-xs font-mono text-slate-200 truncate select-all">{{ standaloneR2Url }}</p>
+                  <p class="text-[10px] text-secondary font-bold uppercase tracking-wider mb-0.5">Link Direto Gerado:</p>
+                  <p class="text-xs font-mono text-[#333333] truncate select-all">{{ standaloneR2Url }}</p>
                 </div>
-                <button @click="copyToClipboard(standaloneR2Url)" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0 text-white">
+                <button @click="copyToClipboard(standaloneR2Url)" class="px-3 py-1.5 bg-secondary text-white hover:bg-secondary/90 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0">
                   <span class="material-symbols-outlined text-[14px]">{{ copySuccess ? 'check' : 'content_copy' }}</span>
-                  {{ copySuccess ? 'Copiado!' : 'Copiar' }}
+                  {{ copySuccess ? 'Copiado!' : 'Copiar Link' }}
                 </button>
               </div>
             </div>
