@@ -559,7 +559,12 @@ const pageCssStyle = computed(() => {
         <div
           v-for="link in links.filter(l => l.icon === 'shop_product')"
           :key="link.id"
-          class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-[24px] p-3.5 border border-black/5 dark:border-white/5 shadow-md flex flex-col justify-between text-left font-sans group hover:scale-[1.02] transition-all duration-300 relative"
+          class="p-3.5 flex flex-col justify-between text-left relative transition-all duration-300 shadow-sm group hover:scale-[1.02] overflow-hidden"
+          :class="[
+            computedButtonClasses,
+            profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')
+          ]"
+          :style="computedButtonStyles"
         >
           <div>
             <!-- Image with Zoom Icon Overlay -->
@@ -585,13 +590,13 @@ const pageCssStyle = computed(() => {
 
             <!-- Product title with link redirection -->
             <a :href="parseProductPayload(link.url).targetUrl" target="_blank" @click="handleClick(link)" class="block group/title">
-              <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover/title:text-secondary transition-colors">{{ link.title }}</p>
+              <p class="text-xs sm:text-sm font-extrabold leading-snug line-clamp-2 transition-colors" :style="{ color: computedButtonStyles.color || profile?.btn_text_color }">{{ link.title }}</p>
             </a>
           </div>
 
           <!-- Price & CTA bar -->
-          <div class="flex items-center justify-between mt-3 pt-2 border-t border-black/5 dark:border-white/5">
-            <span class="text-xs font-black text-secondary">{{ parseProductPayload(link.url).price }}</span>
+          <div class="flex items-center justify-between mt-3 pt-2 border-t" :style="{ borderTopColor: (computedButtonStyles.color || profile?.btn_text_color) ? (computedButtonStyles.color || profile?.btn_text_color) + '22' : 'rgba(0,0,0,0.1)' }">
+            <span class="text-xs font-black" :style="{ color: computedButtonStyles.color || profile?.btn_text_color || '#111111' }">{{ parseProductPayload(link.url).price }}</span>
             <a 
               :href="parseProductPayload(link.url).targetUrl" 
               target="_blank" 

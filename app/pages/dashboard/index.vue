@@ -555,7 +555,113 @@ function openEditLinkModal(link: any) {
     url: link.url || '',
     icon: link.icon || ''
   }
+
+  // Populate custom modal states
+  if (link.icon === 'shop_product') {
+    const payload = parseProductPayload(link.url)
+    editProductName.value = link.title
+    editProductPrice.value = payload.price
+    editProductLink.value = payload.targetUrl
+    editProductImage.value = payload.imageUrl
+  } else if (link.icon === 'social_feed') {
+    const payload = parseSocialPayload(link.url)
+    editSocialPlatform.value = payload.platform
+    editSocialHandle.value = payload.handle
+    editSocialFollowers.value = payload.followersText
+    editSocialFollowUrl.value = payload.followUrl
+    editSocialImages.value = [payload.images?.[0] || '', payload.images?.[1] || '', payload.images?.[2] || '']
+  } else if (link.icon === 'video_card') {
+    const payload = parseVideoPayload(link.url)
+    editVideoUrl.value = payload.videoUrl
+    editVideoThumb.value = payload.thumbnailUrl
+    editVideoAspect.value = payload.aspectRatio || '16/9'
+  }
+
   showEditLinkModal.value = true
+}
+
+async function handleEditProductImgUpload(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  const file = input.files[0]
+  uploadingEditProductImg.value = true
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await $fetch<{ success: boolean; url: string }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (res && res.url) {
+      editProductImage.value = res.url
+    }
+  } catch (err: any) {
+    console.error('Edit Product img upload error:', err)
+  } finally {
+    uploadingEditProductImg.value = false
+    input.value = ''
+  }
+}
+
+async function handleEditSocialImgUpload(event: Event, index: number) {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  const file = input.files[0]
+  uploadingEditSocialImgIndex.value = index
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await $fetch<{ success: boolean; url: string }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (res && res.url) {
+      editSocialImages.value[index] = res.url
+    }
+  } catch (err: any) {
+    console.error('Edit Social img upload error:', err)
+  } finally {
+    uploadingEditSocialImgIndex.value = null
+    input.value = ''
+  }
+}
+
+async function handleEditVideoUpload(event: Event, type: 'video' | 'thumb') {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  const file = input.files[0]
+  if (type === 'video') uploadingEditVideo.value = true
+  else uploadingEditVideoThumb.value = true
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await $fetch<{ success: boolean; url: string }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (res && res.url) {
+      if (type === 'video') editVideoUrl.value = res.url
+      else editVideoThumb.value = res.url
+    }
+  } catch (err: any) {
+    console.error('Edit Video upload error:', err)
+  } finally {
+    if (type === 'video') uploadingEditVideo.value = false
+    else uploadingEditVideoThumb.value = false
+    input.value = ''
+  }
 }
 
 async function saveLinkEdit() {
@@ -564,8 +670,34 @@ async function saveLinkEdit() {
 
   try {
     let url = editingLink.value.url.trim()
-    if (!url.startsWith('http://') && !url.startsWith('https://') && editingLink.value.icon !== 'spotify_embed' && editingLink.value.icon !== 'video_card') {
-      url = 'https://' + url
+
+    // Serialize custom fields if custom block
+    if (editingLink.value.icon === 'shop_product') {
+      editingLink.value.title = editProductName.value
+      url = JSON.stringify({
+        price: editProductPrice.value || 'Grátis',
+        targetUrl: editProductLink.value,
+        imageUrl: editProductImage.value
+      })
+    } else if (editingLink.value.icon === 'social_feed') {
+      editingLink.value.title = `Card ${editSocialPlatform.value.toUpperCase()}`
+      url = JSON.stringify({
+        platform: editSocialPlatform.value,
+        handle: editSocialHandle.value,
+        followersText: editSocialFollowers.value || 'Seguidores',
+        followUrl: editSocialFollowUrl.value,
+        images: editSocialImages.value.filter(url => !!url)
+      })
+    } else if (editingLink.value.icon === 'video_card') {
+      url = JSON.stringify({
+        videoUrl: editVideoUrl.value,
+        thumbnailUrl: editVideoThumb.value || '',
+        aspectRatio: editVideoAspect.value || '16/9'
+      })
+    } else {
+      if (!url.startsWith('http://') && !url.startsWith('https://') && editingLink.value.icon !== 'spotify_embed') {
+        url = 'https://' + url
+      }
     }
 
     const { error } = await supabase
@@ -626,6 +758,29 @@ const productLink = ref('')
 const productImage = ref('')
 const uploadingProductImg = ref(false)
 const activePreviewTab = ref<'links' | 'shop'>('links')
+
+// ─── Edit Modal Custom State ───
+// Product Edit
+const editProductName = ref('')
+const editProductPrice = ref('')
+const editProductLink = ref('')
+const editProductImage = ref('')
+const uploadingEditProductImg = ref(false)
+
+// Social Feed Edit
+const editSocialPlatform = ref<'tiktok' | 'instagram' | 'youtube'>('tiktok')
+const editSocialHandle = ref('')
+const editSocialFollowers = ref('')
+const editSocialFollowUrl = ref('')
+const editSocialImages = ref<string[]>(['', '', ''])
+const uploadingEditSocialImgIndex = ref<number | null>(null)
+
+// Video Edit
+const editVideoUrl = ref('')
+const editVideoThumb = ref('')
+const editVideoAspect = ref<'16/9' | '9/16' | '1/1'>('16/9')
+const uploadingEditVideo = ref(false)
+const uploadingEditVideoThumb = ref(false)
 
 // ─── Coupon Redemption State ───
 const showCouponModal = ref(false)
@@ -2345,17 +2500,28 @@ async function logout() {
 
                 <!-- Shop Product Grid -->
                 <div v-else-if="activePreviewTab === 'shop'" class="grid grid-cols-2 gap-3 w-full">
-                  <div v-for="link in links.filter(l => l.icon === 'shop_product')" :key="link.id" class="bg-white rounded-2xl p-2 border border-slate-200/50 shadow-xs flex flex-col justify-between text-left font-sans group relative">
+                  <div v-for="link in links.filter(l => l.icon === 'shop_product')" :key="link.id" 
+                    class="p-2.5 flex flex-col justify-between text-left relative transition-all duration-300 shadow-xs overflow-hidden"
+                    :class="[
+                      computedButtonClasses,
+                      customFontClass.startsWith('custom:') ? '' : customFontClass
+                    ]"
+                    :style="computedButtonStyles">
                     <div>
-                      <div class="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200/40 mb-2">
+                      <div class="w-full aspect-square rounded-[14px] overflow-hidden bg-slate-100/50 border border-white/10 mb-2">
                         <img v-if="parseProductPayload(link.url).imageUrl" :src="parseProductPayload(link.url).imageUrl" class="w-full h-full object-cover">
                         <div v-else class="w-full h-full flex items-center justify-center text-slate-400">
                           <span class="material-symbols-outlined text-2xl">shopping_bag</span>
                         </div>
                       </div>
-                      <p class="text-[10px] font-bold text-slate-800 leading-tight line-clamp-2">{{ link.title }}</p>
+                      <p class="text-[9px] font-extrabold leading-snug line-clamp-2" :style="{ color: computedButtonStyles.color || '#111111' }">{{ link.title }}</p>
                     </div>
-                    <p class="text-[9px] font-extrabold text-[#111111] mt-1">{{ parseProductPayload(link.url).price }}</p>
+                    <div class="flex items-center justify-between mt-2 pt-1 border-t" :style="{ borderTopColor: (computedButtonStyles.color || '#111111') + '22' }">
+                      <span class="text-[9px] font-black" :style="{ color: computedButtonStyles.color || '#111111' }">{{ parseProductPayload(link.url).price }}</span>
+                      <span class="px-2 py-0.5 bg-secondary text-white font-extrabold text-[8px] rounded-md shadow-2xs">
+                        Comprar
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -2557,8 +2723,8 @@ async function logout() {
           <p class="text-xs text-gray-500">Altere o título, URL ou a foto de capa do seu botão.</p>
         </div>
 
-        <!-- Thumbnail Image & Upload Button -->
-        <div class="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex items-center gap-3">
+        <!-- Thumbnail Image & Upload Button (Only for Standard/Spotify links) -->
+        <div v-if="editingLink.icon !== 'shop_product' && editingLink.icon !== 'social_feed' && editingLink.icon !== 'video_card'" class="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex items-center gap-3">
           <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-white border border-gray-200 shadow-2xs flex items-center justify-center">
             <img v-if="isImageUrl(editingLink.icon)" :src="editingLink.icon" class="w-full h-full object-cover">
             <div v-else-if="editingLink.icon && brandIcons[editingLink.icon]" class="w-6 h-6 shrink-0" v-html="brandIcons[editingLink.icon]"></div>
@@ -2579,14 +2745,140 @@ async function logout() {
         </div>
 
         <form @submit.prevent="saveLinkEdit" class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Título do Botão</label>
-            <input v-model="editingLink.title" type="text" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:border-secondary font-medium" required>
+          <!-- Form 1: Shop Product Edit -->
+          <div v-if="editingLink.icon === 'shop_product'" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nome do Produto</label>
+              <input v-model="editProductName" type="text" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:border-secondary font-medium" required>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Preço</label>
+              <input v-model="editProductPrice" type="text" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:border-secondary font-medium" placeholder="Ex: $15">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Link de Compra / Checkout</label>
+              <input v-model="editProductLink" type="text" class="w-full px-3.5 py-2.5 text-xs font-mono border border-gray-300 rounded-xl focus:outline-none focus:border-secondary" required>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Foto do Produto</label>
+              <div class="flex items-center gap-3">
+                <div v-if="editProductImage" class="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shrink-0 shadow-2xs relative group">
+                  <img :src="editProductImage" class="w-full h-full object-cover">
+                  <button type="button" @click="editProductImage = ''" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 cursor-pointer">
+                    <span class="material-symbols-outlined text-[8px] font-bold">close</span>
+                  </button>
+                </div>
+                <label class="cursor-pointer px-3 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shrink-0">
+                  <span v-if="uploadingEditProductImg" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                  <span v-else class="material-symbols-outlined text-[14px]">add_photo_alternate</span>
+                  {{ uploadingEditProductImg ? 'Subindo...' : 'Trocar Foto' }}
+                  <input type="file" accept="image/*" @change="handleEditProductImgUpload" class="hidden">
+                </label>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">URL de Destino</label>
-            <input v-model="editingLink.url" type="text" class="w-full px-3.5 py-2.5 text-xs font-mono border border-gray-300 rounded-xl focus:outline-none focus:border-secondary" required>
+          <!-- Form 2: Social Feed Edit -->
+          <div v-else-if="editingLink.icon === 'social_feed'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Plataforma</label>
+                <select v-model="editSocialPlatform" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:outline-none focus:border-secondary bg-white">
+                  <option value="tiktok">TikTok</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="youtube">YouTube</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Handle/Username</label>
+                <input v-model="editSocialHandle" type="text" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:outline-none focus:border-secondary bg-white font-mono" required>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Seguidores</label>
+                <input v-model="editSocialFollowers" type="text" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:outline-none focus:border-secondary bg-white">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">URL "Seguir"</label>
+                <input v-model="editSocialFollowUrl" type="text" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:outline-none focus:border-secondary bg-white font-mono" required>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Fotos do Feed (3 Imagens)</label>
+              <div class="grid grid-cols-3 gap-2">
+                <div v-for="i in [0, 1, 2]" :key="i" class="border border-dashed border-gray-300 rounded-xl p-1 bg-white flex flex-col items-center justify-center min-h-[70px] relative text-center">
+                  <img v-if="editSocialImages[i]" :src="editSocialImages[i]" class="absolute inset-0 w-full h-full object-cover rounded-xl">
+                  <div v-if="editSocialImages[i]" class="absolute top-0.5 right-0.5 z-10 bg-black/60 hover:bg-black/85 text-white rounded-full p-0.5 cursor-pointer" @click="editSocialImages[i] = ''">
+                    <span class="material-symbols-outlined text-[9px] font-bold">close</span>
+                  </div>
+                  <label v-else class="cursor-pointer text-[9px] font-bold text-secondary hover:text-secondary/80 flex flex-col items-center">
+                    <span v-if="uploadingEditSocialImgIndex === i" class="material-symbols-outlined animate-spin text-[12px]">progress_activity</span>
+                    <span v-else class="material-symbols-outlined text-[12px] text-gray-400">add_a_photo</span>
+                    Carregar
+                    <input type="file" accept="image/*" @change="e => handleEditSocialImgUpload(e, i)" class="hidden">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form 3: Video Player Edit -->
+          <div v-else-if="editingLink.icon === 'video_card'" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Título do Vídeo</label>
+              <input v-model="editingLink.title" type="text" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:border-secondary font-medium" required>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Arquivo de Vídeo (URL)</label>
+              <div class="flex items-center gap-2">
+                <input v-model="editVideoUrl" type="text" class="flex-1 px-3 py-2 text-xs font-mono border border-gray-300 rounded-xl focus:outline-none" readonly>
+                <label class="cursor-pointer px-3 py-2 bg-secondary text-white font-bold text-xs rounded-xl shadow-xs shrink-0">
+                  <span v-if="uploadingEditVideo" class="material-symbols-outlined animate-spin text-[12px]">progress_activity</span>
+                  <span v-else class="material-symbols-outlined text-[12px]">upload</span>
+                  {{ uploadingEditVideo ? 'Subindo...' : 'Trocar' }}
+                  <input type="file" accept="video/*" @change="e => handleEditVideoUpload(e, 'video')" class="hidden">
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Formato do Player</label>
+              <div class="flex gap-2">
+                <button @click="editVideoAspect = '16/9'" type="button" :class="['flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all', editVideoAspect === '16/9' ? 'bg-secondary text-white border-secondary' : 'bg-white border-gray-300 text-gray-600']">🖥️ 16:9</button>
+                <button @click="editVideoAspect = '9/16'" type="button" :class="['flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all', editVideoAspect === '9/16' ? 'bg-secondary text-white border-secondary' : 'bg-white border-gray-300 text-gray-600']">📱 9:16</button>
+                <button @click="editVideoAspect = '1/1'" type="button" :class="['flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all', editVideoAspect === '1/1' ? 'bg-secondary text-white border-secondary' : 'bg-white border-gray-300 text-gray-600']">⏹️ 1:1</button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Capa do Vídeo (Opcional)</label>
+              <div class="flex items-center gap-3">
+                <div v-if="editVideoThumb" class="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shrink-0 shadow-2xs relative group">
+                  <img :src="editVideoThumb" class="w-full h-full object-cover">
+                  <button type="button" @click="editVideoThumb = ''" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 cursor-pointer">
+                    <span class="material-symbols-outlined text-[8px] font-bold">close</span>
+                  </button>
+                </div>
+                <label class="cursor-pointer px-3 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs shrink-0">
+                  <span v-if="uploadingEditVideoThumb" class="material-symbols-outlined animate-spin text-[12px]">progress_activity</span>
+                  <span v-else class="material-symbols-outlined text-[12px]">photo</span>
+                  {{ uploadingEditVideoThumb ? 'Subindo...' : 'Trocar Capa' }}
+                  <input type="file" accept="image/*" @change="e => handleEditVideoUpload(e, 'thumb')" class="hidden">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form 4: Standard Link Edit -->
+          <div v-else class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Título do Botão</label>
+              <input v-model="editingLink.title" type="text" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:border-secondary font-medium" required>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">URL de Destino</label>
+              <input v-model="editingLink.url" type="text" class="w-full px-3.5 py-2.5 text-xs font-mono border border-gray-300 rounded-xl focus:outline-none focus:border-secondary" required>
+            </div>
           </div>
 
           <div class="pt-2 flex justify-end gap-2">
