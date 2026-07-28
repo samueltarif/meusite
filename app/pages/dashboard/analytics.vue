@@ -281,7 +281,7 @@ function formatDayLabel(dateStr: string) {
 
           <!-- Timeline Chart Graphic (Blurred if Free User) -->
           <div :class="[profile?.subscription_status !== 'active' ? 'filter blur-sm select-none pointer-events-none opacity-40' : '']">
-            <div v-if="clicksByDay.length > 0" class="h-64 pt-6 flex items-end justify-between gap-2 border-b border-gray-100 pb-2 overflow-x-auto hide-scrollbar">
+            <div v-if="clicksByDay.length > 0" class="h-64 pt-6 flex items-end justify-start gap-6 border-b border-gray-100 pb-2 overflow-x-auto hide-scrollbar">
               <div
                 v-for="d in clicksByDay"
                 :key="d.date"
