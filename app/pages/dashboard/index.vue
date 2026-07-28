@@ -699,8 +699,16 @@ async function loadUserData(userId: string) {
   if (linksData) { links.value = linksData }
 }
 
+function isThemePro(theme: any): boolean {
+  return theme.id !== 'cosmic-neon'
+}
+
 // ─── Theme Application ───
 function applyTheme(theme: Theme) {
+  if (subscriptionStatus.value !== 'active' && isThemePro(theme)) {
+    checkProGate('Modelos e Templates Profissionais')
+    return
+  }
   activeThemeId.value = theme.id
   customBgColor.value = theme.bgColor
   customBgImage.value = theme.bgImageUrl || ''
@@ -1115,6 +1123,12 @@ async function logout() {
           <!-- Active check badge -->
           <div v-if="activeThemeId === theme.id" class="absolute top-4 right-4 bg-secondary text-white w-6 h-6 rounded-full flex items-center justify-center z-20 shadow-sm">
             <span class="material-symbols-outlined text-sm font-bold">check</span>
+          </div>
+
+          <!-- PRO Badge for Free users -->
+          <div v-if="subscriptionStatus !== 'active' && isThemePro(theme)" class="absolute top-4 left-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-md z-20 flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">lock</span>
+            PRO
           </div>
 
           <!-- Mini phone mockup -->
@@ -2110,12 +2124,17 @@ async function logout() {
         </div>
 
         <div class="pt-2 space-y-3">
-          <button @click="showProModal = false; showCouponModal = true" class="w-full py-3.5 px-6 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-lg">confirmation_number</span>
-            Resgatar Cupom (1 Ano Grátis)
+          <button @click="showProModal = false; handleCheckout()" :disabled="checkoutLoading" class="w-full py-3.5 px-6 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2">
+            <span v-if="checkoutLoading" class="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+            <span v-else class="material-symbols-outlined text-lg">shopping_cart</span>
+            {{ checkoutLoading ? 'Carregando Pagamento...' : 'Fazer Upgrade para o Plano Pro' }}
           </button>
           
-          <button @click="showProModal = false" class="w-full py-2.5 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">
+          <button @click="showProModal = false; showCouponModal = true" class="text-xs text-amber-600 hover:text-amber-700 font-bold underline transition-colors block mx-auto pt-1">
+            Possui um cupom promocional? Resgatar aqui
+          </button>
+
+          <button @click="showProModal = false" class="w-full py-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">
             Continuar no Plano Gratuito
           </button>
         </div>

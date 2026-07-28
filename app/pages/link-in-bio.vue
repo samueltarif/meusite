@@ -825,6 +825,10 @@ const removeLink = (id: number) => {
   links.value = links.value.filter((l) => l.id !== id)
 }
 
+const isThemePro = (theme: Theme) => {
+  return theme.id !== 'monica-vera'
+}
+
 // Select preset theme
 const applyTheme = (theme: Theme) => {
   activeThemeId.value = theme.id
@@ -929,6 +933,12 @@ const applyTheme = (theme: Theme) => {
           <!-- Active check badge -->
           <div v-if="activeThemeId === theme.id" class="absolute top-4 right-4 bg-secondary text-white w-6 h-6 rounded-full flex items-center justify-center z-20 shadow-sm">
             <span class="material-symbols-outlined text-sm font-bold">check</span>
+          </div>
+
+          <!-- PRO Badge -->
+          <div v-if="isThemePro(theme)" class="absolute top-4 left-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-md z-20 flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">lock</span>
+            PRO
           </div>
 
           <!-- Mini phone mockup container -->

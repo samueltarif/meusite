@@ -262,7 +262,7 @@ function formatDayLabel(dateStr: string) {
         </div>
 
         <!-- Section 2: Timeline Bar Chart (Daily Clicks Activity) -->
-        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-6">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-6 relative overflow-hidden">
           <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h2 class="font-heading font-extrabold text-xl text-gray-900 flex items-center gap-2">
@@ -277,28 +277,45 @@ function formatDayLabel(dateStr: string) {
             </div>
           </div>
 
-          <!-- Timeline Chart Graphic -->
-          <div v-if="clicksByDay.length > 0" class="h-64 pt-6 flex items-end justify-between gap-2 border-b border-gray-100 pb-2 overflow-x-auto hide-scrollbar">
-            <div
-              v-for="d in clicksByDay"
-              :key="d.date"
-              class="flex-1 min-w-[28px] max-w-[48px] flex flex-col items-center gap-2 group h-full justify-end"
-            >
-              <div class="text-[10px] font-bold font-mono text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white px-1.5 py-0.5 rounded shadow-sm">
-                {{ d.clicks }}
-              </div>
+          <!-- Timeline Chart Graphic (Blurred if Free User) -->
+          <div :class="[profile?.subscription_status !== 'active' ? 'filter blur-sm select-none pointer-events-none opacity-40' : '']">
+            <div v-if="clicksByDay.length > 0" class="h-64 pt-6 flex items-end justify-between gap-2 border-b border-gray-100 pb-2 overflow-x-auto hide-scrollbar">
               <div
-                class="w-full rounded-t-xl bg-gradient-to-t from-secondary to-purple-500 group-hover:from-purple-600 group-hover:to-pink-500 transition-all duration-300 shadow-2xs min-h-[8px]"
-                :style="{ height: `${Math.max((d.clicks / maxDayClicks) * 180, 10)}px` }"
-              ></div>
-              <span class="text-[10px] font-mono text-gray-400 truncate">{{ formatDayLabel(d.date) }}</span>
+                v-for="d in clicksByDay"
+                :key="d.date"
+                class="flex-1 min-w-[28px] max-w-[48px] flex flex-col items-center gap-2 group h-full justify-end"
+              >
+                <div class="text-[10px] font-bold font-mono text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white px-1.5 py-0.5 rounded shadow-sm">
+                  {{ d.clicks }}
+                </div>
+                <div
+                  class="w-full rounded-t-xl bg-gradient-to-t from-secondary to-purple-500 group-hover:from-purple-600 group-hover:to-pink-500 transition-all duration-300 shadow-2xs min-h-[8px]"
+                  :style="{ height: `${Math.max((d.clicks / maxDayClicks) * 180, 10)}px` }"
+                ></div>
+                <span class="text-[10px] font-mono text-gray-400 truncate">{{ formatDayLabel(d.date) }}</span>
+              </div>
+            </div>
+
+            <!-- Empty Chart Fallback -->
+            <div v-else class="py-12 text-center space-y-2 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+              <span class="material-symbols-outlined text-3xl text-gray-300">timeline</span>
+              <p class="text-xs text-gray-500">Seus dados de cliques diários aparecerão aqui conforme os visitantes interagirem com seus links.</p>
             </div>
           </div>
 
-          <!-- Empty Chart Fallback -->
-          <div v-else class="py-12 text-center space-y-2 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-            <span class="material-symbols-outlined text-3xl text-gray-300">timeline</span>
-            <p class="text-xs text-gray-500">Seus dados de cliques diários aparecerão aqui conforme os visitantes interagirem com seus links.</p>
+          <!-- PRO Lock Overlay for Daily Clicks -->
+          <div v-if="profile?.subscription_status !== 'active'" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
+              <span class="material-symbols-outlined text-2xl">lock</span>
+            </div>
+            <div class="space-y-1">
+              <h3 class="font-extrabold text-base text-gray-900 font-heading">Gráfico de Cliques Diários Bloqueado</h3>
+              <p class="text-xs text-gray-600 max-w-sm">Acompanhe o gráfico e a evolução diária dos seus acessos no Plano Pro.</p>
+            </div>
+            <NuxtLink to="/dashboard" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm">workspace_premium</span>
+              Desbloquear no Plano Pro
+            </NuxtLink>
           </div>
         </div>
 
@@ -306,7 +323,7 @@ function formatDayLabel(dateStr: string) {
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           <!-- Column 1: Traffic Sources (Instagram vs TikTok vs WhatsApp vs Direct) -->
-          <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-6 flex flex-col">
+          <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-6 flex flex-col relative overflow-hidden">
             <div>
               <h2 class="font-heading font-extrabold text-xl text-gray-900 flex items-center gap-2">
                 <span class="material-symbols-outlined text-pink-500">share</span>
@@ -315,40 +332,57 @@ function formatDayLabel(dateStr: string) {
               <p class="text-xs text-gray-500">De onde vêm os visitantes que clicam na sua página.</p>
             </div>
 
-            <!-- Platform Progress Breakdown -->
-            <div v-if="Object.keys(clicksByPlatform).length > 0" class="space-y-4 flex-1">
-              <div
-                v-for="(count, plat) in clicksByPlatform"
-                :key="plat"
-                class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100 space-y-2"
-              >
-                <div class="flex items-center justify-between text-xs font-bold text-gray-800">
-                  <div class="flex items-center gap-2">
-                    <div v-if="platformIcons[plat] && brandIcons[platformIcons[plat]]" class="w-4 h-4 text-gray-700" v-html="brandIcons[platformIcons[plat]]"></div>
-                    <span v-else class="material-symbols-outlined text-base text-gray-500">link</span>
-                    <span>{{ plat }}</span>
+            <!-- Platform Progress Breakdown (Blurred if Free User) -->
+            <div :class="['flex-1 space-y-4', profile?.subscription_status !== 'active' ? 'filter blur-sm select-none pointer-events-none opacity-40' : '']">
+              <div v-if="Object.keys(clicksByPlatform).length > 0" class="space-y-4">
+                <div
+                  v-for="(count, plat) in clicksByPlatform"
+                  :key="plat"
+                  class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100 space-y-2"
+                >
+                  <div class="flex items-center justify-between text-xs font-bold text-gray-800">
+                    <div class="flex items-center gap-2">
+                      <div v-if="platformIcons[plat] && brandIcons[platformIcons[plat]]" class="w-4 h-4 text-gray-700" v-html="brandIcons[platformIcons[plat]]"></div>
+                      <span v-else class="material-symbols-outlined text-base text-gray-500">link</span>
+                      <span>{{ plat }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-gray-900 font-mono font-extrabold">{{ count }} cliques</span>
+                      <span class="text-[10px] text-gray-400 font-mono">({{ Math.round((count / totalPlatformClicks) * 100) }}%)</span>
+                    </div>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-gray-900 font-mono font-extrabold">{{ count }} cliques</span>
-                    <span class="text-[10px] text-gray-400 font-mono">({{ Math.round((count / totalPlatformClicks) * 100) }}%)</span>
-                  </div>
-                </div>
 
-                <!-- Custom Colored Progress Bar -->
-                <div class="w-full bg-gray-200/70 h-2.5 rounded-full overflow-hidden">
-                  <div
-                    class="h-full rounded-full bg-gradient-to-r transition-all duration-500"
-                    :class="platformColors[plat] || 'from-secondary to-purple-600'"
-                    :style="{ width: `${Math.max((count / totalPlatformClicks) * 100, 4)}%` }"
-                  ></div>
+                  <!-- Custom Colored Progress Bar -->
+                  <div class="w-full bg-gray-200/70 h-2.5 rounded-full overflow-hidden">
+                    <div
+                      class="h-full rounded-full bg-gradient-to-r transition-all duration-500"
+                      :class="platformColors[plat] || 'from-secondary to-purple-600'"
+                      :style="{ width: `${Math.max((count / totalPlatformClicks) * 100, 4)}%` }"
+                    ></div>
+                  </div>
                 </div>
+              </div>
+
+              <!-- Fallback if no platform breakdown recorded yet -->
+              <div v-else class="py-12 text-center space-y-2 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 flex-1 flex flex-col items-center justify-center">
+                <span class="material-symbols-outlined text-4xl text-gray-300">hub</span>
+                <p class="text-xs text-gray-500 max-w-xs">Quando visitantes navegarem pelo Instagram, TikTok ou WhatsApp, a distribuição de origem aparecerá aqui automaticamente.</p>
               </div>
             </div>
 
-            <!-- Fallback if no platform breakdown recorded yet -->
-            <div v-else class="py-12 text-center space-y-2 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 flex-1 flex flex-col items-center justify-center">
-              <span class="material-symbols-outlined text-4xl text-gray-300">hub</span>
-              <p class="text-xs text-gray-500 max-w-xs">Quando visitantes navegarem pelo Instagram, TikTok ou WhatsApp, a distribuição de origem aparecerá aqui automaticamente.</p>
+            <!-- PRO Lock Overlay for Traffic Sources -->
+            <div v-if="profile?.subscription_status !== 'active'" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
+                <span class="material-symbols-outlined text-2xl">lock</span>
+              </div>
+              <div class="space-y-1">
+                <h3 class="font-extrabold text-base text-gray-900 font-heading">Origem do Tráfego Bloqueada</h3>
+                <p class="text-xs text-gray-600 max-w-sm">Descubra se seus visitantes vêm do Instagram, WhatsApp ou TikTok no Plano Pro.</p>
+              </div>
+              <NuxtLink to="/dashboard" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm">workspace_premium</span>
+                Desbloquear no Plano Pro
+              </NuxtLink>
             </div>
           </div>
 
