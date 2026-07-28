@@ -1023,6 +1023,10 @@ async function logout() {
           </p>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
+          <NuxtLink to="/dashboard/analytics" class="px-4.5 py-2.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md hover:scale-105 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">analytics</span>
+            Métricas & Analytics
+          </NuxtLink>
           <button @click="showCouponModal = true" class="px-4 py-2.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 border border-amber-500/30 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 shadow-2xs">
             <span class="material-symbols-outlined text-[16px]">confirmation_number</span>
             Resgatar Cupom
