@@ -311,6 +311,39 @@ function openProductModal(link: any) {
   }
 }
 
+const activeShareModalLink = ref<any>(null)
+const copySuccess = ref(false)
+const reportSuccess = ref(false)
+
+function openShareModal(link: any) {
+  activeShareModalLink.value = link
+  copySuccess.value = false
+  reportSuccess.value = false
+}
+
+async function copyLinkUrl() {
+  if (!activeShareModalLink.value) return
+  try {
+    await navigator.clipboard.writeText(activeShareModalLink.value.url)
+    copySuccess.value = true
+    setTimeout(() => {
+      copySuccess.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy link:', err)
+  }
+}
+
+function getUrlDomain(url: string): string {
+  try {
+    const cleanUrl = url.startsWith('http') ? url : `https://${url}`
+    const parsed = new URL(cleanUrl)
+    return parsed.hostname.replace('www.', '')
+  } catch (e) {
+    return url
+  }
+}
+
 function parseProductPayload(urlStr: string) {
   try {
     if (urlStr && urlStr.startsWith('{')) {
@@ -525,31 +558,44 @@ const pageCssStyle = computed(() => {
             </div>
 
             <!-- Case 3: Standard Link Button -->
-            <a
+            <div
               v-else
-              :href="link.url"
-              target="_blank"
-              @click="handleClick(link)"
               :class="[
-                'w-full py-3.5 px-4 font-bold text-xs sm:text-sm flex items-center justify-between transition-all duration-300 shadow-sm relative group overflow-hidden',
+                'w-full flex items-center justify-between transition-all duration-300 shadow-sm relative group overflow-hidden',
                 computedButtonClasses,
                 profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')
               ]"
               :style="computedButtonStyles"
             >
-              <!-- Left Thumbnail / Icon -->
-              <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black/5 border border-white/20 shadow-2xs">
-                <img v-if="isImageUrl(link.icon)" :src="link.icon" :alt="link.title" class="w-full h-full object-cover">
-                <div v-else-if="link.icon && brandIcons[link.icon]" class="w-4 h-4 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
-                <span v-else class="material-symbols-outlined text-[18px] shrink-0">{{ link.icon || 'link' }}</span>
-              </div>
+              <!-- Navigation Area -->
+              <a
+                :href="link.url"
+                target="_blank"
+                @click="handleClick(link)"
+                class="flex-1 py-3.5 pl-4 pr-1 flex items-center justify-between min-w-0"
+              >
+                <!-- Left Thumbnail / Icon -->
+                <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black/5 border border-white/20 shadow-2xs">
+                  <img v-if="isImageUrl(link.icon)" :src="link.icon" :alt="link.title" class="w-full h-full object-cover">
+                  <div v-else-if="link.icon && brandIcons[link.icon]" class="w-4 h-4 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
+                  <span v-else class="material-symbols-outlined text-[18px] shrink-0">{{ link.icon || 'link' }}</span>
+                </div>
 
-              <!-- Button Title -->
-              <span class="flex-1 text-center font-bold truncate px-2">{{ link.title }}</span>
+                <!-- Button Title -->
+                <span class="flex-1 text-center font-bold truncate px-2">{{ link.title }}</span>
 
-              <!-- Spacer for center alignment -->
-              <div class="w-8 h-8 shrink-0"></div>
-            </a>
+                <!-- Spacer for center alignment -->
+                <div class="w-8 h-8 shrink-0"></div>
+              </a>
+
+              <!-- Share Button -->
+              <button
+                @click.stop.prevent="openShareModal(link)"
+                class="w-10 h-10 flex items-center justify-center text-current opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0 mr-1.5 rounded-full cursor-pointer z-10"
+              >
+                <span class="material-symbols-outlined text-lg">more_vert</span>
+              </button>
+            </div>
           </template>
         </template>
       </div>
@@ -675,6 +721,146 @@ const pageCssStyle = computed(() => {
         </div>
       </Transition>
 
+      <!-- Share Link Modal -->
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="activeShareModalLink" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" @click="activeShareModalLink = null">
+          <!-- Modal content box -->
+          <div 
+            class="w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[28px] sm:rounded-[28px] p-6 shadow-2xl transition-all duration-300 transform translate-y-0 scale-100 flex flex-col items-center"
+            @click.stop
+          >
+            <!-- Drag handle on mobile (purely visual) -->
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mb-5 sm:hidden shrink-0"></div>
+
+            <!-- Header -->
+            <div class="flex items-center justify-between w-full mb-4">
+              <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Compartilhar link</h3>
+              <button @click="activeShareModalLink = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer">
+                <span class="material-symbols-outlined text-xl">close</span>
+              </button>
+            </div>
+
+            <!-- Link Card Preview -->
+            <div class="w-full bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 mb-5 border border-slate-100 dark:border-slate-800/80 flex flex-col items-center text-center">
+              <!-- Icon container -->
+              <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black/5 border border-slate-200 dark:border-slate-800 shadow-3xs">
+                <img v-if="isImageUrl(activeShareModalLink.icon)" :src="activeShareModalLink.icon" :alt="activeShareModalLink.title" class="w-full h-full object-cover">
+                <div v-else-if="activeShareModalLink.icon && brandIcons[activeShareModalLink.icon]" class="w-6 h-6 shrink-0 flex items-center justify-center text-slate-800 dark:text-white" v-html="brandIcons[activeShareModalLink.icon]"></div>
+                <span v-else class="material-symbols-outlined text-[24px] shrink-0 text-slate-500 dark:text-slate-400">{{ activeShareModalLink.icon || 'link' }}</span>
+              </div>
+              <p class="font-extrabold text-sm text-slate-900 dark:text-white mt-3 truncate w-full px-2">{{ activeShareModalLink.title }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 select-all break-all w-full px-2">{{ getUrlDomain(activeShareModalLink.url) }}</p>
+            </div>
+
+            <!-- Sharing Options -->
+            <div class="w-full text-left">
+              <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Compartilhar via</p>
+              
+              <div class="flex items-center gap-3.5 overflow-x-auto pb-2 w-full no-scrollbar">
+                <!-- Copy Link -->
+                <button 
+                  @click="copyLinkUrl" 
+                  class="flex flex-col items-center gap-2 shrink-0 group/share cursor-pointer"
+                >
+                  <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center group-hover/share:bg-slate-200 dark:group-hover/share:bg-slate-700 transition-colors shadow-2xs">
+                    <span class="material-symbols-outlined text-lg">{{ copySuccess ? 'check' : 'link' }}</span>
+                  </div>
+                  <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">
+                    {{ copySuccess ? 'Copiado!' : 'Copiar' }}
+                  </span>
+                </button>
+
+                <!-- WhatsApp -->
+                <a 
+                  :href="`https://api.whatsapp.com/send?text=${encodeURIComponent(activeShareModalLink.title + ' - ' + activeShareModalLink.url)}`" 
+                  target="_blank"
+                  class="flex flex-col items-center gap-2 shrink-0 group/share"
+                >
+                  <div class="w-12 h-12 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center hover:bg-[#25D366]/20 transition-colors shadow-2xs">
+                    <div class="w-5 h-5 fill-current" v-html="brandIcons.whatsapp"></div>
+                  </div>
+                  <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">WhatsApp</span>
+                </a>
+
+                <!-- X (Twitter) -->
+                <a 
+                  :href="`https://x.com/intent/tweet?url=${encodeURIComponent(activeShareModalLink.url)}&text=${encodeURIComponent(activeShareModalLink.title)}`" 
+                  target="_blank"
+                  class="flex flex-col items-center gap-2 shrink-0 group/share"
+                >
+                  <div class="w-12 h-12 rounded-full bg-black/10 dark:bg-white/10 text-black dark:text-white flex items-center justify-center hover:bg-black/20 dark:hover:bg-white/20 transition-colors shadow-2xs">
+                    <div class="w-4 h-4 fill-current" v-html="brandIcons.x"></div>
+                  </div>
+                  <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">X / Twitter</span>
+                </a>
+
+                <!-- Facebook -->
+                <a 
+                  :href="`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(activeShareModalLink.url)}`" 
+                  target="_blank"
+                  class="flex flex-col items-center gap-2 shrink-0 group/share"
+                >
+                  <div class="w-12 h-12 rounded-full bg-[#1877F2]/10 text-[#1877F2] flex items-center justify-center hover:bg-[#1877F2]/20 transition-colors shadow-2xs">
+                    <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  </div>
+                  <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">Facebook</span>
+                </a>
+
+                <!-- LinkedIn -->
+                <a 
+                  :href="`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(activeShareModalLink.url)}`" 
+                  target="_blank"
+                  class="flex flex-col items-center gap-2 shrink-0 group/share"
+                >
+                  <div class="w-12 h-12 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] flex items-center justify-center hover:bg-[#0A66C2]/20 transition-colors shadow-2xs">
+                    <div class="w-4 h-4 fill-current" v-html="brandIcons.linkedin"></div>
+                  </div>
+                  <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">LinkedIn</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Avyro CTA Banner -->
+            <div class="w-full border-t border-slate-100 dark:border-slate-800/80 pt-5 mt-5 text-left">
+              <h4 class="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">Junte-se a {{ profile?.display_name || profile?.username }} no Avyro</h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Crie seu perfil profissional e comece a compartilhar seus links com um visual incrível.</p>
+              
+              <div class="flex flex-col gap-2 mt-4 w-full">
+                <a href="/register" class="w-full py-3 bg-slate-950 dark:bg-white text-white dark:text-slate-950 font-bold text-xs rounded-full transition-all block text-center shadow-md hover:scale-[1.01] active:scale-[0.99]">
+                  Cadastre-se gratuitamente
+                </a>
+                <a href="/" class="w-full py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-full transition-all block text-center hover:scale-[1.01] active:scale-[0.99]">
+                  Saiba mais
+                </a>
+              </div>
+            </div>
+
+            <!-- Report Link Option -->
+            <div class="w-full flex justify-center mt-5 pt-3.5 border-t border-slate-50 dark:border-slate-800/50 shrink-0">
+              <button 
+                v-if="!reportSuccess"
+                @click="reportSuccess = true" 
+                class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors uppercase tracking-wider cursor-pointer"
+              >
+                <span class="material-symbols-outlined text-sm">flag</span>
+                Reportar link
+              </button>
+              <span v-else class="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">check_circle</span>
+                Link reportado
+              </span>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
     </div>
   </div>
 </template>
@@ -721,5 +907,13 @@ const pageCssStyle = computed(() => {
   height: 100%;
   max-width: 100%;
   max-height: 100%;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>
