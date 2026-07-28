@@ -20,12 +20,26 @@ export default defineEventHandler(async (event) => {
 
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
+  // 1. Obter perfil atual do usuário no Supabase para verificar se já possui Plano Pro ativo
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+
+  if (profile && profile.subscription_status === 'active') {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Sua conta já possui o Plano Pro ativo! Você não precisa resgatar o cupom novamente.'
+    })
+  }
+
   let isValid = false
   let matchedCouponId: string | null = null
   let couponDetails = 'Plano Pro Ativo'
   let stripeInstance: Stripe | null = null
 
-  // 1. Validar via Stripe API (Checa Código de Promoção, ID do Cupom e Nome do Cupom no Stripe)
+  // 2. Validar via Stripe API (Checa Código de Promoção, ID do Cupom e Nome do Cupom no Stripe)
   if (stripeKey) {
     try {
       stripeInstance = new Stripe(stripeKey, { apiVersion: '2025-01-27.acacia' as any })
@@ -82,7 +96,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 2. Cupons padrão adicionais do sistema (para redundância)
+  // 3. Cupons padrão adicionais do sistema (para redundância)
   const defaultSystemCoupons = ['VIPAMIGOS', '1ANOGRATIS', 'VIP1ANO', 'PRO1ANO', 'BIANCA100', 'MEUSITE100', '100OFF']
   if (!isValid && defaultSystemCoupons.includes(cleanCode)) {
     isValid = true
@@ -94,13 +108,6 @@ export default defineEventHandler(async (event) => {
       statusMessage: `O cupom "${cleanCode}" não foi encontrado ou não está ativo no Stripe. Verifique a digitação.`
     })
   }
-
-  // 3. Obter perfil atual do usuário no Supabase
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
 
   let stripeCustomerId = profile?.stripe_customer_id || null
   let stripeSubscriptionId = profile?.stripe_subscription_id || null
