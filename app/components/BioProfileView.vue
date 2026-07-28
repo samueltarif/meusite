@@ -75,21 +75,46 @@ if (profile.value) {
 
 function detectClickPlatform(): string {
   if (import.meta.server) return 'Direto'
+  
+  const savedSource = sessionStorage.getItem('avyro_traffic_source')
+  if (savedSource && savedSource !== 'Direto') return savedSource
+
   const referrer = (document.referrer || '').toLowerCase()
+  const userAgent = (navigator.userAgent || '').toLowerCase()
   const searchParams = new URLSearchParams(window.location.search)
   const utmSource = (searchParams.get('utm_source') || searchParams.get('ref') || searchParams.get('source') || '').toLowerCase()
 
-  if (utmSource.includes('instagram') || referrer.includes('instagram.com')) return 'Instagram'
-  if (utmSource.includes('tiktok') || referrer.includes('tiktok.com')) return 'TikTok'
-  if (utmSource.includes('whatsapp') || referrer.includes('whatsapp.com') || referrer.includes('wa.me')) return 'WhatsApp'
-  if (utmSource.includes('youtube') || referrer.includes('youtube.com') || referrer.includes('youtu.be')) return 'YouTube'
-  if (utmSource.includes('twitter') || utmSource.includes('x') || referrer.includes('t.co') || referrer.includes('twitter.com') || referrer.includes('x.com')) return 'X (Twitter)'
-  if (utmSource.includes('facebook') || referrer.includes('facebook.com') || referrer.includes('fb.com')) return 'Facebook'
-  if (utmSource.includes('pinterest') || referrer.includes('pinterest.com')) return 'Pinterest'
+  // 1. UTM / Query parameters
+  if (utmSource.includes('instagram') || utmSource.includes('insta')) return 'Instagram'
+  if (utmSource.includes('tiktok')) return 'TikTok'
+  if (utmSource.includes('whatsapp') || utmSource.includes('wa')) return 'WhatsApp'
+
+  // 2. Referrer headers
+  if (referrer.includes('instagram.com') || referrer.includes('l.instagram.com')) return 'Instagram'
+  if (referrer.includes('tiktok.com')) return 'TikTok'
+  if (referrer.includes('whatsapp.com') || referrer.includes('wa.me')) return 'WhatsApp'
+  if (referrer.includes('youtube.com') || referrer.includes('youtu.be')) return 'YouTube'
+  if (referrer.includes('t.co') || referrer.includes('twitter.com') || referrer.includes('x.com')) return 'X (Twitter)'
+  if (referrer.includes('facebook.com') || referrer.includes('fb.com') || referrer.includes('l.facebook.com')) return 'Facebook'
   if (referrer.includes('google.com')) return 'Google'
+
+  // 3. User Agent Inspection for In-App WebViews (Instagram, TikTok, WhatsApp apps)
+  if (userAgent.includes('instagram')) return 'Instagram'
+  if (userAgent.includes('tiktok') || userAgent.includes('musical_ly')) return 'TikTok'
+  if (userAgent.includes('whatsapp')) return 'WhatsApp'
+
   if (referrer) return 'Outro Site'
   return 'Direto'
 }
+
+onMounted(() => {
+  if (import.meta.client) {
+    const source = detectClickPlatform()
+    if (source && source !== 'Direto') {
+      sessionStorage.setItem('avyro_traffic_source', source)
+    }
+  }
+})
 
 async function handleClick(link: LinkItem) {
   try {
