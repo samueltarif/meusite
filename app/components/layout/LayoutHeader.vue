@@ -23,10 +23,8 @@ function closeMenu() {
       
       <!-- Logo: Avyro -->
       <NuxtLink to="/" class="flex items-center gap-2.5 group">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.8)] p-[1.5px]">
-          <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
-            <span class="font-heading font-black text-[#00f0ff] text-sm tracking-tighter">A</span>
-          </div>
+        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)] p-[1.5px] shrink-0">
+          <img src="/favicon.png" alt="Avyro Logo" class="w-full h-full object-contain rounded-full bg-[#0d0928]">
         </div>
         <span class="font-heading text-xl font-extrabold text-white tracking-tight">Avyro</span>
       </NuxtLink>
