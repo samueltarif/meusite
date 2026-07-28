@@ -456,6 +456,38 @@ const newLinkTitle = ref('')
 const newLinkUrl = ref('')
 const uploadingLinkIcon = ref(false)
 
+// Pro Upgrade Gate State
+const showProModal = ref(false)
+const proFeatureTitle = ref('')
+const proFeatureMessage = ref('')
+
+function checkProGate(featureName: string): boolean {
+  if (subscriptionStatus.value === 'active') return true
+  
+  if (featureName === 'link_limit') {
+    proFeatureTitle.value = 'Limite do Plano Gratuito (5 Links)'
+    proFeatureMessage.value = 'No Plano Gratuito você pode adicionar até 5 links. Faça o upgrade para o Plano Pro para ter links ilimitados!'
+  } else if (featureName === 'multimedia') {
+    proFeatureTitle.value = 'Blocos Multimídia (Vídeo e Spotify)'
+    proFeatureMessage.value = 'Os blocos interativos de Player de Vídeo e Player do Spotify são exclusivos do Plano Pro!'
+  } else if (featureName === 'button_photo') {
+    proFeatureTitle.value = 'Fotos Personalizadas nos Botões'
+    proFeatureMessage.value = 'Adicionar fotos de capa personalizadas nas miniaturas dos botões é um recurso exclusivo do Plano Pro!'
+  } else if (featureName === 'custom_bg') {
+    proFeatureTitle.value = 'Fundos Personalizados & Bancos de Fotos'
+    proFeatureMessage.value = 'Imagens de fundo personalizadas, busca no Pexels/Unsplash e GIFs do Giphy são exclusivos do Plano Pro!'
+  } else if (featureName === 'custom_button') {
+    proFeatureTitle.value = 'Customizador Avançado de Botões'
+    proFeatureMessage.value = 'Sombras personalizadas, fundos transparentes e bordas estilizadas são exclusivos do Plano Pro!'
+  } else {
+    proFeatureTitle.value = 'Recurso Exclusivo do Plano Pro'
+    proFeatureMessage.value = 'Faça o upgrade para o Plano Pro para desbloquear este recurso incrível!'
+  }
+
+  showProModal.value = true
+  return false
+}
+
 // Link Editing Modal State
 const showEditLinkModal = ref(false)
 const editingLink = ref<{ id: any; title: string; url: string; icon: string } | null>(null)
@@ -467,6 +499,7 @@ function isImageUrl(urlStr?: string) {
 }
 
 async function handleLinkIconUpload(event: Event, isEditing = false) {
+  if (!checkProGate('button_photo')) return
   const input = event.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
 
@@ -697,6 +730,7 @@ function openAddPlatform(platId: string) {
 }
 
 async function addPlatformLink() {
+  if (links.value.length >= 5 && !checkProGate('link_limit')) return
   if (!platformInputTitle.value || !platformInputUrl.value || !currentUser.value) return
   const plat = platforms.find(p => p.id === showAddPlatformId.value)
 
@@ -726,6 +760,7 @@ async function addPlatformLink() {
 
 // ─── Custom Link Add ───
 async function addCustomLink() {
+  if (links.value.length >= 5 && !checkProGate('link_limit')) return
   if (!newLinkTitle.value || !newLinkUrl.value || !currentUser.value) return
   let url = newLinkUrl.value
   if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url
@@ -752,6 +787,8 @@ async function addCustomLink() {
 }
 
 async function addSpotifyBlock() {
+  if (!checkProGate('multimedia')) return
+  if (links.value.length >= 5 && !checkProGate('link_limit')) return
   if (!spotifyInputUrl.value || !currentUser.value) return
   let url = spotifyInputUrl.value.trim()
   
@@ -2044,6 +2081,42 @@ async function logout() {
             </button>
           </div>
         </form>
+
+      </div>
+    </div>
+
+    <!-- Pro Upgrade Modal -->
+    <div v-if="showProModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 relative space-y-6 text-center">
+        
+        <button @click="showProModal = false" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center transition-colors">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+
+        <div class="w-16 h-16 bg-gradient-to-tr from-amber-500 to-yellow-400 text-white rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-amber-500/30">
+          <span class="material-symbols-outlined text-3xl">workspace_premium</span>
+        </div>
+
+        <div class="space-y-2">
+          <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
+            Recurso Exclusivo do Plano Pro
+          </span>
+          <h3 class="font-heading font-extrabold text-2xl text-gray-900">{{ proFeatureTitle }}</h3>
+          <p class="text-xs text-gray-600 leading-relaxed max-w-xs mx-auto">
+            {{ proFeatureMessage }}
+          </p>
+        </div>
+
+        <div class="pt-2 space-y-3">
+          <button @click="showProModal = false; showCouponModal = true" class="w-full py-3.5 px-6 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-lg">confirmation_number</span>
+            Resgatar Cupom (1 Ano Grátis)
+          </button>
+          
+          <button @click="showProModal = false" class="w-full py-2.5 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">
+            Continuar no Plano Gratuito
+          </button>
+        </div>
 
       </div>
     </div>

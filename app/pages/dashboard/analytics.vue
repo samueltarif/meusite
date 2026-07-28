@@ -184,6 +184,22 @@ function formatDayLabel(dateStr: string) {
 
       <template v-else>
 
+        <!-- Pro Upgrade Banner if Free User -->
+        <div v-if="profile?.subscription_status !== 'active'" class="p-6 rounded-3xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-xl flex items-center justify-between gap-6 flex-wrap sm:flex-nowrap">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-2xl">workspace_premium</span>
+              <h3 class="font-heading font-extrabold text-lg">Desbloqueie o Analytics Completo do Plano Pro</h3>
+            </div>
+            <p class="text-xs text-amber-950 font-medium max-w-xl">
+              Sua conta está no Plano Gratuito. Ative o Plano Pro para visualizar o gráfico de cliques por dia, origens detalhadas de tráfego (Instagram, TikTok, WhatsApp) e relatórios avançados!
+            </p>
+          </div>
+          <NuxtLink to="/dashboard" class="px-6 py-3 bg-white text-amber-950 hover:bg-amber-50 font-bold text-xs rounded-2xl shadow-md transition-all shrink-0">
+            Resgatar Cupom no Painel
+          </NuxtLink>
+        </div>
+
         <!-- KPI Cards Grid (Linktree Core Metrics) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <!-- Card 1: Total Views -->
