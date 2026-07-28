@@ -1218,11 +1218,31 @@ async function logout() {
         </div>
       </div>
 
-      <!-- Step 3: Playground Customizer + Live Preview Side-by-Side -->
-      <div class="grid grid-cols-12 gap-1.5 sm:gap-8 items-start">
+      <!-- Step 3: Playground Customizer + Live Preview (Mobile First Full Width + Desktop Side-by-Side) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-        <!-- Left Column: Customizer Controls (7 cols) -->
-        <div class="col-span-7 bg-white p-3 sm:p-8 rounded-2xl sm:rounded-3xl border border-[#EEEEEE] shadow-sm space-y-6 sm:space-y-8 min-w-0">
+        <!-- Left Column: Customizer Controls (Full width on mobile, 7 cols on desktop) -->
+        <div class="lg:col-span-7 bg-white p-5 sm:p-8 rounded-3xl border border-[#EEEEEE] shadow-sm space-y-8 min-w-0">
+          <!-- Mobile Sticky Live Preview Helper Bar -->
+          <div class="lg:hidden sticky top-20 z-30 bg-slate-900/95 backdrop-blur-md p-3.5 rounded-2xl border border-slate-800 shadow-xl text-white flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-base">smartphone</span>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                  Preview Ao Vivo
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                </h4>
+                <p class="text-[10px] text-gray-400 font-mono">Edições em tempo real</p>
+              </div>
+            </div>
+
+            <a href="#phone-mockup" class="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1">
+              <span>Ver Celular</span>
+              <span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+            </a>
+          </div>
           <div>
             <h2 class="font-heading text-xl font-extrabold text-[#111111] mb-1 flex items-center gap-2">
               <span class="material-symbols-outlined text-secondary">tune</span>
@@ -1790,10 +1810,9 @@ async function logout() {
           </button>
         </div>
 
-        <!-- Right Column: Interactive Phone Preview (5 cols) -->
-        <div class="col-span-5 sticky top-20 flex justify-center overflow-visible z-20">
-          <div class="w-full flex justify-center origin-top scale-[0.48] xs:scale-[0.62] sm:scale-[0.8] md:scale-100 transition-transform -mr-[135px] xs:-mr-[95px] sm:mr-0 shrink-0">
-            <div class="relative w-[340px] h-[680px] bg-slate-950 rounded-[48px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] p-[12px] border-4 border-slate-800 shrink-0">
+        <!-- Right Column: Interactive Phone Preview (5 cols on Desktop, centered full on Mobile) -->
+        <div id="phone-mockup" class="lg:col-span-5 lg:sticky lg:top-8 flex justify-center w-full pt-4 lg:pt-0 scroll-mt-24">
+          <div class="relative w-full max-w-[340px] h-[680px] bg-slate-950 rounded-[48px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] p-[12px] border-4 border-slate-800 shrink-0">
             <!-- Speaker & Camera -->
             <div class="absolute top-[22px] left-1/2 -translate-x-1/2 w-32 h-[20px] bg-slate-900 rounded-full flex items-center justify-center gap-2 z-30">
               <span class="w-1.5 h-1.5 rounded-full bg-slate-800"></span>
