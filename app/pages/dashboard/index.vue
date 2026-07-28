@@ -1218,11 +1218,11 @@ async function logout() {
         </div>
       </div>
 
-      <!-- Step 3: Playground Customizer + Preview (IDENTICAL layout to /link-in-bio) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- Step 3: Playground Customizer + Live Preview Side-by-Side -->
+      <div class="grid grid-cols-12 gap-1.5 sm:gap-8 items-start">
 
         <!-- Left Column: Customizer Controls (7 cols) -->
-        <div :class="['lg:col-span-7 bg-white p-4 sm:p-8 rounded-3xl border border-[#EEEEEE] shadow-sm space-y-8', mobileViewMode === 'preview' ? 'hidden lg:block' : 'block']">
+        <div class="col-span-7 bg-white p-3 sm:p-8 rounded-2xl sm:rounded-3xl border border-[#EEEEEE] shadow-sm space-y-6 sm:space-y-8 min-w-0">
           <div>
             <h2 class="font-heading text-xl font-extrabold text-[#111111] mb-1 flex items-center gap-2">
               <span class="material-symbols-outlined text-secondary">tune</span>
@@ -1791,8 +1791,9 @@ async function logout() {
         </div>
 
         <!-- Right Column: Interactive Phone Preview (5 cols) -->
-        <div :class="['lg:col-span-5 lg:sticky lg:top-8 flex justify-center', mobileViewMode === 'editor' ? 'hidden lg:flex' : 'flex']">
-          <div class="relative w-[340px] h-[680px] bg-slate-950 rounded-[48px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] p-[12px] border-4 border-slate-800">
+        <div class="col-span-5 sticky top-20 flex justify-center overflow-visible z-20">
+          <div class="w-full flex justify-center origin-top scale-[0.48] xs:scale-[0.62] sm:scale-[0.8] md:scale-100 transition-transform -mr-[135px] xs:-mr-[95px] sm:mr-0 shrink-0">
+            <div class="relative w-[340px] h-[680px] bg-slate-950 rounded-[48px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] p-[12px] border-4 border-slate-800 shrink-0">
             <!-- Speaker & Camera -->
             <div class="absolute top-[22px] left-1/2 -translate-x-1/2 w-32 h-[20px] bg-slate-900 rounded-full flex items-center justify-center gap-2 z-30">
               <span class="w-1.5 h-1.5 rounded-full bg-slate-800"></span>
@@ -1890,37 +1891,9 @@ async function logout() {
           </div>
         </div>
       </div>
-
     </div>
 
-    <!-- Mobile Floating Live Preview Switcher -->
-    <div class="lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-xl border border-white/20 p-1.5 rounded-full shadow-2xl flex items-center gap-1.5 w-[90%] max-w-[340px]">
-      <button
-        @click="mobileViewMode = 'editor'"
-        :class="[
-          'flex-1 py-2.5 px-3 rounded-full text-xs font-extrabold transition-all flex items-center justify-center gap-1.5',
-          mobileViewMode === 'editor'
-            ? 'bg-secondary text-white shadow-md'
-            : 'text-gray-400 hover:text-white'
-        ]"
-      >
-        <span class="material-symbols-outlined text-[16px]">edit</span>
-        <span>Personalizar</span>
-      </button>
-
-      <button
-        @click="mobileViewMode = 'preview'"
-        :class="[
-          'flex-1 py-2.5 px-3 rounded-full text-xs font-extrabold transition-all flex items-center justify-center gap-1.5',
-          mobileViewMode === 'preview'
-            ? 'bg-purple-600 text-white shadow-md'
-            : 'text-gray-400 hover:text-white'
-        ]"
-      >
-        <span class="material-symbols-outlined text-[16px]">smartphone</span>
-        <span>Preview Vivo</span>
-      </button>
-    </div>
+  </div>
 
     <!-- Pexels & Unsplash Photo Picker Modal -->
     <div v-if="showPhotoModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
