@@ -18,6 +18,14 @@ let timer: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
   try {
+    const hash = window.location.hash || ''
+    const search = window.location.search || ''
+
+    if (hash.includes('type=recovery') || search.includes('type=recovery')) {
+      router.push('/auth/reset-password' + hash)
+      return
+    }
+
     // Supabase automatically handles the token exchange from the URL hash
     const { data, error } = await supabase.auth.getSession()
 

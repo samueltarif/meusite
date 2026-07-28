@@ -19,10 +19,17 @@ const successMessage = ref('')
 const router = useRouter()
 
 onMounted(async () => {
-  // Check if session token was received from Supabase reset link
+  const hash = window.location.hash || ''
+  const search = window.location.search || ''
+
+  if (hash.includes('access_token') || hash.includes('type=recovery') || search.includes('type=recovery')) {
+    errorMessage.value = ''
+    return
+  }
+
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session && !window.location.hash.includes('access_token')) {
-    errorMessage.value = 'Link de redefinição inválido ou expirado. Por favor, solicite um novo link.'
+  if (!session) {
+    errorMessage.value = 'Por favor, utilize o link de redefinição enviado para o seu e-mail para cadastrar a nova senha.'
   }
 })
 
