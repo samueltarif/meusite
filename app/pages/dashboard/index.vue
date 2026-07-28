@@ -454,6 +454,99 @@ const platformInputTitle = ref('')
 const newLinkIcon = ref('')
 const newLinkTitle = ref('')
 const newLinkUrl = ref('')
+const uploadingLinkIcon = ref(false)
+
+// Link Editing Modal State
+const showEditLinkModal = ref(false)
+const editingLink = ref<{ id: any; title: string; url: string; icon: string } | null>(null)
+const savingEditLink = ref(false)
+
+function isImageUrl(urlStr?: string) {
+  if (!urlStr) return false
+  return urlStr.startsWith('http://') || urlStr.startsWith('https://') || urlStr.startsWith('data:image/') || urlStr.startsWith('/uploads/')
+}
+
+async function handleLinkIconUpload(event: Event, isEditing = false) {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  const file = input.files[0]
+  uploadingLinkIcon.value = true
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await $fetch<{ success: boolean; url: string }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (res && res.url) {
+      if (isEditing && editingLink.value) {
+        editingLink.value.icon = res.url
+      } else {
+        newLinkIcon.value = res.url
+      }
+    }
+  } catch (err: any) {
+    console.error('Erro no upload da imagem do link:', err)
+    errorMsg.value = `Erro no upload: ${err.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+  } finally {
+    uploadingLinkIcon.value = false
+    input.value = ''
+  }
+}
+
+function openEditLinkModal(link: any) {
+  editingLink.value = {
+    id: link.id,
+    title: link.title || '',
+    url: link.url || '',
+    icon: link.icon || ''
+  }
+  showEditLinkModal.value = true
+}
+
+async function saveLinkEdit() {
+  if (!editingLink.value || !currentUser.value) return
+  savingEditLink.value = true
+
+  try {
+    let url = editingLink.value.url.trim()
+    if (!url.startsWith('http://') && !url.startsWith('https://') && editingLink.value.icon !== 'spotify_embed' && editingLink.value.icon !== 'video_card') {
+      url = 'https://' + url
+    }
+
+    const { error } = await supabase
+      .from('links')
+      .update({
+        title: editingLink.value.title,
+        url,
+        icon: editingLink.value.icon
+      })
+      .eq('id', editingLink.value.id)
+
+    if (error) throw error
+
+    const idx = links.value.findIndex(l => l.id === editingLink.value?.id)
+    if (idx !== -1) {
+      links.value[idx].title = editingLink.value.title
+      links.value[idx].url = url
+      links.value[idx].icon = editingLink.value.icon
+    }
+
+    showEditLinkModal.value = false
+    editingLink.value = null
+  } catch (err: any) {
+    console.error('Erro ao salvar edição do link:', err)
+    errorMsg.value = `Erro ao atualizar link: ${err.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+  } finally {
+    savingEditLink.value = false
+  }
+}
 
 // ─── Block Creator Type Selector State ───
 const activeBlockType = ref<'link' | 'spotify' | 'video'>('link')
@@ -1403,7 +1496,11 @@ async function logout() {
                     </button>
                   </div>
 
-                  <div v-if="link.icon === 'spotify_embed'" class="w-8 h-8 rounded-xl bg-green-500/10 text-green-600 p-2 flex items-center justify-center shrink-0">
+                  <!-- Icon or Custom Round Image Thumbnail -->
+                  <div v-if="isImageUrl(link.icon)" class="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-gray-200 shadow-2xs">
+                    <img :src="link.icon" :alt="link.title" class="w-full h-full object-cover">
+                  </div>
+                  <div v-else-if="link.icon === 'spotify_embed'" class="w-8 h-8 rounded-xl bg-green-500/10 text-green-600 p-2 flex items-center justify-center shrink-0">
                     <span class="material-symbols-outlined text-[18px]">podcasts</span>
                   </div>
                   <div v-else-if="link.icon === 'video_card'" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-600 p-2 flex items-center justify-center shrink-0">
@@ -1422,6 +1519,9 @@ async function logout() {
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   <span class="text-[10px] font-mono text-secondary bg-secondary/10 px-2 py-0.5 rounded-full">{{ link.clicks_count || 0 }} cliques</span>
+                  <button @click="openEditLinkModal(link)" title="Editar link e imagem" class="text-secondary hover:bg-secondary/10 p-2 rounded-full transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                  </button>
                   <button @click="removeLink(link.id)" title="Excluir link" class="text-red-400 hover:bg-red-50 p-2 rounded-full transition-colors">
                     <span class="material-symbols-outlined text-[18px]">delete</span>
                   </button>
@@ -1456,8 +1556,23 @@ async function logout() {
               <!-- Form 1: Standard Link -->
               <div v-if="activeBlockType === 'link'" class="space-y-4 bg-[#FAFAFA] p-4 rounded-2xl border border-[#EEEEEE]">
                 <div>
-                  <label class="block text-xs font-semibold text-[#111111] mb-1.5">Ícone Oficial da Plataforma</label>
-                  <div class="flex flex-wrap gap-1.5">
+                  <div class="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                    <label class="block text-xs font-semibold text-[#111111]">Ícone Oficial ou Foto de Capa do Botão</label>
+                    <label class="cursor-pointer px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1">
+                      <span v-if="uploadingLinkIcon" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                      <span v-else class="material-symbols-outlined text-[14px]">add_photo_alternate</span>
+                      {{ uploadingLinkIcon ? 'Enviando...' : 'Carregar Foto Personalizada' }}
+                      <input type="file" accept="image/*" @change="e => handleLinkIconUpload(e, false)" class="hidden">
+                    </label>
+                  </div>
+
+                  <div class="flex flex-wrap gap-1.5 items-center">
+                    <div v-if="isImageUrl(newLinkIcon)" class="w-8 h-8 rounded-full border-2 border-secondary overflow-hidden shrink-0 shadow-xs relative group" title="Foto selecionada">
+                      <img :src="newLinkIcon" class="w-full h-full object-cover">
+                      <button @click="newLinkIcon = ''" title="Remover foto" class="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined text-[14px]">close</span>
+                      </button>
+                    </div>
                     <button v-for="pIcon in topPlatformsIcons" :key="pIcon.id" @click="newLinkIcon = pIcon.icon"
                       :class="['px-2.5 py-1.5 text-[11px] rounded-xl border transition-all flex items-center gap-1.5 font-medium',
                         newLinkIcon === pIcon.icon ? 'border-secondary bg-secondary text-white font-bold shadow-sm' : 'border-[#EEEEEE] bg-white text-[#444] hover:border-secondary/40 hover:text-secondary'
@@ -1470,7 +1585,7 @@ async function logout() {
                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                   <div class="sm:col-span-5">
                     <label class="block text-xs font-semibold text-[#111111] mb-1">Título do botão</label>
-                    <input v-model="newLinkTitle" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white" placeholder="Ex: Entre em contato no WhatsApp">
+                    <input v-model="newLinkTitle" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white" placeholder="Ex: Pegue aqui um presente 🎁">
                   </div>
                   <div class="sm:col-span-5">
                     <label class="block text-xs font-semibold text-[#111111] mb-1">URL de destino</label>
@@ -1668,13 +1783,21 @@ async function logout() {
                     <!-- Case 3: Standard Link Button -->
                     <a v-else href="#"
                       :class="[
-                        'w-full py-3 px-4 text-center font-bold text-xs md:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm', 
+                        'w-full py-3 px-4 font-bold text-xs md:text-sm flex items-center justify-between transition-all duration-300 shadow-sm relative group overflow-hidden', 
                         computedButtonClasses, 
                         customFontClass.startsWith('custom:') ? '' : customFontClass
                       ]"
                       :style="computedButtonStyles">
-                      <div v-if="link.icon && brandIcons[link.icon]" class="w-4 h-4 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
-                      <span>{{ link.title }}</span>
+                      <!-- Left Thumbnail Image / Icon -->
+                      <div class="w-7 h-7 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black/5 border border-white/20 shadow-2xs">
+                        <img v-if="isImageUrl(link.icon)" :src="link.icon" :alt="link.title" class="w-full h-full object-cover">
+                        <div v-else-if="link.icon && brandIcons[link.icon]" class="w-3.5 h-3.5 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
+                        <span v-else class="material-symbols-outlined text-[16px] shrink-0">{{ link.icon || 'link' }}</span>
+                      </div>
+
+                      <span class="flex-1 text-center font-bold truncate px-2">{{ link.title }}</span>
+
+                      <div class="w-7 h-7 shrink-0"></div>
                     </a>
                   </template>
                 </div>
@@ -1856,6 +1979,68 @@ async function logout() {
             {{ redeemingCoupon ? 'Validando Cupom...' : 'Ativar Plano Pro Grátis' }}
           </button>
         </form>
+      </div>
+    </div>
+
+    <!-- Edit Link Modal -->
+    <div v-if="showEditLinkModal && editingLink" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 relative space-y-5">
+        
+        <button @click="showEditLinkModal = false" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center transition-colors">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+
+        <div class="text-center space-y-1">
+          <div class="w-12 h-12 bg-secondary/10 text-secondary rounded-2xl mx-auto flex items-center justify-center mb-2">
+            <span class="material-symbols-outlined text-2xl">edit</span>
+          </div>
+          <h3 class="font-heading font-extrabold text-xl text-gray-900">Editar Botão / Link</h3>
+          <p class="text-xs text-gray-500">Altere o título, URL ou a foto de capa do seu botão.</p>
+        </div>
+
+        <!-- Thumbnail Image & Upload Button -->
+        <div class="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-white border border-gray-200 shadow-2xs flex items-center justify-center">
+            <img v-if="isImageUrl(editingLink.icon)" :src="editingLink.icon" class="w-full h-full object-cover">
+            <div v-else-if="editingLink.icon && brandIcons[editingLink.icon]" class="w-6 h-6 shrink-0" v-html="brandIcons[editingLink.icon]"></div>
+            <span v-else class="material-symbols-outlined text-gray-400 text-xl">link</span>
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <label class="cursor-pointer px-3 py-1.5 bg-secondary text-white font-bold text-xs rounded-xl shadow-xs hover:bg-secondary/90 transition-all inline-flex items-center gap-1.5">
+              <span v-if="uploadingLinkIcon" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+              <span v-else class="material-symbols-outlined text-[14px]">add_photo_alternate</span>
+              {{ uploadingLinkIcon ? 'Enviando...' : 'Trocar Foto de Capa' }}
+              <input type="file" accept="image/*" @change="e => handleLinkIconUpload(e, true)" class="hidden">
+            </label>
+            <button v-if="isImageUrl(editingLink.icon)" @click="editingLink.icon = ''" class="text-[11px] text-red-500 hover:underline block mt-1">
+              Remover Foto
+            </button>
+          </div>
+        </div>
+
+        <form @submit.prevent="saveLinkEdit" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Título do Botão</label>
+            <input v-model="editingLink.title" type="text" class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:border-secondary font-medium" required>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">URL de Destino</label>
+            <input v-model="editingLink.url" type="text" class="w-full px-3.5 py-2.5 text-xs font-mono border border-gray-300 rounded-xl focus:outline-none focus:border-secondary" required>
+          </div>
+
+          <div class="pt-2 flex justify-end gap-2">
+            <button type="button" @click="showEditLinkModal = false" class="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50">
+              Cancelar
+            </button>
+            <button type="submit" :disabled="savingEditLink" class="px-6 py-2.5 rounded-xl bg-secondary text-white font-bold text-xs hover:bg-secondary/90 transition-all flex items-center gap-1.5 disabled:opacity-50">
+              <span v-if="savingEditLink" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+              <span>{{ savingEditLink ? 'Salvando...' : 'Salvar Alterações' }}</span>
+            </button>
+          </div>
+        </form>
+
       </div>
     </div>
   </div>

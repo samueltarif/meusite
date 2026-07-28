@@ -170,6 +170,11 @@ function parseVideoPayload(urlStr: string) {
   return { videoUrl: urlStr || '', thumbnailUrl: '' }
 }
 
+function isImageUrl(urlStr?: string) {
+  if (!urlStr) return false
+  return urlStr.startsWith('http://') || urlStr.startsWith('https://') || urlStr.startsWith('data:image/') || urlStr.startsWith('/uploads/')
+}
+
 // Background style engine matching playground
 const pageCssStyle = computed(() => {
   if (!profile.value) return ''
@@ -280,15 +285,24 @@ const pageCssStyle = computed(() => {
             target="_blank"
             @click="handleClick(link)"
             :class="[
-              'w-full py-3.5 px-5 text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm',
+              'w-full py-3.5 px-4 font-bold text-xs sm:text-sm flex items-center justify-between transition-all duration-300 shadow-sm relative group overflow-hidden',
               computedButtonClasses,
               profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')
             ]"
             :style="computedButtonStyles"
           >
-            <div v-if="link.icon && brandIcons[link.icon]" class="w-5 h-5 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
-            <span v-else-if="link.icon" class="material-symbols-outlined text-[18px] shrink-0">{{ link.icon }}</span>
-            <span>{{ link.title }}</span>
+            <!-- Left Thumbnail / Icon -->
+            <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black/5 border border-white/20 shadow-2xs">
+              <img v-if="isImageUrl(link.icon)" :src="link.icon" :alt="link.title" class="w-full h-full object-cover">
+              <div v-else-if="link.icon && brandIcons[link.icon]" class="w-4 h-4 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
+              <span v-else class="material-symbols-outlined text-[18px] shrink-0">{{ link.icon || 'link' }}</span>
+            </div>
+
+            <!-- Button Title -->
+            <span class="flex-1 text-center font-bold truncate px-2">{{ link.title }}</span>
+
+            <!-- Spacer for center alignment -->
+            <div class="w-8 h-8 shrink-0"></div>
           </a>
         </template>
       </div>
