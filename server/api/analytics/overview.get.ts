@@ -96,11 +96,20 @@ export default defineEventHandler(async (event) => {
       })
       clicksByPlatform = platformMap
 
-      // Group by day
+      // Group by day adjusted to America/Sao_Paulo timezone (UTC-3)
       const dayMap: Record<string, number> = {}
       clicksData.forEach((c: any) => {
-        const day = (c.created_at || '').split('T')[0]
-        if (day) dayMap[day] = (dayMap[day] || 0) + 1
+        if (!c.created_at) return
+        try {
+          const dateObj = new Date(c.created_at)
+          const day = dateObj.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
+          if (day && day !== 'Invalid Date') {
+            dayMap[day] = (dayMap[day] || 0) + 1
+          }
+        } catch (e) {
+          const day = c.created_at.split('T')[0]
+          if (day) dayMap[day] = (dayMap[day] || 0) + 1
+        }
       })
       clicksByDay = Object.entries(dayMap)
         .sort(([a], [b]) => a.localeCompare(b))

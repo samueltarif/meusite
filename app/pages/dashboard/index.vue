@@ -607,6 +607,7 @@ const spotifyInputUrl = ref('')
 const newVideoTitle = ref('')
 const newVideoUrl = ref('')
 const newVideoThumbUrl = ref('')
+const newVideoAspectRatio = ref<'16/9' | '9/16' | '1/1'>('16/9')
 const uploadingVideo = ref(false)
 const uploadingThumb = ref(false)
 
@@ -869,7 +870,8 @@ async function addVideoBlock() {
 
   const payload = JSON.stringify({
     videoUrl: newVideoUrl.value,
-    thumbnailUrl: newVideoThumbUrl.value || ''
+    thumbnailUrl: newVideoThumbUrl.value || '',
+    aspectRatio: newVideoAspectRatio.value || '16/9'
   })
 
   const { data, error } = await supabase.from('links').insert({
@@ -891,6 +893,7 @@ async function addVideoBlock() {
   newVideoTitle.value = ''
   newVideoUrl.value = ''
   newVideoThumbUrl.value = ''
+  newVideoAspectRatio.value = '16/9'
 }
 
 async function handleVideoUpload(event: Event, type: 'video' | 'thumb') {
@@ -1187,7 +1190,7 @@ function parseVideoPayload(urlStr: string) {
       return JSON.parse(urlStr)
     }
   } catch (e) {}
-  return { videoUrl: urlStr || '', thumbnailUrl: '' }
+  return { videoUrl: urlStr || '', thumbnailUrl: '', aspectRatio: '16/9' }
 }
 
 function parseSocialPayload(urlStr: string) {
@@ -1948,6 +1951,34 @@ async function logout() {
                     <input v-model="newVideoTitle" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white" placeholder="Ex: Perfect Person Ep. 165">
                   </div>
 
+                  <!-- Aspect Ratio Selector -->
+                  <div>
+                    <label class="block text-xs font-semibold text-[#111111] mb-1">Formato de Exibição do Player</label>
+                    <div class="flex gap-2 flex-wrap">
+                      <button 
+                        @click="newVideoAspectRatio = '16/9'" 
+                        type="button"
+                        :class="['px-3 py-1.5 text-xs font-bold rounded-xl border transition-all', newVideoAspectRatio === '16/9' ? 'bg-secondary text-white border-secondary' : 'bg-white border-[#DDDDDD] text-gray-500 hover:text-gray-700']"
+                      >
+                        🖥️ Widescreen (16:9)
+                      </button>
+                      <button 
+                        @click="newVideoAspectRatio = '9/16'" 
+                        type="button"
+                        :class="['px-3 py-1.5 text-xs font-bold rounded-xl border transition-all', newVideoAspectRatio === '9/16' ? 'bg-secondary text-white border-secondary' : 'bg-white border-[#DDDDDD] text-gray-500 hover:text-gray-700']"
+                      >
+                        📱 Vertical (9:16)
+                      </button>
+                      <button 
+                        @click="newVideoAspectRatio = '1/1'" 
+                        type="button"
+                        :class="['px-3 py-1.5 text-xs font-bold rounded-xl border transition-all', newVideoAspectRatio === '1/1' ? 'bg-secondary text-white border-secondary' : 'bg-white border-[#DDDDDD] text-gray-500 hover:text-gray-700']"
+                      >
+                        ⏹️ Quadrado (1:1)
+                      </button>
+                    </div>
+                  </div>
+
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Video upload -->
                     <div>
@@ -2208,7 +2239,12 @@ async function logout() {
                       </div>
 
                       <!-- Case 2: Custom Video Player Block -->
-                      <div v-else-if="link.icon === 'video_card'" class="w-full rounded-2xl overflow-hidden shadow-md bg-black relative aspect-video group border border-white/10">
+                      <div v-else-if="link.icon === 'video_card'" 
+                        :class="[
+                          'w-full rounded-2xl overflow-hidden shadow-md bg-black relative group border border-white/10 mx-auto',
+                          parseVideoPayload(link.url).aspectRatio === '9/16' ? 'aspect-[9/16] max-w-[200px]' : 
+                          parseVideoPayload(link.url).aspectRatio === '1/1' ? 'aspect-square' : 'aspect-video'
+                        ]">
                         <!-- Poster/Thumbnail -->
                         <img v-if="parseVideoPayload(link.url).thumbnailUrl" :src="parseVideoPayload(link.url).thumbnailUrl" class="w-full h-full object-cover">
                         <div v-else class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-gray-500">

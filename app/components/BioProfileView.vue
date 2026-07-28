@@ -285,7 +285,7 @@ function parseVideoPayload(urlStr: string) {
       return JSON.parse(urlStr)
     }
   } catch (e) {}
-  return { videoUrl: urlStr || '', thumbnailUrl: '' }
+  return { videoUrl: urlStr || '', thumbnailUrl: '', aspectRatio: '16/9' }
 }
 
 function parseSocialPayload(urlStr: string) {
@@ -431,7 +431,12 @@ const pageCssStyle = computed(() => {
             </div>
 
             <!-- Case 2: Custom Video Player Block -->
-            <div v-else-if="link.icon === 'video_card'" class="w-full rounded-2xl overflow-hidden shadow-md bg-black relative aspect-video border border-white/10">
+            <div v-else-if="link.icon === 'video_card'" 
+              :class="[
+                'w-full rounded-2xl overflow-hidden shadow-md bg-black relative border border-white/10 mx-auto',
+                parseVideoPayload(link.url).aspectRatio === '9/16' ? 'aspect-[9/16] max-w-[240px]' : 
+                parseVideoPayload(link.url).aspectRatio === '1/1' ? 'aspect-square' : 'aspect-video'
+              ]">
               <!-- If playing inline -->
               <video v-if="playingVideoId === link.id" :src="parseVideoPayload(link.url).videoUrl" controls autoplay class="w-full h-full object-contain" @play="handleClick(link)"></video>
               
