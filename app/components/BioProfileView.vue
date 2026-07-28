@@ -298,6 +298,18 @@ function parseSocialPayload(urlStr: string) {
 }
 
 const activeTab = ref<'links' | 'shop'>('links')
+const activeProductModalData = ref<{ title: string; price: string; imageUrl: string; targetUrl: string; originalLink: any } | null>(null)
+
+function openProductModal(link: any) {
+  const payload = parseProductPayload(link.url)
+  activeProductModalData.value = {
+    title: link.title,
+    price: payload.price,
+    imageUrl: payload.imageUrl,
+    targetUrl: payload.targetUrl,
+    originalLink: link
+  }
+}
 
 function parseProductPayload(urlStr: string) {
   try {
@@ -539,30 +551,52 @@ const pageCssStyle = computed(() => {
 
       <!-- Shop Product Grid -->
       <div v-else-if="activeTab === 'shop'" class="grid grid-cols-2 gap-4 w-full mb-10">
-        <a
+        <div
           v-for="link in links.filter(l => l.icon === 'shop_product')"
           :key="link.id"
-          :href="parseProductPayload(link.url).targetUrl"
-          target="_blank"
-          @click="handleClick(link)"
-          class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-[24px] p-3 border border-black/5 dark:border-white/5 shadow-md flex flex-col justify-between text-left font-sans group hover:scale-[1.02] transition-all duration-300 cursor-pointer"
+          class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-[24px] p-3.5 border border-black/5 dark:border-white/5 shadow-md flex flex-col justify-between text-left font-sans group hover:scale-[1.02] transition-all duration-300 relative"
         >
           <div>
-            <div class="w-full aspect-square rounded-[18px] overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/40 mb-3 relative">
+            <!-- Image with Zoom Icon Overlay -->
+            <div 
+              v-if="parseProductPayload(link.url).imageUrl"
+              @click="openProductModal(link)" 
+              class="w-full aspect-square rounded-[18px] overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/40 mb-3 relative cursor-zoom-in group/img"
+            >
               <img
-                v-if="parseProductPayload(link.url).imageUrl"
                 :src="parseProductPayload(link.url).imageUrl"
                 :alt="link.title"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                class="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
               />
-              <div v-else class="w-full h-full flex items-center justify-center text-slate-400">
-                <span class="material-symbols-outlined text-3xl">shopping_bag</span>
+              <!-- Hover Zoom Indicator Overlay -->
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 flex items-center justify-center text-white gap-1 text-[11px] font-bold">
+                <span class="material-symbols-outlined text-[16px] font-bold">fullscreen</span>
+                <span>Ampliar</span>
               </div>
             </div>
-            <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white leading-snug line-clamp-2">{{ link.title }}</p>
+            <div v-else class="w-full aspect-square rounded-[18px] overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/40 mb-3 flex items-center justify-center text-slate-400">
+              <span class="material-symbols-outlined text-3xl">shopping_bag</span>
+            </div>
+
+            <!-- Product title with link redirection -->
+            <a :href="parseProductPayload(link.url).targetUrl" target="_blank" @click="handleClick(link)" class="block group/title">
+              <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover/title:text-secondary transition-colors">{{ link.title }}</p>
+            </a>
           </div>
-          <p class="text-xs font-black text-secondary mt-2.5">{{ parseProductPayload(link.url).price }}</p>
-        </a>
+
+          <!-- Price & CTA bar -->
+          <div class="flex items-center justify-between mt-3 pt-2 border-t border-black/5 dark:border-white/5">
+            <span class="text-xs font-black text-secondary">{{ parseProductPayload(link.url).price }}</span>
+            <a 
+              :href="parseProductPayload(link.url).targetUrl" 
+              target="_blank" 
+              @click="handleClick(link)" 
+              class="px-3 py-1 bg-secondary text-white font-extrabold text-[10px] rounded-lg hover:bg-secondary/90 shadow-2xs hover:shadow-xs transition-all"
+            >
+              Comprar
+            </a>
+          </div>
+        </div>
       </div>
 
       <!-- Footer Watermark -->
@@ -572,6 +606,44 @@ const pageCssStyle = computed(() => {
           Powered by Avyro Link-in-Bio
         </span>
       </div>
+
+      <!-- Fullscreen Product Zoom Modal -->
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <div v-if="activeProductModalData" class="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-md">
+          <!-- Close button -->
+          <button @click="activeProductModalData = null" class="absolute top-4 right-4 text-white hover:opacity-85 transition-opacity bg-black/40 hover:bg-black/60 p-2.5 rounded-full flex items-center justify-center z-50">
+            <span class="material-symbols-outlined text-2xl font-bold">close</span>
+          </button>
+          
+          <!-- Image container -->
+          <div class="relative max-w-full max-h-[68vh] overflow-hidden rounded-2xl shadow-2xl bg-black/20 flex items-center justify-center">
+            <img :src="activeProductModalData.imageUrl" :alt="activeProductModalData.title" class="max-w-full max-h-[68vh] object-contain rounded-2xl">
+          </div>
+
+          <!-- Product Details and CTA -->
+          <div class="mt-5 text-center max-w-md w-full px-4 flex flex-col items-center">
+            <h3 class="text-white text-base sm:text-lg font-black leading-snug font-sans">{{ activeProductModalData.title }}</h3>
+            <p class="text-secondary text-sm font-black mt-1 font-sans">{{ activeProductModalData.price }}</p>
+            
+            <div class="flex items-center gap-3 mt-4 w-full">
+              <button @click="activeProductModalData = null" class="flex-1 py-3 border border-white/20 hover:border-white/40 text-white font-bold text-xs rounded-full transition-all">
+                Fechar
+              </button>
+              <a :href="activeProductModalData.targetUrl" target="_blank" @click="handleClick(activeProductModalData.originalLink); activeProductModalData = null" class="flex-1 py-3 bg-secondary hover:bg-secondary/90 text-white font-bold text-xs rounded-full transition-all flex items-center justify-center gap-1.5 shadow-md">
+                <span class="material-symbols-outlined text-[16px] font-bold">shopping_cart</span>
+                Comprar Agora
+              </a>
+            </div>
+          </div>
+        </div>
+      </Transition>
 
     </div>
   </div>
