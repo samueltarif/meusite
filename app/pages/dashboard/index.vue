@@ -1910,6 +1910,7 @@ async function logout() {
           </div>
         </div>
       </div>
+    </div>
 
     <!-- Pexels & Unsplash Photo Picker Modal -->
     <div v-if="showPhotoModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
