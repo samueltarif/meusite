@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { brandIcons } from '~/utils/brandIcons'
 
 const isMenuOpen = ref(false)
 
@@ -20,7 +21,7 @@ function closeMenu() {
   <header class="fixed top-3 sm:top-5 left-0 w-full z-50 px-3 sm:px-8 pointer-events-none">
     <div class="max-w-5xl mx-auto pointer-events-auto bg-[#0d0928]/70 backdrop-blur-2xl border border-purple-500/20 rounded-[20px] shadow-[0_10px_35px_rgba(0,0,0,0.6)] px-5 sm:px-6 py-3 flex justify-between items-center transition-all duration-300">
       
-      <!-- Logo: A Avyro matching Stitch screenshot -->
+      <!-- Logo: Avyro -->
       <NuxtLink to="/" class="flex items-center gap-2.5 group">
         <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.8)] p-[1.5px]">
           <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
@@ -30,7 +31,7 @@ function closeMenu() {
         <span class="font-heading text-xl font-extrabold text-white tracking-tight">Avyro</span>
       </NuxtLink>
 
-      <!-- Desktop Nav matching Stitch exact colors -->
+      <!-- Desktop Nav -->
       <nav class="hidden md:flex gap-7 items-center">
         <NuxtLink
           v-for="link in navLinks"
@@ -42,12 +43,15 @@ function closeMenu() {
         </NuxtLink>
       </nav>
 
-      <!-- Desktop CTA Button: Contact Glass Pill Button matching Stitch -->
+      <!-- Single Support Button: WhatsApp registered number -->
       <a
-        href="/#contact"
-        class="hidden md:inline-flex items-center justify-center px-7 py-2 rounded-full text-sm font-bold text-white bg-white/10 border-2 border-[#00f0ff] shadow-[0_0_25px_rgba(0,240,255,0.6)] hover:shadow-[0_0_40px_rgba(0,240,255,0.9)] hover:scale-105 transition-all duration-300 backdrop-blur-2xl"
+        href="https://wa.me/5511951372631?text=Olá!%20Vim%20pelo%20site%20e%20preciso%20de%20suporte."
+        target="_blank"
+        rel="noopener noreferrer"
+        class="hidden md:inline-flex items-center justify-center gap-2 px-5 py-2 rounded-full text-xs font-extrabold text-white bg-gradient-to-r from-emerald-500 to-green-600 border border-emerald-400/40 shadow-[0_0_20px_rgba(16,185,129,0.5)] hover:shadow-[0_0_35px_rgba(16,185,129,0.8)] hover:scale-105 transition-all duration-300 backdrop-blur-2xl"
       >
-        Contact
+        <span class="w-4 h-4 fill-current shrink-0" v-html="brandIcons.whatsapp"></span>
+        Suporte WhatsApp
       </a>
 
       <!-- Mobile Menu Toggle -->
@@ -79,11 +83,14 @@ function closeMenu() {
             {{ link.label }}
           </NuxtLink>
           <a
-            href="/#contact"
-            class="w-full py-2.5 rounded-full text-xs font-bold text-center text-white bg-gradient-to-r from-cyan-500 to-purple-600 shadow-[0_0_20px_rgba(0,240,255,0.5)] mt-2"
+            href="https://wa.me/5511951372631?text=Olá!%20Vim%20pelo%20site%20e%20preciso%20de%20suporte."
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-full py-3 rounded-full text-xs font-extrabold text-center text-white bg-gradient-to-r from-emerald-500 to-green-600 shadow-[0_0_20px_rgba(16,185,129,0.5)] mt-2 flex items-center justify-center gap-2"
             @click="closeMenu"
           >
-            Quero um Orçamento
+            <span class="w-4 h-4 fill-current shrink-0" v-html="brandIcons.whatsapp"></span>
+            Suporte WhatsApp (11) 95137-2631
           </a>
         </nav>
       </div>
@@ -101,7 +108,6 @@ function closeMenu() {
 .slide-down-enter-from,
 .slide-down-leave-to {
   opacity: 0;
-  max-height: 0;
-  transform: translateY(-8px);
+  transform: translateY(-10px);
 }
 </style>
