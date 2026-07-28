@@ -91,7 +91,12 @@ async function handleLogin() {
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Senha</label>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider">Senha</label>
+            <NuxtLink to="/auth/forgot-password" class="text-xs text-[#00f0ff] hover:underline font-semibold transition-colors">
+              Esqueceu a senha?
+            </NuxtLink>
+          </div>
           <input
             v-model="password"
             type="password"
