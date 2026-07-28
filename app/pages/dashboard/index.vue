@@ -492,6 +492,9 @@ function checkProGate(featureName: string): boolean {
   } else if (featureName === 'custom_button') {
     proFeatureTitle.value = 'Customizador Avançado de Botões'
     proFeatureMessage.value = 'Sombras personalizadas, fundos transparentes e bordas estilizadas são exclusivos do Plano Pro!'
+  } else if (featureName === 'shop') {
+    proFeatureTitle.value = 'Vitrine Digital / Shop Premium'
+    proFeatureMessage.value = 'Adicionar uma vitrine digital de produtos/serviços no formato de grade com imagens e preços é um recurso exclusivo do Plano Pro!'
   } else {
     proFeatureTitle.value = 'Recurso Exclusivo do Plano Pro'
     proFeatureMessage.value = 'Faça o upgrade para o Plano Pro para desbloquear este recurso incrível!'
@@ -595,7 +598,7 @@ async function saveLinkEdit() {
 }
 
 // ─── Block Creator Type Selector State ───
-const activeBlockType = ref<'link' | 'spotify' | 'video' | 'social_feed'>('link')
+const activeBlockType = ref<'link' | 'spotify' | 'video' | 'social_feed' | 'shop_product'>('link')
 
 // Spotify Creator State
 const spotifyInputUrl = ref('')
@@ -614,6 +617,14 @@ const socialFollowers = ref('')
 const socialFollowUrl = ref('')
 const socialImages = ref<string[]>(['', '', ''])
 const uploadingSocialImgIndex = ref<number | null>(null)
+
+// Shop Creator State
+const productName = ref('')
+const productPrice = ref('')
+const productLink = ref('')
+const productImage = ref('')
+const uploadingProductImg = ref(false)
+const activePreviewTab = ref<'links' | 'shop'>('links')
 
 // ─── Coupon Redemption State ───
 const showCouponModal = ref(false)
@@ -977,6 +988,78 @@ async function handleSocialImgUpload(event: Event, index: number) {
     uploadingSocialImgIndex.value = null
     input.value = ''
   }
+}
+
+async function addProductBlock() {
+  if (!checkProGate('shop')) return
+  if (links.value.length >= 5 && !checkProGate('link_limit')) return
+  if (!productName.value || !productLink.value || !currentUser.value) return
+
+  const payload = JSON.stringify({
+    price: productPrice.value || 'Grátis',
+    targetUrl: productLink.value,
+    imageUrl: productImage.value
+  })
+
+  const { data, error } = await supabase.from('links').insert({
+    user_id: currentUser.value.id,
+    title: productName.value,
+    url: payload,
+    icon: 'shop_product',
+    position: links.value.length,
+  }).select().single()
+
+  if (error) {
+    console.error('Erro ao adicionar produto:', error)
+    errorMsg.value = `Erro ao adicionar: ${error.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+    return
+  }
+
+  if (data) links.value.push(data)
+  productName.value = ''
+  productPrice.value = ''
+  productLink.value = ''
+  productImage.value = ''
+}
+
+async function handleProductImgUpload(event: Event) {
+  if (!checkProGate('shop')) return
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  const file = input.files[0]
+  uploadingProductImg.value = true
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await $fetch<{ success: boolean; url: string }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (res && res.url) {
+      productImage.value = res.url
+    }
+  } catch (err: any) {
+    console.error('Product image upload error:', err)
+    errorMsg.value = `Erro no upload: ${err.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+  } finally {
+    uploadingProductImg.value = false
+    input.value = ''
+  }
+}
+
+function parseProductPayload(urlStr: string) {
+  try {
+    if (urlStr && urlStr.startsWith('{')) {
+      return JSON.parse(urlStr)
+    }
+  } catch (e) {}
+  return { price: 'Grátis', targetUrl: urlStr || '#', imageUrl: '' }
 }
 
 async function removeLink(id: any) {
@@ -1717,6 +1800,10 @@ async function logout() {
                   <div v-else-if="link.icon === 'video_card'" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-600 p-2 flex items-center justify-center shrink-0">
                     <span class="material-symbols-outlined text-[18px]">movie</span>
                   </div>
+                  <div v-else-if="link.icon === 'shop_product'" class="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-orange-500/10 text-orange-600 flex items-center justify-center border border-gray-200">
+                    <img v-if="parseProductPayload(link.url).imageUrl" :src="parseProductPayload(link.url).imageUrl" class="w-full h-full object-cover">
+                    <span v-else class="material-symbols-outlined text-[18px]">shopping_bag</span>
+                  </div>
                   <div v-else-if="link.icon && brandIcons[link.icon]" class="w-8 h-8 rounded-xl bg-secondary/10 text-secondary p-2 flex items-center justify-center shrink-0">
                     <div class="w-4 h-4" v-html="brandIcons[link.icon]"></div>
                   </div>
@@ -1772,6 +1859,12 @@ async function logout() {
                 :class="['px-4 py-2 text-xs font-bold transition-all border-b-2', activeBlockType === 'social_feed' ? 'border-secondary text-secondary' : 'border-transparent text-gray-400 hover:text-gray-600']"
               >
                 📱 Feed Social Premium
+              </button>
+              <button
+                @click="activeBlockType = 'shop_product'"
+                :class="['px-4 py-2 text-xs font-bold transition-all border-b-2', activeBlockType === 'shop_product' ? 'border-secondary text-secondary' : 'border-transparent text-gray-400 hover:text-gray-600']"
+              >
+                🛒 Produto (Shop)
               </button>
             </div>
 
@@ -1958,6 +2051,63 @@ async function logout() {
                   </div>
                 </div>
               </div>
+
+              <!-- Form 5: Shop Product Card -->
+              <div v-else-if="activeBlockType === 'shop_product'" class="space-y-4 bg-[#FAFAFA] p-4 rounded-2xl border border-[#EEEEEE]">
+                <div>
+                  <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">🛒 Adicionar Produto à Vitrine (Shop)</h4>
+                  <p class="text-[10px] text-gray-400">Adicione produtos físicos ou digitais que serão exibidos na aba exclusiva "Shop".</p>
+                </div>
+                <div class="space-y-3.5">
+                  <!-- Product Name & Price -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1">Nome do Produto</label>
+                      <input v-model="productName" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white font-medium" placeholder="Ex: Creamy Pistachio Spread">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1">Preço (ex: $15 ou R$ 89,90)</label>
+                      <input v-model="productPrice" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white" placeholder="Ex: $15">
+                    </div>
+                  </div>
+
+                  <!-- Checkout Link & Product Image -->
+                  <div class="grid grid-cols-1 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1">Link de Compra / Checkout</label>
+                      <input v-model="productLink" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white font-mono" placeholder="https://">
+                    </div>
+                  </div>
+
+                  <!-- Product Image upload -->
+                  <div>
+                    <label class="block text-xs font-semibold text-[#111111] mb-1.5">Foto do Produto</label>
+                    <div class="flex items-center gap-3">
+                      <!-- Image preview -->
+                      <div v-if="productImage" class="w-14 h-14 rounded-xl border border-gray-200 overflow-hidden shrink-0 shadow-xs relative group">
+                        <img :src="productImage" class="w-full h-full object-cover">
+                        <button @click="productImage = ''" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 cursor-pointer">
+                          <span class="material-symbols-outlined text-[10px] font-bold">close</span>
+                        </button>
+                      </div>
+                      <!-- File Selector -->
+                      <label class="cursor-pointer px-3 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shrink-0">
+                        <span v-if="uploadingProductImg" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                        <span v-else class="material-symbols-outlined text-[14px]">add_photo_alternate</span>
+                        {{ uploadingProductImg ? 'Subindo Imagem...' : 'Carregar Imagem do Produto' }}
+                        <input type="file" accept="image/*" @change="handleProductImgUpload" class="hidden">
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Submit button -->
+                  <div class="pt-2 flex justify-end">
+                    <button @click="addProductBlock" :disabled="!productName || !productLink || uploadingProductImg" class="px-6 py-2 bg-secondary text-white font-heading text-xs font-bold rounded-xl hover:bg-secondary/90 transition-all disabled:opacity-50">
+                      Adicionar Produto
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -2042,111 +2192,135 @@ async function logout() {
                   <div v-for="s in selectedSocials" :key="s" class="w-5 h-5 cursor-pointer hover:scale-110 transition-transform" v-html="brandIcons[s] || ''" :title="s"></div>
                 </div>
 
+                <!-- Tabs Selector (Links vs Shop) - If there is at least one product -->
+                <div v-if="links.some(l => l.icon === 'shop_product')" class="flex gap-2 justify-center mb-6 w-full max-w-[200px] mx-auto p-1 bg-black/10 rounded-full shrink-0">
+                  <button @click="activePreviewTab = 'links'" :class="['flex-1 py-1 text-[10px] font-bold rounded-full transition-all', activePreviewTab === 'links' ? 'bg-white text-slate-800 shadow-2xs' : 'text-white/60 hover:text-white']">Links</button>
+                  <button @click="activePreviewTab = 'shop'" :class="['flex-1 py-1 text-[10px] font-bold rounded-full transition-all', activePreviewTab === 'shop' ? 'bg-white text-slate-800 shadow-2xs' : 'text-white/60 hover:text-white']">Shop</button>
+                </div>
+
                 <!-- Links Buttons / Embeds -->
-                <div class="space-y-3.5 w-full">
+                <div v-if="activePreviewTab === 'links'" class="space-y-3.5 w-full">
                   <template v-for="link in links" :key="link.id">
-                    <!-- Case 1: Spotify Embed Player -->
-                    <div v-if="link.icon === 'spotify_embed'" class="w-full rounded-2xl overflow-hidden shadow-sm">
-                      <iframe style="border-radius:12px" :src="link.url" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-                    </div>
-
-                    <!-- Case 2: Custom Video Player Block -->
-                    <div v-else-if="link.icon === 'video_card'" class="w-full rounded-2xl overflow-hidden shadow-md bg-black relative aspect-video group border border-white/10">
-                      <!-- Poster/Thumbnail -->
-                      <img v-if="parseVideoPayload(link.url).thumbnailUrl" :src="parseVideoPayload(link.url).thumbnailUrl" class="w-full h-full object-cover">
-                      <div v-else class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-gray-500">
-                        <span class="material-symbols-outlined text-4xl mb-1 text-gray-400">movie</span>
-                        <span class="text-[10px] font-mono text-gray-400">Player de Vídeo</span>
-                      </div>
-                      
-                      <!-- Video title/caption overlay -->
-                      <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/45 to-transparent flex flex-col justify-end text-left z-10">
-                        <p class="text-white text-xs font-bold font-heading truncate">{{ link.title }}</p>
+                    <template v-if="link.icon !== 'shop_product'">
+                      <!-- Case 1: Spotify Embed Player -->
+                      <div v-if="link.icon === 'spotify_embed'" class="w-full rounded-2xl overflow-hidden shadow-sm">
+                        <iframe style="border-radius:12px" :src="link.url" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
                       </div>
 
-                      <!-- Play Overlay button -->
-                      <div class="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
-                        <div class="w-11 h-11 rounded-full bg-white/95 text-black shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
-                          <span class="material-symbols-outlined text-2xl font-bold ml-0.5" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                      <!-- Case 2: Custom Video Player Block -->
+                      <div v-else-if="link.icon === 'video_card'" class="w-full rounded-2xl overflow-hidden shadow-md bg-black relative aspect-video group border border-white/10">
+                        <!-- Poster/Thumbnail -->
+                        <img v-if="parseVideoPayload(link.url).thumbnailUrl" :src="parseVideoPayload(link.url).thumbnailUrl" class="w-full h-full object-cover">
+                        <div v-else class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-gray-500">
+                          <span class="material-symbols-outlined text-4xl mb-1 text-gray-400">movie</span>
+                          <span class="text-[10px] font-mono text-gray-400">Player de Vídeo</span>
                         </div>
-                      </div>
-                    </div>
-
-                    <!-- Case 4: Social Feed Premium Card -->
-                    <div v-else-if="link.icon === 'social_feed'" class="w-full bg-[#fffbeb] text-slate-800 rounded-2xl p-4 border border-slate-200/50 shadow-xs flex flex-col gap-3 font-sans">
-                      <!-- Card Header -->
-                      <div class="flex items-center justify-between text-xs font-bold text-slate-800/80">
-                        <div class="flex items-center gap-1.5 capitalize">
-                          <!-- Brand Icon depending on platform -->
-                          <div class="w-4 h-4 shrink-0 fill-current text-slate-700" v-html="brandIcons[parseSocialPayload(link.url).platform] || ''"></div>
-                          <span class="text-[11px] text-slate-700 font-bold uppercase tracking-wider">{{ parseSocialPayload(link.url).platform }}</span>
-                        </div>
-                      </div>
-
-                      <!-- 3D Overlapping Feed Images -->
-                      <div class="flex items-center justify-center -space-x-3 py-1">
-                        <!-- Left image -->
-                        <div v-if="parseSocialPayload(link.url).images?.[0]" class="w-[60px] h-[90px] rounded-lg overflow-hidden shadow-xs border border-white/20 -rotate-6 scale-90 z-0 bg-slate-200 shrink-0">
-                          <img :src="parseSocialPayload(link.url).images[0]" class="w-full h-full object-cover">
-                        </div>
-                        <div v-else class="w-[60px] h-[90px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center -rotate-6 scale-90 z-0 shrink-0">
-                          <span class="material-symbols-outlined text-[14px] text-slate-400">photo</span>
+                        
+                        <!-- Video title/caption overlay -->
+                        <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/45 to-transparent flex flex-col justify-end text-left z-10">
+                          <p class="text-white text-xs font-bold font-heading truncate">{{ link.title }}</p>
                         </div>
 
-                        <!-- Center image -->
-                        <div v-if="parseSocialPayload(link.url).images?.[1]" class="w-[75px] h-[110px] rounded-lg overflow-hidden shadow-sm border border-white/30 z-10 scale-100 bg-slate-200 shrink-0">
-                          <img :src="parseSocialPayload(link.url).images[1]" class="w-full h-full object-cover">
-                        </div>
-                        <div v-else class="w-[75px] h-[110px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center z-10 scale-100 shrink-0">
-                          <span class="material-symbols-outlined text-[16px] text-slate-400">photo</span>
-                        </div>
-
-                        <!-- Right image -->
-                        <div v-if="parseSocialPayload(link.url).images?.[2]" class="w-[60px] h-[90px] rounded-lg overflow-hidden shadow-xs border border-white/20 rotate-6 scale-90 z-0 bg-slate-200 shrink-0">
-                          <img :src="parseSocialPayload(link.url).images[2]" class="w-full h-full object-cover">
-                        </div>
-                        <div v-else class="w-[60px] h-[90px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center rotate-6 scale-90 z-0 shrink-0">
-                          <span class="material-symbols-outlined text-[14px] text-slate-400">photo</span>
-                        </div>
-                      </div>
-
-                      <!-- Card Footer (Handle, Followers & Follow Button) -->
-                      <div class="flex items-center justify-between mt-1 pt-1.5 border-t border-slate-200/40">
-                        <div class="flex items-center gap-2 text-left min-w-0">
-                          <div class="w-7 h-7 rounded-full overflow-hidden border border-black/10 shrink-0 bg-slate-200">
-                            <img :src="customAvatar.replace('animated:', '') || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'" class="w-full h-full object-cover">
-                          </div>
-                          <div class="min-w-0">
-                            <p class="text-[10px] font-bold text-slate-800 truncate leading-tight">{{ parseSocialPayload(link.url).handle }}</p>
-                            <p class="text-[9px] text-slate-500 font-medium leading-none">{{ parseSocialPayload(link.url).followersText }}</p>
+                        <!-- Play Overlay button -->
+                        <div class="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+                          <div class="w-11 h-11 rounded-full bg-white/95 text-black shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+                            <span class="material-symbols-outlined text-2xl font-bold ml-0.5" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
                           </div>
                         </div>
-                        <button class="px-3.5 py-1 bg-slate-800 hover:bg-slate-900 text-white font-bold text-[9px] rounded-full transition-all shrink-0">
-                          Seguir
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Case 3: Standard Link Button -->
-                    <a v-else href="#"
-                      :class="[
-                        'w-full py-3 px-4 font-bold text-xs md:text-sm flex items-center justify-between transition-all duration-300 shadow-sm relative group overflow-hidden', 
-                        computedButtonClasses, 
-                        customFontClass.startsWith('custom:') ? '' : customFontClass
-                      ]"
-                      :style="computedButtonStyles">
-                      <!-- Left Thumbnail Image / Icon -->
-                      <div class="w-7 h-7 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black/5 border border-white/20 shadow-2xs">
-                        <img v-if="isImageUrl(link.icon)" :src="link.icon" :alt="link.title" class="w-full h-full object-cover">
-                        <div v-else-if="link.icon && brandIcons[link.icon]" class="w-3.5 h-3.5 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
-                        <span v-else class="material-symbols-outlined text-[16px] shrink-0">{{ link.icon || 'link' }}</span>
                       </div>
 
-                      <span class="flex-1 text-center font-bold truncate px-2">{{ link.title }}</span>
+                      <!-- Case 4: Social Feed Premium Card -->
+                      <div v-else-if="link.icon === 'social_feed'" class="w-full bg-[#fffbeb] text-slate-800 rounded-2xl p-4 border border-slate-200/50 shadow-xs flex flex-col gap-3 font-sans">
+                        <!-- Card Header -->
+                        <div class="flex items-center justify-between text-xs font-bold text-slate-800/80">
+                          <div class="flex items-center gap-1.5 capitalize">
+                            <!-- Brand Icon depending on platform -->
+                            <div class="w-4 h-4 shrink-0 fill-current text-slate-700" v-html="brandIcons[parseSocialPayload(link.url).platform] || ''"></div>
+                            <span class="text-[11px] text-slate-700 font-bold uppercase tracking-wider">{{ parseSocialPayload(link.url).platform }}</span>
+                          </div>
+                        </div>
 
-                      <div class="w-7 h-7 shrink-0"></div>
-                    </a>
+                        <!-- 3D Overlapping Feed Images -->
+                        <div class="flex items-center justify-center -space-x-3 py-1">
+                          <!-- Left image -->
+                          <div v-if="parseSocialPayload(link.url).images?.[0]" class="w-[60px] h-[90px] rounded-lg overflow-hidden shadow-xs border border-white/20 -rotate-6 scale-90 z-0 bg-slate-200 shrink-0">
+                            <img :src="parseSocialPayload(link.url).images[0]" class="w-full h-full object-cover">
+                          </div>
+                          <div v-else class="w-[60px] h-[90px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center -rotate-6 scale-90 z-0 shrink-0">
+                            <span class="material-symbols-outlined text-[14px] text-slate-400">photo</span>
+                          </div>
+
+                          <!-- Center image -->
+                          <div v-if="parseSocialPayload(link.url).images?.[1]" class="w-[75px] h-[110px] rounded-lg overflow-hidden shadow-sm border border-white/30 z-10 scale-100 bg-slate-200 shrink-0">
+                            <img :src="parseSocialPayload(link.url).images[1]" class="w-full h-full object-cover">
+                          </div>
+                          <div v-else class="w-[75px] h-[110px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center z-10 scale-100 shrink-0">
+                            <span class="material-symbols-outlined text-[16px] text-slate-400">photo</span>
+                          </div>
+
+                          <!-- Right image -->
+                          <div v-if="parseSocialPayload(link.url).images?.[2]" class="w-[60px] h-[90px] rounded-lg overflow-hidden shadow-xs border border-white/20 rotate-6 scale-90 z-0 bg-slate-200 shrink-0">
+                            <img :src="parseSocialPayload(link.url).images[2]" class="w-full h-full object-cover">
+                          </div>
+                          <div v-else class="w-[60px] h-[90px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center rotate-6 scale-90 z-0 shrink-0">
+                            <span class="material-symbols-outlined text-[14px] text-slate-400">photo</span>
+                          </div>
+                        </div>
+
+                        <!-- Card Footer (Handle, Followers & Follow Button) -->
+                        <div class="flex items-center justify-between mt-1 pt-1.5 border-t border-slate-200/40">
+                          <div class="flex items-center gap-2 text-left min-w-0">
+                            <div class="w-7 h-7 rounded-full overflow-hidden border border-black/10 shrink-0 bg-slate-200">
+                              <img :src="customAvatar.replace('animated:', '') || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'" class="w-full h-full object-cover">
+                            </div>
+                            <div class="min-w-0">
+                              <p class="text-[10px] font-bold text-slate-800 truncate leading-tight">{{ parseSocialPayload(link.url).handle }}</p>
+                              <p class="text-[9px] text-slate-500 font-medium leading-none">{{ parseSocialPayload(link.url).followersText }}</p>
+                            </div>
+                          </div>
+                          <button class="px-3.5 py-1 bg-slate-800 hover:bg-slate-900 text-white font-bold text-[9px] rounded-full transition-all shrink-0">
+                            Seguir
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Case 3: Standard Link Button -->
+                      <a v-else href="#"
+                        :class="[
+                          'w-full py-3 px-4 font-bold text-xs md:text-sm flex items-center justify-between transition-all duration-300 shadow-sm relative group overflow-hidden', 
+                          computedButtonClasses, 
+                          customFontClass.startsWith('custom:') ? '' : customFontClass
+                        ]"
+                        :style="computedButtonStyles">
+                        <!-- Left Thumbnail Image / Icon -->
+                        <div class="w-7 h-7 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black/5 border border-white/20 shadow-2xs">
+                          <img v-if="isImageUrl(link.icon)" :src="link.icon" :alt="link.title" class="w-full h-full object-cover">
+                          <div v-else-if="link.icon && brandIcons[link.icon]" class="w-3.5 h-3.5 shrink-0 flex items-center justify-center" v-html="brandIcons[link.icon]"></div>
+                          <span v-else class="material-symbols-outlined text-[16px] shrink-0">{{ link.icon || 'link' }}</span>
+                        </div>
+
+                        <span class="flex-1 text-center font-bold truncate px-2">{{ link.title }}</span>
+
+                        <div class="w-7 h-7 shrink-0"></div>
+                      </a>
+                    </template>
                   </template>
+                </div>
+
+                <!-- Shop Product Grid -->
+                <div v-else-if="activePreviewTab === 'shop'" class="grid grid-cols-2 gap-3 w-full">
+                  <div v-for="link in links.filter(l => l.icon === 'shop_product')" :key="link.id" class="bg-white rounded-2xl p-2 border border-slate-200/50 shadow-xs flex flex-col justify-between text-left font-sans group relative">
+                    <div>
+                      <div class="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200/40 mb-2">
+                        <img v-if="parseProductPayload(link.url).imageUrl" :src="parseProductPayload(link.url).imageUrl" class="w-full h-full object-cover">
+                        <div v-else class="w-full h-full flex items-center justify-center text-slate-400">
+                          <span class="material-symbols-outlined text-2xl">shopping_bag</span>
+                        </div>
+                      </div>
+                      <p class="text-[10px] font-bold text-slate-800 leading-tight line-clamp-2">{{ link.title }}</p>
+                    </div>
+                    <p class="text-[9px] font-extrabold text-[#111111] mt-1">{{ parseProductPayload(link.url).price }}</p>
+                  </div>
                 </div>
 
                 <!-- Branding Footer -->
