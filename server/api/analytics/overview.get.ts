@@ -28,7 +28,6 @@ export default defineEventHandler(async (event) => {
   } else if (range === '90d') {
     startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString()
   }
-  // 'all' = null startDate
 
   // 1. Get profile
   const { data: profile } = await supabaseAdmin
@@ -45,8 +44,9 @@ export default defineEventHandler(async (event) => {
     .order('position', { ascending: true })
 
   const totalClicks = (links || []).reduce((sum: number, l: any) => sum + (l.clicks_count || 0), 0)
+  const linkIds = (links || []).map((l: any) => l.id)
 
-  // 3. Try to get detailed click analytics from link_clicks table
+  // 3. Get detailed click analytics from link_clicks table
   let clicksByPlatform: Record<string, number> = {}
   let clicksByDay: { date: string; clicks: number }[] = []
   let clicksByLink: { linkId: string; title: string; icon: string; clicks: number }[] = []
@@ -57,7 +57,12 @@ export default defineEventHandler(async (event) => {
     let clicksQuery = supabaseAdmin
       .from('link_clicks')
       .select('*')
-      .eq('profile_id', userId)
+
+    if (linkIds.length > 0) {
+      clicksQuery = clicksQuery.or(`profile_id.eq.${userId},link_id.in.(${linkIds.join(',')})`)
+    } else {
+      clicksQuery = clicksQuery.eq('profile_id', userId)
+    }
 
     if (startDate) {
       clicksQuery = clicksQuery.gte('created_at', startDate)
@@ -117,11 +122,11 @@ export default defineEventHandler(async (event) => {
         .slice(0, 10)
     }
   } catch (err: any) {
-    // link_clicks table may not exist yet
+    console.error('Error fetching analytics overview:', err)
   }
 
-  // If no analytics table, build clicksByLink from links data directly
-  if (!hasAnalyticsTable && links) {
+  // Fallback to links data if clicksByLink is empty
+  if (clicksByLink.length === 0 && links) {
     clicksByLink = links
       .filter((l: any) => (l.clicks_count || 0) > 0)
       .map((l: any) => ({

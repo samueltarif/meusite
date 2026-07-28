@@ -17,6 +17,17 @@ export default defineEventHandler(async (event) => {
 
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
+  // Resolve target user/profile ID if missing
+  let resolvedProfileId = profileId
+  if (!resolvedProfileId) {
+    try {
+      const { data: linkInfo } = await supabaseAdmin.from('links').select('user_id').eq('id', linkId).single()
+      if (linkInfo) {
+        resolvedProfileId = linkInfo.user_id
+      }
+    } catch (e) {}
+  }
+
   // 1. Incrementar a contagem total de cliques do link
   try {
     await supabaseAdmin.rpc('increment_link_click', { link_id: linkId })
@@ -31,16 +42,19 @@ export default defineEventHandler(async (event) => {
 
   // 2. Registrar o clique no banco de dados com a plataforma de origem (Instagram, TikTok, WhatsApp, etc.)
   try {
-    await supabaseAdmin.from('link_clicks').insert({
+    const { error: insErr } = await supabaseAdmin.from('link_clicks').insert({
       link_id: linkId,
-      profile_id: profileId || null,
+      profile_id: resolvedProfileId || null,
       platform: platform || 'Direto',
       referrer: referrer || null,
       created_at: new Date().toISOString()
     })
+    if (insErr) {
+      console.error('Insert link_clicks error:', insErr)
+    }
   } catch (err: any) {
-    // Se a tabela analítica link_clicks ainda não foi criada no Supabase, a contagem principal continua funcionando 100%
+    console.error('Exception inserting link_clicks:', err)
   }
 
-  return { success: true, platform }
+  return { success: true, platform, profileId: resolvedProfileId }
 })

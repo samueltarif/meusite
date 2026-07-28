@@ -81,27 +81,34 @@ function detectClickPlatform(): string {
 
   const referrer = (document.referrer || '').toLowerCase()
   const userAgent = (navigator.userAgent || '').toLowerCase()
-  const searchParams = new URLSearchParams(window.location.search)
-  const utmSource = (searchParams.get('utm_source') || searchParams.get('ref') || searchParams.get('source') || '').toLowerCase()
+  const searchStr = (window.location.search || '').toLowerCase()
 
-  // 1. UTM / Query parameters
-  if (utmSource.includes('instagram') || utmSource.includes('insta')) return 'Instagram'
-  if (utmSource.includes('tiktok')) return 'TikTok'
-  if (utmSource.includes('whatsapp') || utmSource.includes('wa')) return 'WhatsApp'
+  // 1. TikTok Click ID or URL parameters or Referrer or UserAgent
+  if (searchStr.includes('ttclid=') || searchStr.includes('tiktok') || referrer.includes('tiktok.com') || userAgent.includes('tiktok') || userAgent.includes('musical_ly')) {
+    return 'TikTok'
+  }
 
-  // 2. Referrer headers
-  if (referrer.includes('instagram.com') || referrer.includes('l.instagram.com')) return 'Instagram'
-  if (referrer.includes('tiktok.com')) return 'TikTok'
-  if (referrer.includes('whatsapp.com') || referrer.includes('wa.me')) return 'WhatsApp'
-  if (referrer.includes('youtube.com') || referrer.includes('youtu.be')) return 'YouTube'
-  if (referrer.includes('t.co') || referrer.includes('twitter.com') || referrer.includes('x.com')) return 'X (Twitter)'
-  if (referrer.includes('facebook.com') || referrer.includes('fb.com') || referrer.includes('l.facebook.com')) return 'Facebook'
+  // 2. Instagram / Facebook Click ID or URL parameters or Referrer or UserAgent
+  if (searchStr.includes('utm_source=instagram') || searchStr.includes('utm_source=insta') || searchStr.includes('ig') || referrer.includes('instagram.com') || userAgent.includes('instagram')) {
+    return 'Instagram'
+  }
+  // Meta's fbclid parameter is automatically added to bio links clicked on Instagram/Facebook
+  if (searchStr.includes('fbclid=')) {
+    if (referrer.includes('instagram') || userAgent.includes('instagram')) return 'Instagram'
+    if (referrer.includes('facebook') || userAgent.includes('facebook')) return 'Facebook'
+    return 'Instagram' // Default to Instagram for bio links with fbclid
+  }
+
+  // 3. WhatsApp
+  if (searchStr.includes('whatsapp') || searchStr.includes('wa.me') || referrer.includes('whatsapp.com') || referrer.includes('wa.me') || userAgent.includes('whatsapp')) {
+    return 'WhatsApp'
+  }
+
+  // 4. Other Networks
+  if (searchStr.includes('youtube') || referrer.includes('youtube.com') || referrer.includes('youtu.be')) return 'YouTube'
+  if (searchStr.includes('twitter') || searchStr.includes('x.com') || referrer.includes('t.co') || referrer.includes('twitter.com') || referrer.includes('x.com')) return 'X (Twitter)'
+  if (referrer.includes('facebook.com') || referrer.includes('fb.com')) return 'Facebook'
   if (referrer.includes('google.com')) return 'Google'
-
-  // 3. User Agent Inspection for In-App WebViews (Instagram, TikTok, WhatsApp apps)
-  if (userAgent.includes('instagram')) return 'Instagram'
-  if (userAgent.includes('tiktok') || userAgent.includes('musical_ly')) return 'TikTok'
-  if (userAgent.includes('whatsapp')) return 'WhatsApp'
 
   if (referrer) return 'Outro Site'
   return 'Direto'
