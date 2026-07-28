@@ -2528,10 +2528,26 @@ async function logout() {
                 </div>
 
                 <!-- Branding Footer -->
-                <div class="mt-auto pt-10 text-center">
-                  <span class="inline-flex items-center gap-1 text-[10px] font-bold opacity-40" :class="customFontClass.startsWith('custom:') ? '' : customFontClass" :style="{ color: customTextColor }">
-                    <span class="material-symbols-outlined text-[12px] font-bold">eco</span>
-                    Powered by Avyro Link-in-Bio
+                <div class="mt-auto pt-10 flex justify-center">
+                  <!-- If free user -->
+                  <div 
+                    v-if="profile?.subscription_status !== 'active'"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/5 text-[9px] font-extrabold text-white tracking-wide"
+                  >
+                    <!-- Stylized Mini Logo 'A' -->
+                    <div class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center p-[1px] shrink-0">
+                      <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
+                        <span class="font-heading font-black text-[#00f0ff] text-[7px] tracking-tighter">A</span>
+                      </div>
+                    </div>
+                    <span>Criar meu Link em Bio Grátis</span>
+                  </div>
+                  <!-- If PRO user -->
+                  <span 
+                    v-else 
+                    class="inline-flex items-center gap-1 text-[8px] font-bold opacity-20 tracking-wider text-white"
+                  >
+                    Powered by Avyro
                   </span>
                 </div>
               </div>

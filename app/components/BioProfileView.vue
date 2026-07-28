@@ -611,11 +611,29 @@ const pageCssStyle = computed(() => {
         </div>
       </div>
 
-      <!-- Footer Watermark -->
-      <div class="mt-auto pt-6 text-center">
-        <span class="inline-flex items-center gap-1 text-[10px] font-bold opacity-40" :style="{ color: profile?.text_color }">
-          <span class="material-symbols-outlined text-[12px] font-bold">eco</span>
-          Powered by Avyro Link-in-Bio
+      <!-- Footer Watermark / Linktree-style badge for Free accounts -->
+      <div class="mt-auto pt-8 pb-2 flex justify-center">
+        <!-- If free user (subscription_status !== 'active') -->
+        <NuxtLink 
+          v-if="profile?.subscription_status !== 'active'"
+          to="/register" 
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/5 hover:bg-white/15 dark:hover:bg-black/40 hover:scale-[1.03] active:scale-95 transition-all duration-300 shadow-md text-[10px] font-extrabold text-white tracking-wide"
+        >
+          <!-- Stylized Mini Logo 'A' -->
+          <div class="w-4 h-4 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#8b5cf6] to-[#ec4899] flex items-center justify-center p-[1px] shrink-0">
+            <div class="w-full h-full bg-[#0d0928] rounded-full flex items-center justify-center">
+              <span class="font-heading font-black text-[#00f0ff] text-[8px] tracking-tighter">A</span>
+            </div>
+          </div>
+          <span>Criar meu Link em Bio Grátis</span>
+        </NuxtLink>
+        <!-- If PRO user (subscription_status === 'active'), show optional/minimal watermark -->
+        <span 
+          v-else 
+          class="inline-flex items-center gap-1 text-[9px] font-bold opacity-20 tracking-wider" 
+          :style="{ color: profile?.text_color || '#ffffff' }"
+        >
+          Powered by Avyro
         </span>
       </div>
 
