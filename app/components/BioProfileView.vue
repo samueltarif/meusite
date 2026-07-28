@@ -131,15 +131,14 @@ const computedButtonClasses = computed(() => {
 })
 
 const computedButtonStyles = computed(() => {
+  const c = customBtnConfig.value
+  const isTransparent = isCustomBtn.value && c?.isTransparentBg
   const base = {
-    backgroundColor: profile.value?.btn_bg_color || '#ffffff',
+    backgroundColor: isTransparent ? 'transparent' : (profile.value?.btn_bg_color || '#ffffff'),
     color: profile.value?.btn_text_color || '#111111',
     fontFamily: computedFontFamily.value || undefined
   }
-  if (!isCustomBtn.value) return base
-
-  const c = customBtnConfig.value
-  if (!c) return base
+  if (!isCustomBtn.value || !c) return base
 
   let shadowStr = undefined
   if (c.shadowType === 'drop') {
@@ -257,7 +256,7 @@ const pageCssStyle = computed(() => {
               <img v-if="parseVideoPayload(link.url).thumbnailUrl" :src="parseVideoPayload(link.url).thumbnailUrl" class="w-full h-full object-cover">
               <div v-else class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-gray-500">
                 <span class="material-symbols-outlined text-4xl mb-1 text-gray-400">movie</span>
-                <span class="text-[10px] font-mono text-gray-400">Vídeo Player (R2)</span>
+                <span class="text-[10px] font-mono text-gray-400">Player de Vídeo</span>
               </div>
               
               <!-- Video title/caption overlay -->

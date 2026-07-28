@@ -400,6 +400,7 @@ const customBtnConfig = ref({
   borderWidth: 0,
   borderStyle: 'solid',
   borderColor: '#111111',
+  isTransparentBg: false,
   shadowType: 'none',
   shadowOffsetX: 4,
   shadowOffsetY: 4,
@@ -416,8 +417,9 @@ const computedButtonClasses = computed(() => {
 })
 
 const computedButtonStyles = computed(() => {
+  const isTransparent = isCustomBtn.value && customBtnConfig.value?.isTransparentBg
   const base = {
-    backgroundColor: customBtnBgColor.value,
+    backgroundColor: isTransparent ? 'transparent' : customBtnBgColor.value,
     color: customBtnTextColor.value,
     fontFamily: customFontClass.value.startsWith('custom:') ? customFontClass.value.slice(7) : undefined
   }
@@ -1090,37 +1092,37 @@ async function logout() {
               <div>
                 <div class="flex items-center justify-between mb-1.5">
                   <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider">Foto de Perfil</label>
-                  <label class="cursor-pointer px-2.5 py-1 bg-secondary/10 hover:bg-secondary/20 text-secondary text-[11px] font-bold rounded-lg transition-all flex items-center gap-1">
+                  <label class="cursor-pointer px-3 py-1 bg-secondary/10 hover:bg-secondary/20 text-secondary text-[11px] font-bold rounded-lg transition-all flex items-center gap-1">
                     <span v-if="uploadingTarget === 'avatar'" class="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
-                    <span v-else class="material-symbols-outlined text-[14px]">cloud_upload</span>
-                    {{ uploadingTarget === 'avatar' ? 'Enviando...' : 'Upload R2 (HD)' }}
+                    <span v-else class="material-symbols-outlined text-[14px]">add_a_photo</span>
+                    {{ uploadingTarget === 'avatar' ? 'Enviando...' : 'Carregar Foto' }}
                     <input type="file" accept="image/*" @change="e => handleFileUpload(e, 'avatar')" class="hidden">
                   </label>
                 </div>
-                <input v-model="customAvatar" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="https://... (ou faça upload acima)">
+                <input v-model="customAvatar" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="https://... (ou clique em 'Carregar Foto' acima)">
               </div>
               <div>
                 <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                   <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider">Imagem de Fundo</label>
-                  <div class="flex items-center gap-1.5">
-                    <button @click="openPhotoModal('pexels')" class="px-2 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
-                      <span class="material-symbols-outlined text-[13px]">search</span> Pexels
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <button @click="openPhotoModal('pexels')" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Buscar fotos no Pexels">
+                      <span class="material-symbols-outlined text-[13px]">search</span> Fotos Pexels
                     </button>
-                    <button @click="openPhotoModal('unsplash')" class="px-2 py-0.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
+                    <button @click="openPhotoModal('unsplash')" class="px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Buscar fotos no Unsplash">
                       <span class="material-symbols-outlined text-[13px]">image</span> Unsplash
                     </button>
-                    <button @click="openPhotoModal('giphy')" class="px-2 py-0.5 bg-pink-500/10 hover:bg-pink-500/20 text-pink-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
-                      <span class="material-symbols-outlined text-[13px]">gif</span> Giphy
+                    <button @click="openPhotoModal('giphy')" class="px-2.5 py-1 bg-pink-500/10 hover:bg-pink-500/20 text-pink-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Buscar GIFs no Giphy">
+                      <span class="material-symbols-outlined text-[13px]">gif</span> GIFs Animados
                     </button>
-                    <label class="cursor-pointer px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1">
+                    <label class="cursor-pointer px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1" title="Enviar foto do seu dispositivo">
                       <span v-if="uploadingTarget === 'bg'" class="material-symbols-outlined animate-spin text-[13px]">progress_activity</span>
-                      <span v-else class="material-symbols-outlined text-[13px]">cloud_upload</span>
-                      {{ uploadingTarget === 'bg' ? 'Enviando...' : 'Upload R2' }}
+                      <span v-else class="material-symbols-outlined text-[13px]">upload_file</span>
+                      {{ uploadingTarget === 'bg' ? 'Enviando...' : 'Enviar Foto' }}
                       <input type="file" accept="image/*" @change="e => handleFileUpload(e, 'bg')" class="hidden">
                     </label>
                   </div>
                 </div>
-                <input v-model="customBgImage" @input="updateBgStyle" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="URL da imagem (ou busque no Pexels/Unsplash acima)">
+                <input v-model="customBgImage" @input="updateBgStyle" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="URL da imagem (ou escolha uma das opções acima)">
               </div>
             </div>
 
@@ -1154,6 +1156,18 @@ async function logout() {
                       <span>{{ customBtnConfig.borderWidth }}px</span>
                     </div>
                     <input type="range" min="0" max="6" v-model.number="customBtnConfig.borderWidth" class="w-full accent-secondary">
+                  </div>
+
+                  <!-- Fundo Transparente / Apenas Contorno -->
+                  <div class="flex items-center justify-between p-2.5 bg-white rounded-xl border border-gray-200">
+                    <div>
+                      <span class="block text-[11px] font-bold text-gray-800">Fundo Transparente (Apenas Contorno)</span>
+                      <span class="block text-[9px] text-gray-400">Deixa o fundo do botão invisível, mantendo apenas a borda.</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" v-model="customBtnConfig.isTransparentBg" class="sr-only peer">
+                      <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary"></div>
+                    </label>
                   </div>
 
                   <div class="grid grid-cols-2 gap-3">
@@ -1433,7 +1447,7 @@ async function logout() {
                 @click="activeBlockType = 'video'"
                 :class="['px-4 py-2 text-xs font-bold transition-all border-b-2', activeBlockType === 'video' ? 'border-secondary text-secondary' : 'border-transparent text-gray-400 hover:text-gray-600']"
               >
-                📹 Player de Vídeo (R2)
+                📹 Player de Vídeo
               </button>
             </div>
 
@@ -1492,7 +1506,7 @@ async function logout() {
               <!-- Form 3: Video Player -->
               <div v-else-if="activeBlockType === 'video'" class="space-y-4 bg-[#FAFAFA] p-4 rounded-2xl border border-[#EEEEEE]">
                 <div>
-                  <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">📹 Adicionar Bloco de Vídeo (Cloudflare R2)</h4>
+                  <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">📹 Adicionar Bloco de Vídeo</h4>
                   <p class="text-[10px] text-gray-400">Suba um arquivo de vídeo (.mp4 ou .webm) para exibir um player customizado.</p>
                 </div>
                 <div class="space-y-3">
@@ -1635,7 +1649,7 @@ async function logout() {
                       <img v-if="parseVideoPayload(link.url).thumbnailUrl" :src="parseVideoPayload(link.url).thumbnailUrl" class="w-full h-full object-cover">
                       <div v-else class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-gray-500">
                         <span class="material-symbols-outlined text-4xl mb-1 text-gray-400">movie</span>
-                        <span class="text-[10px] font-mono text-gray-400">Vídeo Player (R2)</span>
+                        <span class="text-[10px] font-mono text-gray-400">Player de Vídeo</span>
                       </div>
                       
                       <!-- Video title/caption overlay -->
