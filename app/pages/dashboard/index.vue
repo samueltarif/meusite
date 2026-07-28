@@ -754,7 +754,37 @@ async function removeLink(id: any) {
   const { error } = await supabase.from('links').delete().eq('id', id)
   if (error) { console.error('Erro ao remover link:', error); return }
   links.value = links.value.filter(l => l.id !== id)
+  await updateLinksPositions()
 }
+
+// ─── Link Reordering ───
+async function moveLinkUp(index: number) {
+  if (index <= 0) return
+  const temp = links.value[index]
+  links.value[index] = links.value[index - 1]
+  links.value[index - 1] = temp
+  links.value = [...links.value]
+  await updateLinksPositions()
+}
+
+async function moveLinkDown(index: number) {
+  if (index >= links.value.length - 1) return
+  const temp = links.value[index]
+  links.value[index] = links.value[index + 1]
+  links.value[index + 1] = temp
+  links.value = [...links.value]
+  await updateLinksPositions()
+}
+
+async function updateLinksPositions() {
+  if (!currentUser.value) return
+  const updates = links.value.map((link, idx) => {
+    link.position = idx
+    return supabase.from('links').update({ position: idx }).eq('id', link.id)
+  })
+  await Promise.all(updates)
+}
+
 
 // ─── Cloudflare R2 Upload Function ───
 async function handleFileUpload(event: Event, target: 'avatar' | 'bg' | 'standalone') {
@@ -1337,8 +1367,28 @@ async function logout() {
 
             <!-- List of links -->
             <div class="space-y-3.5 mb-6">
-              <div v-for="link in links" :key="link.id" class="flex items-center justify-between p-3.5 bg-[#FAFAFA] rounded-2xl border border-[#EEEEEE]">
+              <div v-for="(link, idx) in links" :key="link.id" class="flex items-center justify-between p-3.5 bg-[#FAFAFA] rounded-2xl border border-[#EEEEEE] group hover:border-secondary/30 transition-all">
                 <div class="flex items-center gap-3 min-w-0 flex-1 pr-3">
+                  <!-- Position Controls -->
+                  <div class="flex flex-col gap-0.5 shrink-0">
+                    <button
+                      @click="moveLinkUp(idx)"
+                      :disabled="idx === 0"
+                      title="Mover para cima"
+                      class="w-6 h-5 flex items-center justify-center text-gray-400 hover:text-secondary hover:bg-secondary/10 rounded transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-400"
+                    >
+                      <span class="material-symbols-outlined text-[16px]">keyboard_arrow_up</span>
+                    </button>
+                    <button
+                      @click="moveLinkDown(idx)"
+                      :disabled="idx === links.length - 1"
+                      title="Mover para baixo"
+                      class="w-6 h-5 flex items-center justify-center text-gray-400 hover:text-secondary hover:bg-secondary/10 rounded transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-400"
+                    >
+                      <span class="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
+                    </button>
+                  </div>
+
                   <div v-if="link.icon === 'spotify_embed'" class="w-8 h-8 rounded-xl bg-green-500/10 text-green-600 p-2 flex items-center justify-center shrink-0">
                     <span class="material-symbols-outlined text-[18px]">podcasts</span>
                   </div>
@@ -1358,7 +1408,7 @@ async function logout() {
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   <span class="text-[10px] font-mono text-secondary bg-secondary/10 px-2 py-0.5 rounded-full">{{ link.clicks_count || 0 }} cliques</span>
-                  <button @click="removeLink(link.id)" class="text-red-400 hover:bg-red-50 p-2 rounded-full transition-colors">
+                  <button @click="removeLink(link.id)" title="Excluir link" class="text-red-400 hover:bg-red-50 p-2 rounded-full transition-colors">
                     <span class="material-symbols-outlined text-[18px]">delete</span>
                   </button>
                 </div>
