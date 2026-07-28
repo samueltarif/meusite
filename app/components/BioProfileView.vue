@@ -288,6 +288,15 @@ function parseVideoPayload(urlStr: string) {
   return { videoUrl: urlStr || '', thumbnailUrl: '' }
 }
 
+function parseSocialPayload(urlStr: string) {
+  try {
+    if (urlStr && urlStr.startsWith('{')) {
+      return JSON.parse(urlStr)
+    }
+  } catch (e) {}
+  return { platform: 'tiktok', handle: '@username', followersText: '0 seguidores', followUrl: '#', images: [] }
+}
+
 function isImageUrl(urlStr?: string) {
   if (!urlStr) return false
   return urlStr.startsWith('http://') || urlStr.startsWith('https://') || urlStr.startsWith('data:image/') || urlStr.startsWith('/uploads/')
@@ -400,6 +409,67 @@ const pageCssStyle = computed(() => {
                   <span class="material-symbols-outlined text-2xl font-bold ml-0.5" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Case 4: Social Feed Premium Card -->
+          <div v-else-if="link.icon === 'social_feed'" class="w-full bg-[#fffbeb] text-slate-800 rounded-2xl p-4 border border-slate-200/50 shadow-xs flex flex-col gap-3 font-sans">
+            <!-- Card Header -->
+            <div class="flex items-center justify-between text-xs font-bold text-slate-800/80">
+              <div class="flex items-center gap-1.5 capitalize">
+                <!-- Brand Icon depending on platform -->
+                <div class="w-4 h-4 shrink-0 fill-current text-slate-700" v-html="brandIcons[parseSocialPayload(link.url).platform] || ''"></div>
+                <span class="text-[11px] text-slate-700 font-bold uppercase tracking-wider">{{ parseSocialPayload(link.url).platform }}</span>
+              </div>
+            </div>
+
+            <!-- 3D Overlapping Feed Images -->
+            <div class="flex items-center justify-center -space-x-3 py-1">
+              <!-- Left image -->
+              <div v-if="parseSocialPayload(link.url).images?.[0]" class="w-[65px] h-[95px] sm:w-[75px] sm:h-[110px] rounded-lg overflow-hidden shadow-xs border border-white/20 -rotate-6 scale-90 z-0 bg-slate-200 shrink-0">
+                <img :src="parseSocialPayload(link.url).images[0]" class="w-full h-full object-cover">
+              </div>
+              <div v-else class="w-[65px] h-[95px] sm:w-[75px] sm:h-[110px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center -rotate-6 scale-90 z-0 shrink-0">
+                <span class="material-symbols-outlined text-[14px] text-slate-400">photo</span>
+              </div>
+
+              <!-- Center image -->
+              <div v-if="parseSocialPayload(link.url).images?.[1]" class="w-[80px] h-[115px] sm:w-[95px] sm:h-[130px] rounded-lg overflow-hidden shadow-sm border border-white/30 z-10 scale-100 bg-slate-200 shrink-0">
+                <img :src="parseSocialPayload(link.url).images[1]" class="w-full h-full object-cover">
+              </div>
+              <div v-else class="w-[80px] h-[115px] sm:w-[95px] sm:h-[130px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center z-10 scale-100 shrink-0">
+                <span class="material-symbols-outlined text-[16px] text-slate-400">photo</span>
+              </div>
+
+              <!-- Right image -->
+              <div v-if="parseSocialPayload(link.url).images?.[2]" class="w-[65px] h-[95px] sm:w-[75px] sm:h-[110px] rounded-lg overflow-hidden shadow-xs border border-white/20 rotate-6 scale-90 z-0 bg-slate-200 shrink-0">
+                <img :src="parseSocialPayload(link.url).images[2]" class="w-full h-full object-cover">
+              </div>
+              <div v-else class="w-[65px] h-[95px] sm:w-[75px] sm:h-[110px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center rotate-6 scale-90 z-0 shrink-0">
+                <span class="material-symbols-outlined text-[14px] text-slate-400">photo</span>
+              </div>
+            </div>
+
+            <!-- Card Footer (Handle, Followers & Follow Button) -->
+            <div class="flex items-center justify-between mt-1 pt-1.5 border-t border-slate-200/40">
+              <div class="flex items-center gap-2 text-left min-w-0">
+                <div class="w-8 h-8 rounded-full overflow-hidden border border-black/10 shrink-0 bg-slate-200 flex items-center justify-center">
+                  <img v-if="profile?.avatar_url" :src="profile.avatar_url.replace('animated:', '')" class="w-full h-full object-cover">
+                  <span v-else class="material-symbols-outlined text-base text-gray-400">person</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[11px] font-bold text-slate-800 truncate leading-tight">{{ parseSocialPayload(link.url).handle }}</p>
+                  <p class="text-[10px] text-slate-500 font-medium leading-none">{{ parseSocialPayload(link.url).followersText }}</p>
+                </div>
+              </div>
+              <a
+                :href="parseSocialPayload(link.url).followUrl"
+                target="_blank"
+                @click="handleClick(link)"
+                class="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-[10px] rounded-full transition-all shrink-0 uppercase tracking-wider"
+              >
+                Seguir
+              </a>
             </div>
           </div>
 

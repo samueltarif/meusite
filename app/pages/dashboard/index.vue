@@ -595,7 +595,7 @@ async function saveLinkEdit() {
 }
 
 // ─── Block Creator Type Selector State ───
-const activeBlockType = ref<'link' | 'spotify' | 'video'>('link')
+const activeBlockType = ref<'link' | 'spotify' | 'video' | 'social_feed'>('link')
 
 // Spotify Creator State
 const spotifyInputUrl = ref('')
@@ -606,6 +606,14 @@ const newVideoUrl = ref('')
 const newVideoThumbUrl = ref('')
 const uploadingVideo = ref(false)
 const uploadingThumb = ref(false)
+
+// Social Feed Creator State
+const socialPlatform = ref<'tiktok' | 'instagram' | 'youtube'>('tiktok')
+const socialHandle = ref('')
+const socialFollowers = ref('')
+const socialFollowUrl = ref('')
+const socialImages = ref<string[]>(['', '', ''])
+const uploadingSocialImgIndex = ref<number | null>(null)
 
 // ─── Coupon Redemption State ───
 const showCouponModal = ref(false)
@@ -909,6 +917,68 @@ async function handleVideoUpload(event: Event, type: 'video' | 'thumb') {
   }
 }
 
+async function addSocialFeedBlock() {
+  if (!socialHandle.value || !socialFollowUrl.value || !currentUser.value) return
+
+  const payload = JSON.stringify({
+    platform: socialPlatform.value,
+    handle: socialHandle.value,
+    followersText: socialFollowers.value || 'Seguidores',
+    followUrl: socialFollowUrl.value,
+    images: socialImages.value.filter(url => !!url)
+  })
+
+  const { data, error } = await supabase.from('links').insert({
+    user_id: currentUser.value.id,
+    title: `Card ${socialPlatform.value.toUpperCase()}`,
+    url: payload,
+    icon: 'social_feed',
+    position: links.value.length,
+  }).select().single()
+
+  if (error) {
+    console.error('Erro ao adicionar bloco social feed:', error)
+    errorMsg.value = `Erro ao adicionar: ${error.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+    return
+  }
+
+  if (data) links.value.push(data)
+  socialHandle.value = ''
+  socialFollowers.value = ''
+  socialFollowUrl.value = ''
+  socialImages.value = ['', '', '']
+}
+
+async function handleSocialImgUpload(event: Event, index: number) {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  const file = input.files[0]
+  uploadingSocialImgIndex.value = index
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await $fetch<{ success: boolean; url: string }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (res && res.url) {
+      socialImages.value[index] = res.url
+    }
+  } catch (err: any) {
+    console.error('Social img upload error:', err)
+    errorMsg.value = `Erro no upload: ${err.message}`
+    setTimeout(() => { errorMsg.value = '' }, 5000)
+  } finally {
+    uploadingSocialImgIndex.value = null
+    input.value = ''
+  }
+}
+
 async function removeLink(id: any) {
   const { error } = await supabase.from('links').delete().eq('id', id)
   if (error) { console.error('Erro ao remover link:', error); return }
@@ -1035,6 +1105,15 @@ function parseVideoPayload(urlStr: string) {
     }
   } catch (e) {}
   return { videoUrl: urlStr || '', thumbnailUrl: '' }
+}
+
+function parseSocialPayload(urlStr: string) {
+  try {
+    if (urlStr && urlStr.startsWith('{')) {
+      return JSON.parse(urlStr)
+    }
+  } catch (e) {}
+  return { platform: 'tiktok', handle: '@username', followersText: '0 seguidores', followUrl: '#', images: [] }
 }
 
 // ─── Checkout ───
@@ -1688,6 +1767,12 @@ async function logout() {
               >
                 📹 Player de Vídeo
               </button>
+              <button
+                @click="activeBlockType = 'social_feed'"
+                :class="['px-4 py-2 text-xs font-bold transition-all border-b-2', activeBlockType === 'social_feed' ? 'border-secondary text-secondary' : 'border-transparent text-gray-400 hover:text-gray-600']"
+              >
+                📱 Feed Social Premium
+              </button>
             </div>
 
             <!-- Dynamic Block Forms -->
@@ -1808,6 +1893,71 @@ async function logout() {
                   </div>
                 </div>
               </div>
+
+              <!-- Form 4: Social Feed Premium Card -->
+              <div v-else-if="activeBlockType === 'social_feed'" class="space-y-4 bg-[#FAFAFA] p-4 rounded-2xl border border-[#EEEEEE]">
+                <div>
+                  <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">📱 Adicionar Card de Feed Social Premium</h4>
+                  <p class="text-[10px] text-gray-400">Exiba um bloco imersivo da sua rede social com fotos do seu feed e botão "Seguir".</p>
+                </div>
+                <div class="space-y-3.5">
+                  <!-- Platform & Handle -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1">Plataforma</label>
+                      <select v-model="socialPlatform" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white font-medium">
+                        <option value="tiktok">TikTok</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="youtube">YouTube</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1">Username/Handle (ex: @koysun)</label>
+                      <input v-model="socialHandle" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white font-mono" placeholder="Ex: @username">
+                    </div>
+                  </div>
+
+                  <!-- Followers Text & Follow Link -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1">Texto de Seguidores (ex: 238K seguidores)</label>
+                      <input v-model="socialFollowers" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white" placeholder="Ex: 10 mil seguidores">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-[#111111] mb-1">URL do Link "Seguir"</label>
+                      <input v-model="socialFollowUrl" type="text" class="w-full px-3 py-2 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white font-mono" placeholder="https://">
+                    </div>
+                  </div>
+
+                  <!-- Feed Images (3 Upload Slots) -->
+                  <div>
+                    <label class="block text-xs font-semibold text-[#111111] mb-1.5">Fotos do Feed (Selecione 3 imagens de prévia)</label>
+                    <div class="grid grid-cols-3 gap-2.5">
+                      <div v-for="i in [0, 1, 2]" :key="i" class="border border-dashed border-gray-300 rounded-xl p-2 bg-white flex flex-col items-center justify-center min-h-[90px] relative text-center">
+                        <img v-if="socialImages[i]" :src="socialImages[i]" class="absolute inset-0 w-full h-full object-cover rounded-xl">
+                        <div v-if="socialImages[i]" class="absolute top-1 right-1 z-10 bg-black/60 hover:bg-black/85 text-white rounded-full p-1 cursor-pointer" @click="socialImages[i] = ''">
+                          <span class="material-symbols-outlined text-[12px] font-bold">close</span>
+                        </div>
+                        <div v-else class="flex flex-col items-center">
+                          <label class="cursor-pointer text-[10px] font-bold text-secondary hover:text-secondary/80 flex flex-col items-center gap-1">
+                            <span v-if="uploadingSocialImgIndex === i" class="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                            <span v-else class="material-symbols-outlined text-[16px] text-gray-400">add_a_photo</span>
+                            {{ uploadingSocialImgIndex === i ? 'Enviando...' : 'Carregar' }}
+                            <input type="file" accept="image/*" @change="e => handleSocialImgUpload(e, i)" class="hidden">
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Submit button -->
+                  <div class="pt-2 flex justify-end">
+                    <button @click="addSocialFeedBlock" :disabled="!socialHandle || !socialFollowUrl || uploadingSocialImgIndex !== null" class="px-6 py-2 bg-secondary text-white font-heading text-xs font-bold rounded-xl hover:bg-secondary/90 transition-all disabled:opacity-50">
+                      Adicionar Card Social
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1919,6 +2069,61 @@ async function logout() {
                         <div class="w-11 h-11 rounded-full bg-white/95 text-black shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
                           <span class="material-symbols-outlined text-2xl font-bold ml-0.5" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
                         </div>
+                      </div>
+                    </div>
+
+                    <!-- Case 4: Social Feed Premium Card -->
+                    <div v-else-if="link.icon === 'social_feed'" class="w-full bg-[#fffbeb] text-slate-800 rounded-2xl p-4 border border-slate-200/50 shadow-xs flex flex-col gap-3 font-sans">
+                      <!-- Card Header -->
+                      <div class="flex items-center justify-between text-xs font-bold text-slate-800/80">
+                        <div class="flex items-center gap-1.5 capitalize">
+                          <!-- Brand Icon depending on platform -->
+                          <div class="w-4 h-4 shrink-0 fill-current text-slate-700" v-html="brandIcons[parseSocialPayload(link.url).platform] || ''"></div>
+                          <span class="text-[11px] text-slate-700 font-bold uppercase tracking-wider">{{ parseSocialPayload(link.url).platform }}</span>
+                        </div>
+                      </div>
+
+                      <!-- 3D Overlapping Feed Images -->
+                      <div class="flex items-center justify-center -space-x-3 py-1">
+                        <!-- Left image -->
+                        <div v-if="parseSocialPayload(link.url).images?.[0]" class="w-[60px] h-[90px] rounded-lg overflow-hidden shadow-xs border border-white/20 -rotate-6 scale-90 z-0 bg-slate-200 shrink-0">
+                          <img :src="parseSocialPayload(link.url).images[0]" class="w-full h-full object-cover">
+                        </div>
+                        <div v-else class="w-[60px] h-[90px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center -rotate-6 scale-90 z-0 shrink-0">
+                          <span class="material-symbols-outlined text-[14px] text-slate-400">photo</span>
+                        </div>
+
+                        <!-- Center image -->
+                        <div v-if="parseSocialPayload(link.url).images?.[1]" class="w-[75px] h-[110px] rounded-lg overflow-hidden shadow-sm border border-white/30 z-10 scale-100 bg-slate-200 shrink-0">
+                          <img :src="parseSocialPayload(link.url).images[1]" class="w-full h-full object-cover">
+                        </div>
+                        <div v-else class="w-[75px] h-[110px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center z-10 scale-100 shrink-0">
+                          <span class="material-symbols-outlined text-[16px] text-slate-400">photo</span>
+                        </div>
+
+                        <!-- Right image -->
+                        <div v-if="parseSocialPayload(link.url).images?.[2]" class="w-[60px] h-[90px] rounded-lg overflow-hidden shadow-xs border border-white/20 rotate-6 scale-90 z-0 bg-slate-200 shrink-0">
+                          <img :src="parseSocialPayload(link.url).images[2]" class="w-full h-full object-cover">
+                        </div>
+                        <div v-else class="w-[60px] h-[90px] rounded-lg bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center rotate-6 scale-90 z-0 shrink-0">
+                          <span class="material-symbols-outlined text-[14px] text-slate-400">photo</span>
+                        </div>
+                      </div>
+
+                      <!-- Card Footer (Handle, Followers & Follow Button) -->
+                      <div class="flex items-center justify-between mt-1 pt-1.5 border-t border-slate-200/40">
+                        <div class="flex items-center gap-2 text-left min-w-0">
+                          <div class="w-7 h-7 rounded-full overflow-hidden border border-black/10 shrink-0 bg-slate-200">
+                            <img :src="customAvatar.replace('animated:', '') || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'" class="w-full h-full object-cover">
+                          </div>
+                          <div class="min-w-0">
+                            <p class="text-[10px] font-bold text-slate-800 truncate leading-tight">{{ parseSocialPayload(link.url).handle }}</p>
+                            <p class="text-[9px] text-slate-500 font-medium leading-none">{{ parseSocialPayload(link.url).followersText }}</p>
+                          </div>
+                        </div>
+                        <button class="px-3.5 py-1 bg-slate-800 hover:bg-slate-900 text-white font-bold text-[9px] rounded-full transition-all shrink-0">
+                          Seguir
+                        </button>
                       </div>
                     </div>
 
