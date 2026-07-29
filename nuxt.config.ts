@@ -52,6 +52,8 @@ export default defineNuxtConfig({
     instagramAccessToken: process.env.INSTAGRAM_ACCESS_TOKEN || '',
     instagramBusinessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || process.env.INSTAGRAM_USER_ID || '17841401920784631',
     instagramWebhookVerifyToken: process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN || 'avyro_instagram_webhook_2026',
+    instagramAutoReplyEnabled: process.env.INSTAGRAM_AUTO_REPLY_ENABLED === 'true',
+    instagramAppSecret: process.env.INSTAGRAM_APP_SECRET || '',
     public: {
       stripePublicKey: process.env.STRIPE_PUBLIC_KEY || ''
     }

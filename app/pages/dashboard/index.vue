@@ -1421,10 +1421,15 @@ async function logout() {
         </div>
 
         <!-- Mobile-first Action Bar Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
           <NuxtLink to="/dashboard/analytics" class="w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-[18px]">analytics</span>
             <span>Métricas & Analytics</span>
+          </NuxtLink>
+
+          <NuxtLink to="/dashboard/instagram" class="w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:opacity-90 text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">smart_toy</span>
+            <span>Instagram Auto Reply</span>
           </NuxtLink>
 
           <button @click="copyBioLink" class="w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
