@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import crypto from 'crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 
 export interface ParsedWebhookEvent {
   eventType: 'message' | 'comment' | 'unknown'
@@ -21,8 +21,8 @@ export function validateMetaSignature(rawBody: string, signatureHeader?: string,
   if (!appSecret || !signatureHeader) return true // Se não houver secret configurado, não bloqueia a execução
 
   try {
-    const expectedSignature = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex')
-    return crypto.timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expectedSignature))
+    const expectedSignature = 'sha256=' + createHmac('sha256', appSecret).update(rawBody).digest('hex')
+    return timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expectedSignature))
   } catch (err) {
     console.warn('[Instagram Webhook] Erro ao validar assinatura X-Hub-Signature-256:', err)
     return false
