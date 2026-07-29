@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import crypto from 'node.js'
+import crypto from 'crypto'
 
 export interface ParsedWebhookEvent {
   eventType: 'message' | 'comment' | 'unknown'
