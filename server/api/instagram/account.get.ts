@@ -1,13 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
+  // 1. Obter user_id estritamente pela sessão autenticada do Supabase (nunca aceitar do frontend)
   const user = await getAuthenticatedUser(event)
 
   const supabaseUrl = process.env.SUPABASE_URL || 'https://mwrtluebbiyrmjrqwhut.supabase.co'
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
-  // Seleção estrita de campos públicos/seguros (NUNCA envia access_token para o frontend!)
+  // 2. Buscar APENAS o registro pertencente ao user_id autenticado
   const { data: account, error } = await supabaseAdmin
     .from('instagram_accounts')
     .select(`
@@ -32,17 +33,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const defaultAccountId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || '17841401920784631'
-
+  // NUNCA retornar dados da conta global/admin como fallback para outros usuários!
+  // Se o usuário não possuir conta cadastrada em instagram_accounts, retorna account: null
   return {
     success: true,
-    account: account || {
-      instagram_account_id: defaultAccountId,
-      instagram_username: 'samueltarif_',
-      connection_status: 'pending',
-      is_active: false,
-      created_at: null,
-      token_expires_at: null
-    }
+    account: account || null
   }
 })

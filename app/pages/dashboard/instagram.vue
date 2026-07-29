@@ -354,7 +354,7 @@ function formatDate(dateStr?: string) {
             <div class="space-y-1">
               <div class="flex items-center gap-2">
                 <h2 class="font-heading font-extrabold text-lg text-slate-900">
-                  {{ account?.instagram_username ? `@${account.instagram_username}` : 'Conta Profissional do Instagram' }}
+                  {{ account && account.connection_status !== 'disconnected' ? (account.instagram_username ? `@${account.instagram_username}` : 'Conta Conectada') : 'Conecte seu Instagram Profissional' }}
                 </h2>
 
                 <!-- Status Badge -->
@@ -366,7 +366,7 @@ function formatDate(dateStr?: string) {
                   Conectado
                 </span>
                 <span
-                  v-else-if="account?.connection_status === 'pending'"
+                  v-else-if="account?.connection_status === 'pending' || (!account && !oauthEnabled)"
                   class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 flex items-center gap-1"
                 >
                   <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
@@ -386,8 +386,11 @@ function formatDate(dateStr?: string) {
                 </span>
               </div>
 
-              <p class="text-xs text-slate-500">
-                ID da Conta Meta: <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ account?.instagram_account_id || '17841401920784631' }}</code>
+              <p v-if="account && account.instagram_account_id" class="text-xs text-slate-500">
+                ID da Conta Meta: <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ account.instagram_account_id }}</code>
+              </p>
+              <p v-else class="text-xs text-slate-500">
+                Conecte sua conta Business ou Criador de Conteúdo para responder mensagens e comentários.
               </p>
             </div>
           </div>
