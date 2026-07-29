@@ -47,27 +47,11 @@ export default defineEventHandler(async (event) => {
 
   // 3. Se INSTAGRAM_OAUTH_ENABLED=false (Aguardando aprovação da Meta)
   if (!oauthEnabled) {
-    console.log('[Instagram OAuth Callback]: Código recebido com sucesso, mas INSTAGRAM_OAUTH_ENABLED=false. Salvando registro em modo pending.')
-
-    if (userIdFromState) {
-      try {
-        const defaultIgId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || '17841401920784631'
-        await supabaseAdmin.from('instagram_accounts').upsert({
-          user_id: userIdFromState,
-          instagram_account_id: defaultIgId,
-          connection_status: 'pending',
-          is_active: false,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'instagram_account_id' })
-      } catch (dbErr) {
-        console.error('[Instagram OAuth DB Error]:', dbErr)
-      }
-    }
-
+    console.log('[Instagram OAuth Callback]: Código recebido com sucesso, mas INSTAGRAM_OAUTH_ENABLED=false.')
     return sendRedirect(event, '/dashboard/instagram?instagram_connected=pending', 302)
   }
 
-  // 4. Se INSTAGRAM_OAUTH_ENABLED=true, realiza a troca por token real
+  // 4. Se INSTAGRAM_OAUTH_ENABLED=true, realiza a troca por token real da conta do usuário
   const tokenResult = await exchangeInstagramCodeForToken(code)
 
   if (!tokenResult.success || !tokenResult.accessToken || !tokenResult.instagramAccountId) {
@@ -75,7 +59,7 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, `/dashboard/instagram?instagram_connected=error&reason=${encodeURIComponent(tokenResult.error || 'Erro na troca de token')}`, 302)
   }
 
-  // Gravar a conta conectada com sucesso em instagram_accounts
+  // Gravar a conta conectada com sucesso em instagram_accounts vinculada ao user_id
   if (userIdFromState) {
     const expiresAt = new Date(Date.now() + (tokenResult.expiresIn || 5184000) * 1000).toISOString()
 

@@ -7,19 +7,19 @@ export default defineEventHandler(async (event) => {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
-  // 1. Buscar contas do Instagram vinculadas a este usuário
+  // 1. Buscar apenas contas do Instagram vinculadas a este user_id
   const { data: accounts } = await supabaseAdmin
     .from('instagram_accounts')
     .select('instagram_account_id')
     .eq('user_id', user.id)
 
-  const accountIds = (accounts || []).map(a => a.instagram_account_id)
-  const defaultBusinessId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || '17841401920784631'
-  if (!accountIds.includes(defaultBusinessId)) {
-    accountIds.push(defaultBusinessId)
+  const accountIds = (accounts || []).map(a => a.instagram_account_id).filter(Boolean)
+
+  if (accountIds.length === 0) {
+    return { success: true, events: [] }
   }
 
-  // 2. Buscar eventos no log referentes às contas de Instagram do usuário
+  // 2. Buscar eventos no log referentes APENAS às contas de Instagram do usuário logado
   const { data: eventsList, error } = await supabaseAdmin
     .from('instagram_webhook_events')
     .select(`
