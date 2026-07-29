@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
     const challenge = (query['hub.challenge'] || query.challenge) as string
 
     // Token configurado no ambiente ou fallback seguro
-    const expectedToken = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN || 'avyro_instagram_webhook_2026'
+    const config = useRuntimeConfig()
+    const expectedToken = config.instagramWebhookVerifyToken || process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN || 'avyro_instagram_webhook_2026'
 
     console.log('[Instagram Webhook GET Verification]:', { mode, verifyToken, challenge })
 
@@ -38,6 +39,9 @@ export default defineEventHandler(async (event) => {
       console.log('[Instagram Webhook POST Event Received]:')
       console.log(JSON.stringify(body, null, 2))
       console.log('----------------------------------------------------')
+
+      // Processar mensagem e extrair dados para Auto-Reply
+      await processIncomingInstagramMessages(body)
 
       // Responder 200 OK para a Meta confirmar a entrega do evento
       return { received: true }
