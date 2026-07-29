@@ -314,11 +314,76 @@ function openProductModal(link: any) {
 const activeShareModalLink = ref<any>(null)
 const copySuccess = ref(false)
 const reportSuccess = ref(false)
+const showMoreDescription = ref(false)
+const linkPreviewData = ref<{ title?: string; description?: string; image?: string | null; favicon?: string | null; siteName?: string | null } | null>(null)
+const loadingPreview = ref(false)
+
+async function fetchLinkPreview(url: string) {
+  if (!url || import.meta.server) return
+  loadingPreview.value = true
+  linkPreviewData.value = null
+  try {
+    const data = await $fetch<any>('/api/link-preview', { query: { url } })
+    if (data?.success) {
+      linkPreviewData.value = data
+    }
+  } catch (e) {
+    linkPreviewData.value = null
+  } finally {
+    loadingPreview.value = false
+  }
+}
+
+const SOCIAL_PLATFORM_ICONS = ['youtube', 'instagram', 'tiktok', 'spotify', 'whatsapp', 'x', 'linkedin', 'facebook', 'threads', 'telegram', 'twitter']
+
+function isSocialPlatformLink(link: any): boolean {
+  return SOCIAL_PLATFORM_ICONS.includes(link?.icon)
+}
+
+const PLATFORM_CARD_COLORS: Record<string, { bg: string; accent: string }> = {
+  youtube:   { bg: '#0F0F0F', accent: '#FF0000' },
+  instagram: { bg: '#1a0a1e', accent: '#E1306C' },
+  tiktok:    { bg: '#010101', accent: '#00f2ea' },
+  spotify:   { bg: '#0d1117', accent: '#1DB954' },
+  whatsapp:  { bg: '#0a1e13', accent: '#25D366' },
+  x:         { bg: '#000000', accent: '#ffffff' },
+  twitter:   { bg: '#000000', accent: '#ffffff' },
+  linkedin:  { bg: '#00030a', accent: '#0A66C2' },
+  facebook:  { bg: '#0a0e1a', accent: '#1877F2' },
+  threads:   { bg: '#0d0d0d', accent: '#ffffff' },
+  telegram:  { bg: '#0a1929', accent: '#2AABEE' },
+}
+
+function getPlatformCardColors(icon: string) {
+  return PLATFORM_CARD_COLORS[icon] || { bg: '#0d0d0d', accent: '#ffffff' }
+}
+
+function getPlatformDescription(link: any): string {
+  const platform = link?.icon || ''
+  const name = link?.title || 'este perfil'
+  const descriptions: Record<string, string> = {
+    youtube:   `Assista aos vídeos de ${name} no YouTube. Inscreva-se para não perder nenhum conteúdo novo.`,
+    instagram: `Siga ${name} no Instagram e acompanhe stories, reels e as últimas publicações.`,
+    tiktok:    `Siga ${name} no TikTok e confira os vídeos mais criativos e virais.`,
+    spotify:   `Ouça ${name} no Spotify — podcasts, playlists e muito mais.`,
+    whatsapp:  `Entre em contato direto com ${name} pelo WhatsApp de forma rápida e prática.`,
+    x:         `Siga ${name} no X (Twitter) para acompanhar tweets e discussões em tempo real.`,
+    twitter:   `Siga ${name} no X (Twitter) para acompanhar tweets e discussões em tempo real.`,
+    linkedin:  `Conecte-se com ${name} no LinkedIn e expanda sua rede profissional.`,
+    facebook:  `Curta a página de ${name} no Facebook e fique por dentro das novidades.`,
+    threads:   `Siga ${name} no Threads para conversas, textos e discussões.`,
+    telegram:  `Entre no canal ou grupo ${name} no Telegram.`,
+  }
+  return descriptions[platform] || `Acesse o conteúdo exclusivo de ${name}.`
+}
 
 function openShareModal(link: any) {
   activeShareModalLink.value = link
   copySuccess.value = false
   reportSuccess.value = false
+  showMoreDescription.value = false
+  linkPreviewData.value = null
+  fetchLinkPreview(link.url)
 }
 
 async function copyLinkUrl() {
@@ -591,9 +656,10 @@ const pageCssStyle = computed(() => {
               <!-- Share Button -->
               <button
                 @click.stop.prevent="openShareModal(link)"
-                class="w-10 h-10 flex items-center justify-center text-current opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0 mr-1.5 rounded-full cursor-pointer z-10"
+                class="w-10 h-10 flex items-center justify-center text-current hover:bg-black/10 active:bg-black/15 transition-all shrink-0 mr-2 rounded-full cursor-pointer z-10"
+                title="Compartilhar"
               >
-                <span class="material-symbols-outlined text-lg">more_vert</span>
+                <span class="material-symbols-outlined text-xl" style="font-variation-settings:'wght' 500;">more_vert</span>
               </button>
             </div>
           </template>
@@ -747,9 +813,115 @@ const pageCssStyle = computed(() => {
               </button>
             </div>
 
-            <!-- Link Card Preview -->
-            <div class="w-full bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 mb-5 border border-slate-100 dark:border-slate-800/80 flex flex-col items-center text-center">
-              <!-- Icon container -->
+            <!-- ── Loading skeleton ──────────────────────────────────── -->
+            <div v-if="loadingPreview" class="w-full rounded-2xl mb-5 overflow-hidden border border-slate-100 dark:border-slate-800 animate-pulse">
+              <div class="w-full h-36 bg-slate-200 dark:bg-slate-700"></div>
+              <div class="p-4 bg-slate-50 dark:bg-slate-900 space-y-2.5">
+                <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded-full w-1/4"></div>
+                <div class="h-3.5 bg-slate-200 dark:bg-slate-700 rounded-full w-3/4"></div>
+                <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded-full w-full"></div>
+                <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded-full w-2/3"></div>
+              </div>
+            </div>
+
+            <!-- ── OG Preview com imagem (estilo WhatsApp) ───────────── -->
+            <div
+              v-else-if="linkPreviewData?.image"
+              class="w-full rounded-2xl mb-5 overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm"
+            >
+              <!-- Banner OG -->
+              <div class="w-full aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <img
+                  :src="linkPreviewData.image"
+                  class="w-full h-full object-cover"
+                  @error="(e: any) => { (e.target as HTMLImageElement).closest('.aspect-video')!.style.display = 'none' }"
+                >
+              </div>
+              <!-- Texto -->
+              <div class="p-4 bg-slate-50 dark:bg-slate-950">
+                <div class="flex items-center gap-1.5 mb-1.5">
+                  <img
+                    v-if="linkPreviewData.favicon"
+                    :src="linkPreviewData.favicon"
+                    class="w-3.5 h-3.5 rounded-sm object-contain"
+                    @error="(e: any) => (e.target as HTMLImageElement).style.display = 'none'"
+                  >
+                  <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate">
+                    {{ linkPreviewData.siteName || getUrlDomain(activeShareModalLink.url) }}
+                  </span>
+                </div>
+                <p class="font-extrabold text-sm text-slate-900 dark:text-white leading-snug line-clamp-2">
+                  {{ linkPreviewData.title || activeShareModalLink.title }}
+                </p>
+                <p v-if="linkPreviewData.description" class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed line-clamp-2">
+                  {{ linkPreviewData.description }}
+                </p>
+              </div>
+            </div>
+
+            <!-- ── OG Preview sem imagem (só texto) ─────────────────── -->
+            <div
+              v-else-if="linkPreviewData"
+              class="w-full bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 mb-5 border border-slate-100 dark:border-slate-800/80 flex flex-col items-start text-left"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <img
+                  v-if="linkPreviewData.favicon"
+                  :src="linkPreviewData.favicon"
+                  class="w-4 h-4 rounded-sm object-contain"
+                  @error="(e: any) => (e.target as HTMLImageElement).style.display = 'none'"
+                >
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate">
+                  {{ linkPreviewData.siteName || getUrlDomain(activeShareModalLink.url) }}
+                </span>
+              </div>
+              <p class="font-extrabold text-sm text-slate-900 dark:text-white leading-snug line-clamp-2 w-full">
+                {{ linkPreviewData.title || activeShareModalLink.title }}
+              </p>
+              <p v-if="linkPreviewData.description" class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed line-clamp-2">
+                {{ linkPreviewData.description }}
+              </p>
+            </div>
+
+            <!-- ── Fallback: card dark branded (rede social sem OG) ─── -->
+            <div
+              v-else-if="isSocialPlatformLink(activeShareModalLink)"
+              class="w-full rounded-2xl mb-5 overflow-hidden"
+              :style="{ backgroundColor: getPlatformCardColors(activeShareModalLink.icon).bg }"
+            >
+              <div class="flex flex-col items-center text-center p-6 pb-5 gap-3">
+                <div
+                  class="w-[72px] h-[72px] rounded-[20px] flex items-center justify-center shrink-0 shadow-lg"
+                  :style="{ backgroundColor: getPlatformCardColors(activeShareModalLink.icon).accent + '22', border: `1.5px solid ${getPlatformCardColors(activeShareModalLink.icon).accent}50` }"
+                >
+                  <div
+                    class="w-9 h-9 shrink-0"
+                    :style="{ fill: getPlatformCardColors(activeShareModalLink.icon).accent, color: getPlatformCardColors(activeShareModalLink.icon).accent }"
+                    v-html="brandIcons[activeShareModalLink.icon]"
+                  ></div>
+                </div>
+                <p class="font-extrabold text-base text-white leading-snug">{{ activeShareModalLink.title }}</p>
+                <p class="text-[11px] text-slate-400 -mt-1.5 truncate w-full px-2 font-mono">{{ activeShareModalLink.url }}</p>
+                <p
+                  class="text-xs text-slate-400 leading-relaxed px-2"
+                  :class="showMoreDescription ? '' : 'line-clamp-3'"
+                >
+                  {{ getPlatformDescription(activeShareModalLink) }}
+                </p>
+                <button
+                  @click="showMoreDescription = !showMoreDescription"
+                  class="px-6 py-1.5 border border-slate-600 hover:border-slate-400 text-white text-[11px] font-bold rounded-full transition-all cursor-pointer"
+                >
+                  {{ showMoreDescription ? 'Menos' : 'Mais' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- ── Fallback: card genérico (link sem OG) ─────────────── -->
+            <div
+              v-else
+              class="w-full bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 mb-5 border border-slate-100 dark:border-slate-800/80 flex flex-col items-center text-center"
+            >
               <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-black/5 border border-slate-200 dark:border-slate-800 shadow-3xs">
                 <img v-if="isImageUrl(activeShareModalLink.icon)" :src="activeShareModalLink.icon" :alt="activeShareModalLink.title" class="w-full h-full object-cover">
                 <div v-else-if="activeShareModalLink.icon && brandIcons[activeShareModalLink.icon]" class="w-6 h-6 shrink-0 flex items-center justify-center text-slate-800 dark:text-white" v-html="brandIcons[activeShareModalLink.icon]"></div>
@@ -783,7 +955,7 @@ const pageCssStyle = computed(() => {
                   target="_blank"
                   class="flex flex-col items-center gap-2 shrink-0 group/share"
                 >
-                  <div class="w-12 h-12 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center hover:bg-[#25D366]/20 transition-colors shadow-2xs">
+                  <div class="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs">
                     <div class="w-5 h-5 fill-current" v-html="brandIcons.whatsapp"></div>
                   </div>
                   <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">WhatsApp</span>
@@ -795,7 +967,7 @@ const pageCssStyle = computed(() => {
                   target="_blank"
                   class="flex flex-col items-center gap-2 shrink-0 group/share"
                 >
-                  <div class="w-12 h-12 rounded-full bg-black/10 dark:bg-white/10 text-black dark:text-white flex items-center justify-center hover:bg-black/20 dark:hover:bg-white/20 transition-colors shadow-2xs">
+                  <div class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center hover:opacity-80 transition-opacity shadow-2xs">
                     <div class="w-4 h-4 fill-current" v-html="brandIcons.x"></div>
                   </div>
                   <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">X / Twitter</span>
@@ -807,7 +979,7 @@ const pageCssStyle = computed(() => {
                   target="_blank"
                   class="flex flex-col items-center gap-2 shrink-0 group/share"
                 >
-                  <div class="w-12 h-12 rounded-full bg-[#1877F2]/10 text-[#1877F2] flex items-center justify-center hover:bg-[#1877F2]/20 transition-colors shadow-2xs">
+                  <div class="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs">
                     <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                   </div>
                   <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">Facebook</span>
@@ -819,7 +991,7 @@ const pageCssStyle = computed(() => {
                   target="_blank"
                   class="flex flex-col items-center gap-2 shrink-0 group/share"
                 >
-                  <div class="w-12 h-12 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] flex items-center justify-center hover:bg-[#0A66C2]/20 transition-colors shadow-2xs">
+                  <div class="w-12 h-12 rounded-full bg-[#0A66C2] text-white flex items-center justify-center hover:opacity-90 transition-opacity shadow-2xs">
                     <div class="w-4 h-4 fill-current" v-html="brandIcons.linkedin"></div>
                   </div>
                   <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover/share:text-slate-700 dark:group-hover/share:text-slate-300 truncate w-14 text-center">LinkedIn</span>
@@ -866,6 +1038,7 @@ const pageCssStyle = computed(() => {
 </template>
 
 <style scoped>
+/* ─── Estilos Únicos e Distintos ─────────────────────────────────────── */
 .btn-wavy {
   clip-path: polygon(
     0% 12%, 5% 0%, 10% 12%, 15% 0%, 20% 12%, 25% 0%, 30% 12%, 35% 0%, 40% 12%, 45% 0%, 50% 12%, 55% 0%, 60% 12%, 65% 0%, 70% 12%, 75% 0%, 80% 12%, 85% 0%, 90% 12%, 95% 0%, 100% 12%,
@@ -883,23 +1056,224 @@ const pageCssStyle = computed(() => {
 }
 
 .btn-brutal {
-  border: 2px solid #000000 !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  border-radius: 9999px;
+  border: 3px solid #000000 !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  border-radius: 6px;
 }
 
 .btn-glass {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-radius: 14px;
 }
 
 .btn-outline {
   background-color: transparent !important;
   border: 2px solid currentColor !important;
   border-radius: 12px;
+}
+
+.btn-3d-press {
+  border-radius: 12px;
+  border: none !important;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+  transform: translateY(-3px);
+}
+
+.btn-left-accent {
+  border-radius: 0 12px 12px 0 !important;
+  border-left: 6px solid currentColor !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+}
+
+.btn-angled {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 6px 0 currentColor, 0 0 14px 0 currentColor; }
+  50%       { box-shadow: 0 0 18px 4px currentColor, 0 0 35px 8px currentColor; }
+}
+.btn-neon-glow {
+  border-radius: 9999px;
+  border: 1.5px solid currentColor !important;
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+.btn-dashed {
+  border-radius: 12px;
+  border: 2.5px dashed currentColor !important;
+  background-color: transparent !important;
+}
+
+.btn-retro {
+  border-radius: 0px;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0 #000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 800 !important;
+}
+
+@keyframes aurora-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.btn-aurora {
+  border-radius: 9999px;
+  border: none !important;
+  background: linear-gradient(270deg, #ff0080, #7928ca, #00aaff, #00ffaa, #7928ca, #ff0080) !important;
+  background-size: 500% 500% !important;
+  animation: aurora-shift 5s ease infinite;
+  color: #fff !important;
+}
+
+.btn-corner-marks {
+  border-radius: 2px;
+  border: none !important;
+  background: transparent !important;
+  position: relative;
+}
+.btn-corner-marks::before,
+.btn-corner-marks::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: currentColor;
+  border-style: solid;
+}
+.btn-corner-marks::before {
+  top: 0px;
+  left: 0px;
+  border-width: 2.5px 0 0 2.5px;
+}
+.btn-corner-marks::after {
+  bottom: 0px;
+  right: 0px;
+  border-width: 0 2.5px 2.5px 0;
+}
+
+.btn-stripe {
+  border-radius: 10px;
+  border: none !important;
+  position: relative;
+  overflow: hidden;
+}
+.btn-stripe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    rgba(255,255,255,0.15) 6px,
+    rgba(255,255,255,0.15) 12px
+  );
+  pointer-events: none;
+}
+
+.btn-underline {
+  border-radius: 0 !important;
+  border: none !important;
+  border-bottom: 3px solid currentColor !important;
+  background: transparent !important;
+}
+
+/* ─── Novos Formatos Geométricos & Estilos ────────────────────────────────── */
+.btn-ticket {
+  border-radius: 6px;
+  border: 1.5px dashed currentColor !important;
+  clip-path: polygon(
+    0% 0%, 100% 0%, 
+    100% calc(50% - 7px), calc(100% - 7px) 50%, 100% calc(50% + 7px), 
+    100% 100%, 0% 100%, 
+    0% calc(50% + 7px), 7px 50%, 0% calc(50% - 7px)
+  );
+}
+
+.btn-hexagon {
+  border-radius: 0 !important;
+  border: none !important;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+}
+
+.btn-hangtag {
+  border-radius: 0 10px 10px 0 !important;
+  border: none !important;
+  clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px);
+  position: relative;
+}
+
+.btn-speech {
+  border-radius: 14px 14px 14px 2px !important;
+  border: 2px solid currentColor !important;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+}
+
+.btn-notch {
+  border-radius: 0 !important;
+  border: none !important;
+  clip-path: polygon(
+    10px 0, calc(100% - 10px) 0, 100% 10px, 
+    100% calc(100% - 10px), calc(100% - 10px) 100%, 
+    10px 100%, 0 calc(100% - 10px), 0 10px
+  );
+}
+
+.btn-zigzag {
+  border-radius: 0 !important;
+  border: none !important;
+  clip-path: polygon(
+    0% 0%, 100% 0%, 
+    97% 20%, 100% 40%, 97% 60%, 100% 80%, 97% 100%, 
+    0% 100%, 
+    3% 80%, 0% 60%, 3% 40%, 0% 20%
+  );
+}
+
+.btn-pill-skew {
+  border-radius: 9999px 4px 4px 9999px !important;
+  border: none !important;
+}
+
+@keyframes holo-shine {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.btn-holographic {
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.6) !important;
+  background: linear-gradient(135deg, #e66465 0%, #9198e5 25%, #43e97b 50%, #38f9d7 75%, #fa709a 100%) !important;
+  background-size: 300% 300% !important;
+  animation: holo-shine 6s ease infinite;
+  color: #000 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.btn-cassette {
+  border-radius: 8px;
+  border: 3px solid currentColor !important;
+  box-shadow: inset 0 0 0 3px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.btn-neon-border {
+  border-radius: 14px;
+  border: 2px solid currentColor !important;
+  outline: 2px dashed currentColor;
+  outline-offset: 4px;
 }
 
 :deep(svg) {

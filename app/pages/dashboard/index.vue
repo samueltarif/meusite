@@ -1808,21 +1808,34 @@ async function logout() {
                 <!-- Standard Presets grid if not custom -->
                 <div v-else class="grid grid-cols-3 gap-2 mb-4">
                   <button v-for="btn in [
-                    { val: 'rounded-none', label: 'Quadrado' },
-                    { val: 'rounded-md', label: 'Suave' },
-                    { val: 'rounded-xl', label: 'Arredondado' },
-                    { val: 'rounded-full', label: 'Pílula' },
-                    { val: 'btn-wavy', label: '🌊 Ondulado' },
-                    { val: 'btn-torn', label: '📄 Rasgado' },
-                    { val: 'btn-brutal', label: '🔳 Brutalista' },
-                    { val: 'btn-glass', label: '✨ Vidro' },
-                    { val: 'btn-outline', label: '🔲 Contorno' },
-                    { val: 'btn-sketchy', label: '✏️ Esboçado' },
-                    { val: 'btn-soft-shadow', label: '☁️ Sombra Leve' },
-                    { val: 'btn-left-accent', label: '▮ Detalhe Esq' },
-                    { val: 'btn-angled', label: '📐 Inclinado' },
-                    { val: 'btn-double-border', label: '🎫 Borda Dupla' },
-                    { val: 'btn-neon-glow', label: '🔋 Brilho Neon' },
+                    { val: 'rounded-full',     label: '💊 Pílula' },
+                    { val: 'rounded-xl',       label: '🔷 Arredondado' },
+                    { val: 'rounded-none',     label: '⬜ Quadrado' },
+                    { val: 'btn-outline',      label: '🔲 Contorno' },
+                    { val: 'btn-glass',        label: '✨ Vidro Frosted' },
+                    { val: 'btn-brutal',       label: '🔳 Brutalista' },
+                    { val: 'btn-3d-press',     label: '🧱 Botão 3D' },
+                    { val: 'btn-wavy',         label: '🌊 Ondulado' },
+                    { val: 'btn-torn',         label: '📄 Rasgado' },
+                    { val: 'btn-aurora',       label: '🌈 Aurora Animado' },
+                    { val: 'btn-neon-glow',    label: '🔋 Neon Glow' },
+                    { val: 'btn-retro',        label: '🕹️ Retro Arcade' },
+                    { val: 'btn-dashed',       label: '〰️ Pontilhado' },
+                    { val: 'btn-left-accent',  label: '▮ Faixa Esquerda' },
+                    { val: 'btn-angled',       label: '📐 Cyber / Inclinado' },
+                    { val: 'btn-underline',    label: '— Sublinhado' },
+                    { val: 'btn-corner-marks', label: '□ Cantos HUD' },
+                    { val: 'btn-stripe',       label: '🎡 Listrado' },
+                    { val: 'btn-ticket',       label: '🔖 Cupom / Ticket' },
+                    { val: 'btn-hexagon',      label: '🛡️ Hexágono' },
+                    { val: 'btn-hangtag',      label: '🏷️ Tag com Furo' },
+                    { val: 'btn-speech',       label: '💬 Balão de Fala' },
+                    { val: 'btn-notch',        label: '🪟 Cantos Recortados' },
+                    { val: 'btn-zigzag',       label: '⚡ Zigue-Zague' },
+                    { val: 'btn-pill-skew',    label: '🌗 Semi-Pílula' },
+                    { val: 'btn-holographic',  label: '💿 Holográfico' },
+                    { val: 'btn-cassette',     label: '📼 Fita Vintage' },
+                    { val: 'btn-neon-border',  label: '🔮 Borda Dupla Glow' },
                   ]" :key="btn.val" @click="customRoundness = btn.val; customBtnBorder = ''"
                     :class="['py-2 px-2 text-[11px] border rounded-xl transition-all flex items-center justify-center gap-1', customRoundness === btn.val ? 'border-secondary bg-secondary/5 font-bold text-secondary' : 'border-[#EEEEEE] text-[#555]']">
                     {{ btn.label }}
@@ -2966,6 +2979,7 @@ async function logout() {
 }
 .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
 
+/* ─── Estilos Únicos e Distintos ─────────────────────────────────────── */
 .btn-wavy {
   clip-path: polygon(
     0% 12%, 5% 0%, 10% 12%, 15% 0%, 20% 12%, 25% 0%, 30% 12%, 35% 0%, 40% 12%, 45% 0%, 50% 12%, 55% 0%, 60% 12%, 65% 0%, 70% 12%, 75% 0%, 80% 12%, 85% 0%, 90% 12%, 95% 0%, 100% 12%,
@@ -2983,22 +2997,223 @@ async function logout() {
 }
 
 .btn-brutal {
-  border: 2px solid #000000 !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  border-radius: 9999px;
+  border: 3px solid #000000 !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  border-radius: 6px;
 }
 
 .btn-glass {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-radius: 14px;
 }
 
 .btn-outline {
   background-color: transparent !important;
   border: 2px solid currentColor !important;
   border-radius: 12px;
+}
+
+.btn-3d-press {
+  border-radius: 12px;
+  border: none !important;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35);
+  transform: translateY(-3px);
+}
+
+.btn-left-accent {
+  border-radius: 0 12px 12px 0 !important;
+  border-left: 6px solid currentColor !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+}
+
+.btn-angled {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 6px 0 currentColor, 0 0 14px 0 currentColor; }
+  50%       { box-shadow: 0 0 18px 4px currentColor, 0 0 35px 8px currentColor; }
+}
+.btn-neon-glow {
+  border-radius: 9999px;
+  border: 1.5px solid currentColor !important;
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+.btn-dashed {
+  border-radius: 12px;
+  border: 2.5px dashed currentColor !important;
+  background-color: transparent !important;
+}
+
+.btn-retro {
+  border-radius: 0px;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0 #000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 800 !important;
+}
+
+@keyframes aurora-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.btn-aurora {
+  border-radius: 9999px;
+  border: none !important;
+  background: linear-gradient(270deg, #ff0080, #7928ca, #00aaff, #00ffaa, #7928ca, #ff0080) !important;
+  background-size: 500% 500% !important;
+  animation: aurora-shift 5s ease infinite;
+  color: #fff !important;
+}
+
+.btn-corner-marks {
+  border-radius: 2px;
+  border: none !important;
+  background: transparent !important;
+  position: relative;
+}
+.btn-corner-marks::before,
+.btn-corner-marks::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: currentColor;
+  border-style: solid;
+}
+.btn-corner-marks::before {
+  top: 0px;
+  left: 0px;
+  border-width: 2.5px 0 0 2.5px;
+}
+.btn-corner-marks::after {
+  bottom: 0px;
+  right: 0px;
+  border-width: 0 2.5px 2.5px 0;
+}
+
+.btn-stripe {
+  border-radius: 10px;
+  border: none !important;
+  position: relative;
+  overflow: hidden;
+}
+.btn-stripe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    rgba(255,255,255,0.15) 6px,
+    rgba(255,255,255,0.15) 12px
+  );
+  pointer-events: none;
+}
+
+.btn-underline {
+  border-radius: 0 !important;
+  border: none !important;
+  border-bottom: 3px solid currentColor !important;
+  background: transparent !important;
+}
+
+/* ─── Novos Formatos Geométricos & Estilos ────────────────────────────────── */
+.btn-ticket {
+  border-radius: 6px;
+  border: 1.5px dashed currentColor !important;
+  clip-path: polygon(
+    0% 0%, 100% 0%, 
+    100% calc(50% - 7px), calc(100% - 7px) 50%, 100% calc(50% + 7px), 
+    100% 100%, 0% 100%, 
+    0% calc(50% + 7px), 7px 50%, 0% calc(50% - 7px)
+  );
+}
+
+.btn-hexagon {
+  border-radius: 0 !important;
+  border: none !important;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+}
+
+.btn-hangtag {
+  border-radius: 0 10px 10px 0 !important;
+  border: none !important;
+  clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px);
+  position: relative;
+}
+
+.btn-speech {
+  border-radius: 14px 14px 14px 2px !important;
+  border: 2px solid currentColor !important;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+}
+
+.btn-notch {
+  border-radius: 0 !important;
+  border: none !important;
+  clip-path: polygon(
+    10px 0, calc(100% - 10px) 0, 100% 10px, 
+    100% calc(100% - 10px), calc(100% - 10px) 100%, 
+    10px 100%, 0 calc(100% - 10px), 0 10px
+  );
+}
+
+.btn-zigzag {
+  border-radius: 0 !important;
+  border: none !important;
+  clip-path: polygon(
+    0% 0%, 100% 0%, 
+    97% 20%, 100% 40%, 97% 60%, 100% 80%, 97% 100%, 
+    0% 100%, 
+    3% 80%, 0% 60%, 3% 40%, 0% 20%
+  );
+}
+
+.btn-pill-skew {
+  border-radius: 9999px 4px 4px 9999px !important;
+  border: none !important;
+}
+
+@keyframes holo-shine {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.btn-holographic {
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.6) !important;
+  background: linear-gradient(135deg, #e66465 0%, #9198e5 25%, #43e97b 50%, #38f9d7 75%, #fa709a 100%) !important;
+  background-size: 300% 300% !important;
+  animation: holo-shine 6s ease infinite;
+  color: #000 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.btn-cassette {
+  border-radius: 8px;
+  border: 3px solid currentColor !important;
+  box-shadow: inset 0 0 0 3px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.btn-neon-border {
+  border-radius: 14px;
+  border: 2px solid currentColor !important;
+  outline: 2px dashed currentColor;
+  outline-offset: 4px;
 }
 </style>
