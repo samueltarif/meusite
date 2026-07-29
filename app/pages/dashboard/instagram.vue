@@ -3,9 +3,20 @@ import { ref, onMounted } from 'vue'
 import { supabase } from '~/composables/useSupabase'
 
 useSeoMeta({
-  title: 'Instagram Auto Reply & Leads | Avyro Dashboard',
-  description: 'Gerencie automações de auto-resposta e visualize mensagens e comentários recebidos pelo Instagram.',
+  title: 'Instagram Auto Reply & Integração | Avyro Dashboard',
+  description: 'Conecte sua conta do Instagram, gerencie automações de auto-resposta e acompanhe leads recebidos em tempo real.',
 })
+
+interface InstagramAccount {
+  id?: string
+  instagram_account_id: string
+  instagram_username?: string
+  connection_status: 'pending' | 'connected' | 'expired' | 'error' | 'disconnected'
+  is_active: boolean
+  token_expires_at?: string
+  created_at?: string
+  last_error?: string
+}
 
 interface AutoReplyRule {
   id?: string
@@ -32,16 +43,25 @@ interface WebhookEvent {
   created_at: string
 }
 
+const route = useRoute()
+const config = useRuntimeConfig()
+const oauthEnabled = ref(config.public?.instagramOauthEnabled ?? false)
+
 const activeTab = ref<'rules' | 'events'>('rules')
 const loading = ref(true)
+const account = ref<InstagramAccount | null>(null)
 const rules = ref<AutoReplyRule[]>([])
 const events = ref<WebhookEvent[]>([])
 const sessionToken = ref<string>('')
 
-// Modal state
+// Modals
+const isOAuthInfoModalOpen = ref(false)
 const isModalOpen = ref(false)
 const isEditing = ref(false)
 const editingRuleId = ref<string | null>(null)
+
+// Banners & Notifications
+const queryAlert = ref<{ type: 'success' | 'warning' | 'error'; message: string } | null>(null)
 
 const form = ref<AutoReplyRule>({
   trigger_type: 'message',
@@ -59,6 +79,20 @@ async function fetchSession() {
   const { data: { session } } = await supabase.auth.getSession()
   if (session?.access_token) {
     sessionToken.value = session.access_token
+  }
+}
+
+async function loadAccount() {
+  if (!sessionToken.value) await fetchSession()
+  try {
+    const res = await $fetch<{ success: boolean; account: InstagramAccount }>('/api/instagram/account', {
+      headers: { Authorization: `Bearer ${sessionToken.value}` }
+    })
+    if (res.success) {
+      account.value = res.account
+    }
+  } catch (err: any) {
+    console.error('Erro ao carregar conta do Instagram:', err)
   }
 }
 
@@ -93,13 +127,50 @@ async function loadEvents() {
 async function loadData() {
   loading.value = true
   await fetchSession()
-  await Promise.all([loadRules(), loadEvents()])
+  await Promise.all([loadAccount(), loadRules(), loadEvents()])
   loading.value = false
 }
 
+function handleQueryParams() {
+  if (route.query.instagram_connected === 'true') {
+    queryAlert.value = { type: 'success', message: 'Conta do Instagram conectada com sucesso via OAuth!' }
+  } else if (route.query.instagram_connected === 'pending') {
+    queryAlert.value = { type: 'warning', message: 'Código recebido. Sua conta está em modo de teste aguardando aprovação da Meta.' }
+  } else if (route.query.instagram_connected === 'error') {
+    const reason = (route.query.reason as string) || 'Não foi possível concluir a autorização'
+    queryAlert.value = { type: 'error', message: `Erro ao conectar Instagram: ${reason}` }
+  } else if (route.query.oauth_disabled === 'true') {
+    isOAuthInfoModalOpen.value = true
+  }
+}
+
 onMounted(() => {
+  handleQueryParams()
   loadData()
 })
+
+function handleConnectInstagram() {
+  if (!oauthEnabled.value) {
+    isOAuthInfoModalOpen.value = true
+  } else {
+    window.location.href = '/api/instagram/connect'
+  }
+}
+
+async function handleDisconnectInstagram() {
+  if (!confirm('Deseja realmente desconectar sua conta do Instagram? O histórico de eventos será mantido.')) return
+
+  try {
+    await $fetch('/api/instagram/disconnect', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${sessionToken.value}` }
+    })
+    await loadAccount()
+    queryAlert.value = { type: 'warning', message: 'Conta do Instagram desconectada com sucesso.' }
+  } catch (err) {
+    alert('Erro ao desconectar conta.')
+  }
+}
 
 function openNewModal() {
   isEditing.value = false
@@ -205,7 +276,7 @@ async function deleteRule(id?: string) {
   }
 }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr?: string) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString('pt-BR', {
     day: '2-digit',
@@ -228,12 +299,12 @@ function formatDate(dateStr: string) {
           </NuxtLink>
           <div>
             <h1 class="font-heading font-extrabold text-xl flex items-center gap-2">
-              <span class="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-xs">
-                💬
+              <span class="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-500 via-pink-500 to-amber-500 flex items-center justify-center text-xs">
+                📷
               </span>
-              Instagram Auto Reply & Leads
+              Instagram Auto Reply & Conexão
             </h1>
-            <p class="text-xs text-purple-200/70">Respostas automáticas por palavra-chave e histórico de interações.</p>
+            <p class="text-xs text-purple-200/70">Conexão oficial via OAuth, automação de respostas e captura de leads.</p>
           </div>
         </div>
 
@@ -248,13 +319,133 @@ function formatDate(dateStr: string) {
     </header>
 
     <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      
-      <!-- Safe Mode / Security Banner -->
-      <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-900">
-        <span class="material-symbols-outlined text-amber-600 text-xl shrink-0 mt-0.5">shield</span>
-        <div class="text-xs space-y-1">
-          <p class="font-bold text-amber-950">Modo de Segurança Ativo (INSTAGRAM_AUTO_REPLY_ENABLED=false)</p>
-          <p class="text-amber-900/80">O sistema está recebendo e armazenando eventos no banco normalmente. Para liberar o envio real de respostas no Instagram via Graph API, defina <code class="bg-amber-200/60 px-1 py-0.5 rounded font-mono text-[11px]">INSTAGRAM_AUTO_REPLY_ENABLED=true</code> nas variáveis do seu ambiente.</p>
+
+      <!-- Dynamic Query Alert Banner -->
+      <div
+        v-if="queryAlert"
+        class="p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs font-bold"
+        :class="{
+          'bg-emerald-50 border-emerald-200 text-emerald-800': queryAlert.type === 'success',
+          'bg-amber-50 border-amber-200 text-amber-900': queryAlert.type === 'warning',
+          'bg-red-50 border-red-200 text-red-800': queryAlert.type === 'error'
+        }"
+      >
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg">
+            {{ queryAlert.type === 'success' ? 'check_circle' : (queryAlert.type === 'warning' ? 'info' : 'error') }}
+          </span>
+          <span>{{ queryAlert.message }}</span>
+        </div>
+        <button @click="queryAlert = null" class="text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <!-- ─── 1. CARD DE STATUS DA CONEXÃO INSTAGRAM ─── -->
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-500 p-0.5 shadow-md shadow-purple-500/20 shrink-0">
+              <div class="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
+                <span class="text-2xl">📸</span>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <h2 class="font-heading font-extrabold text-lg text-slate-900">
+                  {{ account?.instagram_username ? `@${account.instagram_username}` : 'Conta Profissional do Instagram' }}
+                </h2>
+
+                <!-- Status Badge -->
+                <span
+                  v-if="account?.connection_status === 'connected'"
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 flex items-center gap-1"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Conectado
+                </span>
+                <span
+                  v-else-if="account?.connection_status === 'pending'"
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 flex items-center gap-1"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  Aguardando Aprovação da Meta
+                </span>
+                <span
+                  v-else-if="account?.connection_status === 'expired'"
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-red-100 text-red-800 flex items-center gap-1"
+                >
+                  Token Expirado
+                </span>
+                <span
+                  v-else
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 flex items-center gap-1"
+                >
+                  Não Conectado
+                </span>
+              </div>
+
+              <p class="text-xs text-slate-500">
+                ID da Conta Meta: <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ account?.instagram_account_id || '17841401920784631' }}</code>
+              </p>
+            </div>
+          </div>
+
+          <!-- Connection Action Buttons -->
+          <div class="flex items-center gap-2">
+            <button
+              v-if="!account || account.connection_status === 'disconnected'"
+              @click="handleConnectInstagram"
+              class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:opacity-95 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all flex items-center gap-2"
+            >
+              <span class="material-symbols-outlined text-base">link</span>
+              Conectar Instagram
+            </button>
+
+            <template v-else>
+              <button
+                @click="handleConnectInstagram"
+                class="px-4 py-2 rounded-xl border border-purple-200 text-purple-700 hover:bg-purple-50 font-bold text-xs transition-all flex items-center gap-1.5"
+              >
+                <span class="material-symbols-outlined text-base">sync</span>
+                Reautenticar
+              </button>
+
+              <button
+                @click="handleDisconnectInstagram"
+                class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs transition-all flex items-center gap-1.5"
+              >
+                <span class="material-symbols-outlined text-base">link_off</span>
+                Desconectar
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Connection Details Info Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Modo de Operação</span>
+            <p class="font-bold text-slate-800 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full" :class="oauthEnabled ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+              {{ oauthEnabled ? 'OAuth 2.0 Oficial Ativo' : 'Modo Teste / Sandbox Meta' }}
+            </p>
+          </div>
+
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Data de Vinculação</span>
+            <p class="font-bold text-slate-800 font-mono">
+              {{ formatDate(account?.created_at) }}
+            </p>
+          </div>
+
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Validade do Token</span>
+            <p class="font-bold text-slate-800 font-mono">
+              {{ account?.token_expires_at ? formatDate(account.token_expires_at) : 'Modo Permanente / Long-lived' }}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -438,6 +629,46 @@ function formatDate(dateStr: string) {
       </div>
 
     </main>
+
+    <!-- MODAL DE INFORMAÇÃO OAUTH SAFE / PENDING -->
+    <div v-if="isOAuthInfoModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 border border-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="font-heading font-extrabold text-lg text-slate-900 flex items-center gap-2">
+            <span>🛡️</span> Conexão Instagram Login (OAuth 2.0)
+          </h3>
+          <button @click="isOAuthInfoModalOpen = false" class="text-slate-400 hover:text-slate-600 p-1">
+            <span class="material-symbols-outlined text-xl">close</span>
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs text-slate-700">
+          <p class="font-bold text-slate-900">
+            A infraestrutura oficial de conexão via Instagram OAuth 2.0 está 100% implementada no backend.
+          </p>
+          <p>
+            No momento, a flag <code class="bg-slate-100 px-1 py-0.5 rounded font-mono text-purple-700">INSTAGRAM_OAUTH_ENABLED=false</code> está ativa pois o aplicativo na <strong>Meta Developers</strong> (App ID <code class="font-mono bg-slate-100 px-1">4609504682619928</code>) aguarda a conclusão da App Review para as permissões de produção:
+          </p>
+          <ul class="list-disc list-inside bg-slate-50 p-3 rounded-xl space-y-1 font-mono text-[11px] text-slate-600 border border-slate-100">
+            <li>instagram_business_basic</li>
+            <li>instagram_business_manage_messages</li>
+            <li>instagram_business_manage_comments</li>
+          </ul>
+          <p class="text-slate-500">
+            Enquanto a aprovação final é processada pela equipe da Meta, as regras de auto-resposta e captura de eventos continuam operando normalmente via Webhook.
+          </p>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t border-slate-100">
+          <button
+            @click="isOAuthInfoModalOpen = false"
+            class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md transition-all"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL DE CRIAR / EDITAR REGRA -->
     <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">

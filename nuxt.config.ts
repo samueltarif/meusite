@@ -57,8 +57,12 @@ export default defineNuxtConfig({
     instagramWebhookVerifyToken: process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN || 'avyro_instagram_webhook_2026',
     instagramAutoReplyEnabled: process.env.INSTAGRAM_AUTO_REPLY_ENABLED === 'true',
     instagramAppSecret: process.env.INSTAGRAM_APP_SECRET || '',
+    instagramAppId: process.env.INSTAGRAM_APP_ID || '4609504682619928',
+    instagramRedirectUri: process.env.INSTAGRAM_REDIRECT_URI || 'https://www.avyro.com.br/api/instagram/callback',
+    instagramOauthEnabled: process.env.INSTAGRAM_OAUTH_ENABLED === 'true',
     public: {
-      stripePublicKey: process.env.STRIPE_PUBLIC_KEY || ''
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY || '',
+      instagramOauthEnabled: process.env.INSTAGRAM_OAUTH_ENABLED === 'true'
     }
   }
 })
