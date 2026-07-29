@@ -117,11 +117,11 @@ export function parseInstagramWebhookPayload(body: any): ParsedWebhookEvent[] {
  * - Checks active auto reply rules in `instagram_auto_replies`
  * - Sends auto reply if enabled via INSTAGRAM_AUTO_REPLY_ENABLED=true
  */
-export async function processIncomingInstagramWebhook(body: any) {
+export async function processIncomingInstagramWebhook(body: any): Promise<{ saved: boolean; event_id: string | null; error?: string }> {
   const events = parseInstagramWebhookPayload(body)
   if (events.length === 0) {
     console.log('[Instagram Webhook] Nenhum evento de mensagem/comentário encontrado no payload.')
-    return
+    return { saved: false, event_id: null, error: 'No messaging/comment events found in payload' }
   }
 
   const supabaseUrl = process.env.SUPABASE_URL || 'https://mwrtluebbiyrmjrqwhut.supabase.co'
@@ -129,12 +129,15 @@ export async function processIncomingInstagramWebhook(body: any) {
 
   if (!supabaseServiceKey) {
     console.error('[Instagram Webhook Error] SUPABASE_SERVICE_ROLE_KEY ausente.')
-    return
+    return { saved: false, event_id: null, error: 'SUPABASE_SERVICE_ROLE_KEY missing' }
   }
 
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
   const config = useRuntimeConfig()
   const autoReplyEnabled = config.instagramAutoReplyEnabled ?? (process.env.INSTAGRAM_AUTO_REPLY_ENABLED === 'true')
+
+  const savedIds: string[] = []
+  let lastError = ''
 
   for (const ev of events) {
     console.log('----------------------------------------------------')
@@ -244,8 +247,13 @@ export async function processIncomingInstagramWebhook(body: any) {
       .select('id')
       .single()
 
+    if (savedEvent?.id) {
+      savedIds.push(savedEvent.id)
+    }
+
     if (saveErr) {
       console.error('[Instagram Webhook DB Error]: Erro ao salvar evento no Supabase:', saveErr)
+      lastError = saveErr.message
       continue
     }
 
@@ -313,6 +321,12 @@ export async function processIncomingInstagramWebhook(body: any) {
         error_message: sendSuccess ? null : 'Falha no envio via Instagram Graph API'
       }).eq('id', eventRecordId)
     }
+  }
+
+  return {
+    saved: savedIds.length > 0,
+    event_id: savedIds[0] || null,
+    error: savedIds.length === 0 ? (lastError || 'Nenhum evento gravado no Supabase.') : undefined
   }
 }
 

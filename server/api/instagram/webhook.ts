@@ -29,7 +29,6 @@ export default defineEventHandler(async (event) => {
     // Validação estrita do token e modo 'subscribe'
     if (mode === 'subscribe' && verifyToken === expectedToken) {
       console.log('[Instagram Webhook GET Success] Token verificado com sucesso! Retornando hub.challenge.')
-      // A Meta exige retorno do hub.challenge como text/plain com HTTP 200
       setResponseHeader(event, 'content-type', 'text/plain')
       return challenge
     }
@@ -41,45 +40,78 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // ─── 2. RECEBIMENTO DE EVENTOS (POST) ──────────────────────────────────
+  // ─── 2. RECEBIMENTO E GRAVAÇÃO DE EVENTOS (POST) ──────────────────────
   if (method === 'POST') {
     try {
-      const rawBody = await readRawBody(event, 'utf-8') || ''
-      const signature = getRequestHeader(event, 'x-hub-signature-256')
-      const config = useRuntimeConfig()
-      const appSecret = process.env.INSTAGRAM_APP_SECRET || config.instagramAppSecret || ''
+      const contentType = getRequestHeader(event, 'content-type') || ''
+      let rawOrParsedBody: any = null
 
-      // Validação opcional da assinatura da Meta (se INSTAGRAM_APP_SECRET estiver configurado)
-      if (appSecret && signature) {
-        const isValidSignature = validateMetaSignature(rawBody, signature, appSecret)
-        if (!isValidSignature) {
-          console.warn('[Instagram Webhook POST] Assinatura X-Hub-Signature-256 inválida!')
-          throw createError({ statusCode: 401, statusMessage: 'Unauthorized: Invalid signature' })
+      try {
+        // Ler o body com await readBody(event) APENAS UMA VEZ
+        rawOrParsedBody = await readBody(event)
+      } catch (readErr: any) {
+        console.error('[Instagram Webhook POST Error]: Falha ao ler o body da requisição:', readErr?.message)
+      }
+
+      console.log('----------------------------------------------------')
+      console.log('[Instagram Webhook POST Diagnostics]:', {
+        contentType,
+        bodyType: typeof rawOrParsedBody,
+        isEmpty: !rawOrParsedBody
+      })
+
+      let body: any = rawOrParsedBody
+
+      // Se readBody(event) retornar string (ex: JSON bruto), realiza JSON.parse seguro
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body)
+        } catch (parseErr) {
+          console.error('[Instagram Webhook POST Error]: String do body não é um JSON válido.')
+          return {
+            received: true,
+            saved: false,
+            error: 'Invalid JSON body'
+          }
         }
       }
 
-      let body: any = {}
-      try {
-        body = JSON.parse(rawBody)
-      } catch (e) {
-        body = await readBody(event) || {}
+      // Validação do objeto JSON
+      if (!body || typeof body !== 'object') {
+        console.error('[Instagram Webhook POST Error]: Body é nulo ou não é um objeto válido.', {
+          contentType,
+          bodyType: typeof body,
+          isEmpty: !body
+        })
+        return {
+          received: true,
+          saved: false,
+          error: 'Invalid JSON body'
+        }
       }
 
-      console.log('----------------------------------------------------')
-      console.log('[Instagram Webhook POST Event Received]:')
+      console.log('[Instagram Webhook POST Event Payload Received]:')
       console.log(JSON.stringify(body, null, 2))
       console.log('----------------------------------------------------')
 
-      // Processar salvamento e matching no Supabase de forma assíncrona (não trava o HTTP 200)
-      processIncomingInstagramWebhook(body).catch((err) => {
-        console.error('[Instagram Webhook Async Process Error]:', err)
-      })
+      // Processar e salvar na tabela `instagram_webhook_events` no Supabase
+      const processResult = await processIncomingInstagramWebhook(body)
 
-      // Retorno imediato de HTTP 200 OK para a Meta
-      return { received: true }
+      console.log('[Instagram Webhook POST Result]:', processResult)
+
+      return {
+        received: true,
+        saved: processResult?.saved ?? false,
+        event_id: processResult?.event_id || null,
+        error: processResult?.error || null
+      }
     } catch (err: any) {
-      console.error('[Instagram Webhook POST Error]:', err?.message || err)
-      return { received: false, error: err?.message }
+      console.error('[Instagram Webhook POST Exception]:', err?.message || err)
+      return {
+        received: true,
+        saved: false,
+        error: err?.message || 'Erro interno ao processar webhook'
+      }
     }
   }
 
