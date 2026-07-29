@@ -49,6 +49,9 @@ export default defineNuxtConfig({
     pexelsApiKey: process.env.PEXELS_API_KEY || '',
     unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY || '',
     giphyApiKey: process.env.GIPHY_API_KEY || '',
+    instagramAccessToken: process.env.INSTAGRAM_ACCESS_TOKEN || '',
+    instagramUserId: process.env.INSTAGRAM_USER_ID || '',
+    instagramWebhookVerifyToken: process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN || 'avyro_instagram_webhook_2026',
     public: {
       stripePublicKey: process.env.STRIPE_PUBLIC_KEY || ''
     }
