@@ -162,7 +162,8 @@ function handleConnectInstagram() {
   if (!oauthEnabled.value) {
     isOAuthInfoModalOpen.value = true
   } else {
-    window.location.href = '/api/instagram/connect'
+    const tokenParam = sessionToken.value ? `?token=${encodeURIComponent(sessionToken.value)}` : ''
+    window.location.href = `/api/instagram/connect${tokenParam}`
   }
 }
 
