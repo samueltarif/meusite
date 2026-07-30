@@ -160,8 +160,8 @@ useSeoMeta({
               <p class="text-xs text-slate-600">
                 Para solicitar a exclusão definitiva e permanente de todo o seu cadastro, conta e histórico de dados da Avyro, envie um e-mail para:
               </p>
-              <a href="mailto:contato@avyro.com.br?subject=Solicitação de Exclusão de Dados - LGPD" class="inline-block font-mono text-xs font-bold text-purple-700 bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200">
-                contato@avyro.com.br
+              <a href="mailto:samuel.tarif@gmail.com?subject=Solicitação de Exclusão de Dados - LGPD" class="inline-block font-mono text-xs font-bold text-purple-700 bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200">
+                samuel.tarif@gmail.com
               </a>
               <p class="text-[11px] text-slate-400">Sua solicitação será atendida no prazo máximo de 5 dias úteis.</p>
             </div>
@@ -195,7 +195,7 @@ useSeoMeta({
           <div class="p-4 rounded-2xl bg-slate-900 text-white space-y-2">
             <p class="font-bold text-sm">Avyro Growth Company</p>
             <p class="text-xs text-slate-300 font-mono">CNPJ: 66.818.617/0001-27</p>
-            <p class="text-xs text-purple-300">E-mail: <a href="mailto:contato@avyro.com.br" class="underline font-bold">contato@avyro.com.br</a></p>
+            <p class="text-xs text-purple-300">E-mail: <a href="mailto:samuel.tarif@gmail.com" class="underline font-bold">samuel.tarif@gmail.com</a></p>
             <p class="text-xs text-purple-300">Suporte WhatsApp: (11) 95137-2631</p>
           </div>
         </section>
