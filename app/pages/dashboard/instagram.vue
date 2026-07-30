@@ -45,7 +45,10 @@ interface WebhookEvent {
 
 const route = useRoute()
 const config = useRuntimeConfig()
-const oauthEnabled = ref(config.public?.instagramOauthEnabled ?? false)
+const oauthEnabled = computed(() => {
+  const val = config.public?.instagramOauthEnabled
+  return val === true || String(val).toLowerCase() === 'true'
+})
 
 const activeTab = ref<'rules' | 'events'>('rules')
 const loading = ref(true)
@@ -145,6 +148,12 @@ function handleQueryParams() {
 }
 
 onMounted(() => {
+  if (process.dev || process.env.NODE_ENV !== 'production') {
+    console.log('[Instagram Dashboard Dev Diagnostics]:', {
+      rawOauthConfig: config.public?.instagramOauthEnabled,
+      oauthEnabled: oauthEnabled.value
+    })
+  }
   handleQueryParams()
   loadData()
 })
