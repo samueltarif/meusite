@@ -16,10 +16,14 @@ export interface InstagramOAuthResult {
  * Builds the official Instagram Login for Business authorization URL
  * Scopes: instagram_business_basic, instagram_business_manage_messages, instagram_business_manage_comments
  */
-export function buildInstagramAuthUrl(userId: string): string {
+export function buildInstagramAuthUrl(userId: string, customRedirectUri?: string): string {
   const config = useRuntimeConfig()
   const appId = config.instagramAppId || process.env.INSTAGRAM_APP_ID || '4609504682619928'
-  const redirectUri = config.instagramRedirectUri || process.env.INSTAGRAM_REDIRECT_URI || 'https://www.avyro.com.br/api/instagram/callback'
+  let redirectUri = customRedirectUri || config.instagramRedirectUri || process.env.INSTAGRAM_REDIRECT_URI || 'https://www.avyro.com.br/api/instagram/callback'
+
+  if (redirectUri.startsWith('//')) {
+    redirectUri = 'http:' + redirectUri
+  }
 
   // Generate safe state token containing user_id and timestamp
   const stateData = {
