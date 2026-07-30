@@ -14,6 +14,11 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: ['ws']
+    },
+    server: {
+      watch: {
+        ignored: ['**/.nuxt/**', '**/.output/**', '**/.git/**']
+      }
     }
   },
   app: {
