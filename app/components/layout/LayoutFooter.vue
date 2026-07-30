@@ -28,8 +28,15 @@ const currentYear = new Date().getFullYear()
         </a>
       </div>
 
+      <!-- Links adicionais -->
+      <div class="flex items-center justify-center gap-4 text-xs text-on-primary/70 my-2">
+        <NuxtLink to="/politica-de-privacidade" class="hover:text-white underline transition-colors">
+          Política de Privacidade
+        </NuxtLink>
+      </div>
+
       <!-- Divider + Copyright -->
-      <p class="font-body text-body-md text-on-primary/60 text-sm pt-8 border-t border-on-primary/10 w-full">
+      <p class="font-body text-body-md text-on-primary/60 text-sm pt-4 border-t border-on-primary/10 w-full">
         © {{ currentYear }} Avyro Growth Company. CNPJ 66.818.617/0001-27
       </p>
     </div>
