@@ -104,9 +104,9 @@ useSeoMeta({
             Empregamos medidas técnicas e organizacionais avançadas para proteger suas informações contra acesso não autorizado, perda, alteração ou destruição:
           </p>
           <ul class="list-disc list-inside space-y-1.5 pl-2">
-            <li><strong>Banco de Dados Criptografado (Supabase):** Comunicação via SSL/TLS com Row Level Security (RLS) habilitado para garantir isolamento multi-tenant absoluto entre usuários.</li>
-            <li><strong>Armazenamento de Mídia (Cloudflare R2):** Upload de arquivos e fotos em infraestrutura isolada com links seguros.</li>
-            <li><strong>Execução Serverless (Vercel):** Handlers de API com proteção contra ataques e sanitização de requisições.</li>
+            <li><strong>Banco de Dados Criptografado (Supabase):</strong> Comunicação via SSL/TLS com Row Level Security (RLS) habilitado para garantir isolamento multi-tenant absoluto entre usuários.</li>
+            <li><strong>Armazenamento de Mídia (Cloudflare R2):</strong> Upload de arquivos e fotos em infraestrutura isolada com links seguros.</li>
+            <li><strong>Execução Serverless (Vercel):</strong> Handlers de API com proteção contra ataques e sanitização de requisições.</li>
           </ul>
         </section>
 
