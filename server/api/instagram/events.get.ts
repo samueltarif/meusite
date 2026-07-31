@@ -34,6 +34,10 @@ export default defineEventHandler(async (event) => {
       processed,
       auto_reply_sent,
       matched_rule_id,
+      human_reply_text,
+      human_reply_sent,
+      human_reply_status,
+      human_reply_at,
       error_message,
       created_at
     `)
@@ -48,5 +52,30 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return { success: true, events: eventsList || [] }
+  // 3. Buscar informações das regras acionadas (matched_rule_id)
+  const matchedRuleIds = (eventsList || [])
+    .map(ev => ev.matched_rule_id)
+    .filter((id): id is string => Boolean(id))
+
+  let rulesMap: Record<string, any> = {}
+
+  if (matchedRuleIds.length > 0) {
+    const { data: rules } = await supabaseAdmin
+      .from('instagram_auto_replies')
+      .select('id, keyword, response_message, trigger_type, match_type')
+      .in('id', matchedRuleIds)
+
+    if (rules) {
+      for (const r of rules) {
+        rulesMap[r.id] = r
+      }
+    }
+  }
+
+  const enrichedEvents = (eventsList || []).map(ev => ({
+    ...ev,
+    matched_rule: ev.matched_rule_id ? rulesMap[ev.matched_rule_id] || null : null
+  }))
+
+  return { success: true, events: enrichedEvents }
 })

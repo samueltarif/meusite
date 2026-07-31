@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { supabase } from '~/composables/useSupabase'
 
 useSeoMeta({
@@ -39,6 +39,17 @@ interface WebhookEvent {
   processed: boolean
   auto_reply_sent: boolean
   matched_rule_id?: string
+  matched_rule?: {
+    id: string
+    keyword: string
+    response_message: string
+    trigger_type: string
+    match_type: string
+  } | null
+  human_reply_text?: string
+  human_reply_sent?: boolean
+  human_reply_status?: 'simulated' | 'sent' | 'error' | string
+  human_reply_at?: string
   error_message?: string
   created_at: string
 }
@@ -62,6 +73,14 @@ const isOAuthInfoModalOpen = ref(false)
 const isModalOpen = ref(false)
 const isEditing = ref(false)
 const editingRuleId = ref<string | null>(null)
+
+// Atendimento Human Agent Modal
+const isAtendimentoModalOpen = ref(false)
+const selectedLead = ref<WebhookEvent | null>(null)
+const humanReplyMessage = ref('')
+const submittingHumanReply = ref(false)
+const creatingTestLead = ref(false)
+const humanReplyNotice = ref<{ type: 'success' | 'warning' | 'error'; message: string } | null>(null)
 
 // Banners & Notifications
 const queryAlert = ref<{ type: 'success' | 'warning' | 'error'; message: string } | null>(null)
@@ -179,6 +198,91 @@ async function handleDisconnectInstagram() {
     queryAlert.value = { type: 'warning', message: 'Conta do Instagram desconectada com sucesso.' }
   } catch (err) {
     alert('Erro ao desconectar conta.')
+  }
+}
+
+async function handleCreateTestLead() {
+  creatingTestLead.value = true
+  try {
+    const res = await $fetch<{ success: boolean; event: WebhookEvent }>('/api/instagram/test-lead', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${sessionToken.value}` }
+    })
+
+    if (res.success) {
+      queryAlert.value = {
+        type: 'success',
+        message: 'Lead de teste criado com sucesso! (Gatilho: "preço" | Sender ID: "cliente_teste_instagram")'
+      }
+      await loadEvents()
+      await loadAccount()
+    }
+  } catch (err: any) {
+    queryAlert.value = {
+      type: 'error',
+      message: err?.data?.statusMessage || err?.message || 'Erro ao gerar lead de teste.'
+    }
+  } finally {
+    creatingTestLead.value = false
+  }
+}
+
+function openAtendimentoModal(lead: WebhookEvent) {
+  selectedLead.value = lead
+  humanReplyMessage.value = lead.human_reply_text || 'Olá! Obrigado pelo contato. Temos planos a partir de R$ XX. Posso te enviar mais detalhes e ajudar a escolher a melhor opção.'
+  humanReplyNotice.value = null
+  isAtendimentoModalOpen.value = true
+}
+
+function closeAtendimentoModal() {
+  isAtendimentoModalOpen.value = false
+  selectedLead.value = null
+  humanReplyMessage.value = ''
+  humanReplyNotice.value = null
+}
+
+async function handleSendHumanReply() {
+  if (!selectedLead.value || !humanReplyMessage.value.trim()) return
+
+  submittingHumanReply.value = true
+  humanReplyNotice.value = null
+
+  try {
+    const res = await $fetch<{
+      success: boolean
+      status: string
+      sent: boolean
+      notice: string
+      event: WebhookEvent
+    }>('/api/instagram/human-reply', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${sessionToken.value}` },
+      body: {
+        event_id: selectedLead.value.id,
+        reply_text: humanReplyMessage.value.trim()
+      }
+    })
+
+    if (res.success) {
+      selectedLead.value = {
+        ...selectedLead.value,
+        ...res.event
+      }
+
+      humanReplyNotice.value = {
+        type: res.status === 'sent' ? 'success' : 'warning',
+        message: res.notice
+      }
+
+      await loadEvents()
+    }
+  } catch (err: any) {
+    humanReplyNotice.value = {
+      type: 'error',
+      message: err?.data?.statusMessage || err?.message || 'Erro ao enviar resposta manual.'
+    }
+  } finally {
+    submittingHumanReply.value = false
   }
 }
 
@@ -578,15 +682,39 @@ function formatDate(dateStr?: string) {
 
       <!-- TAB 2: EVENTS / LEADS LISTING -->
       <div v-if="activeTab === 'events'" class="space-y-4">
-        <div class="flex justify-between items-center">
-          <div>
-            <h2 class="font-heading font-extrabold text-lg text-slate-900">Histórico de Interações do Instagram</h2>
-            <p class="text-xs text-slate-500">Registro de mensagens e comentários recebidos em tempo real via Webhook da Meta.</p>
+        <!-- Review Mode Warning Callout (Req 9) -->
+        <div class="p-4 rounded-2xl bg-purple-50 border border-purple-200 text-purple-900 flex items-start gap-3 text-xs shadow-xs">
+          <span class="material-symbols-outlined text-lg text-purple-600 shrink-0 mt-0.5">info</span>
+          <div class="space-y-1">
+            <h4 class="font-extrabold text-purple-900">Modo de Revisão da Meta (App Review & Human Agent)</h4>
+            <p class="text-purple-800 font-medium">
+              Eventos de teste demonstram o fluxo completo de atendimento enquanto a entrega de DMs reais depende da aprovação/publicação do aplicativo pela Meta.
+            </p>
           </div>
         </div>
 
-        <div v-if="events.length === 0" class="p-12 text-center bg-white rounded-3xl border border-dashed border-slate-200 text-xs text-slate-400">
-          Nenhum evento registrado no banco de dados ainda. Envie uma mensagem direta ou comentário no seu Instagram para testar!
+        <!-- Section Header with Test Lead Generator Button (Req 1) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="font-heading font-extrabold text-lg text-slate-900">Leads & Eventos Recebidos</h2>
+            <p class="text-xs text-slate-500">Acompanhe mensagens recebidas via Webhook e faça atendimentos manuais (Human Agent).</p>
+          </div>
+
+          <!-- Create Test Lead Button (Req 1 & 2) -->
+          <button
+            @click="handleCreateTestLead"
+            :disabled="creatingTestLead"
+            class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all flex items-center gap-2 shrink-0 disabled:opacity-50"
+          >
+            <span class="material-symbols-outlined text-base">science</span>
+            {{ creatingTestLead ? 'Gerando Lead...' : 'Criar Lead de Teste' }}
+          </button>
+        </div>
+
+        <div v-if="events.length === 0" class="p-12 text-center bg-white rounded-3xl border border-dashed border-slate-200 space-y-3">
+          <span class="material-symbols-outlined text-4xl text-slate-300">inbox</span>
+          <h3 class="font-bold text-sm text-slate-700">Nenhum evento registrado ainda</h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto">Clique no botão "Criar lead de teste" acima para gerar uma interação simulada de revisão.</p>
         </div>
 
         <div v-else class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
@@ -596,16 +724,19 @@ function formatDate(dateStr?: string) {
                 <tr>
                   <th class="py-3 px-4">Data / Hora</th>
                   <th class="py-3 px-4">Tipo</th>
-                  <th class="py-3 px-4">Sender ID (Remetente)</th>
+                  <th class="py-3 px-4">Remetente (Sender ID)</th>
                   <th class="py-3 px-4">Texto Recebido</th>
-                  <th class="py-3 px-4">Status da Automação</th>
+                  <th class="py-3 px-4">Auto Reply</th>
+                  <th class="py-3 px-4">Atendimento Humano</th>
+                  <th class="py-3 px-4 text-right">Ação</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
                 <tr v-for="ev in events" :key="ev.id" class="hover:bg-slate-50/80 transition-colors">
-                  <td class="py-3 px-4 font-mono text-[11px] text-slate-500">
+                  <td class="py-3 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
                     {{ formatDate(ev.created_at) }}
                   </td>
+
                   <td class="py-3 px-4">
                     <span
                       class="px-2 py-0.5 rounded text-[10px] font-bold"
@@ -614,25 +745,58 @@ function formatDate(dateStr?: string) {
                       {{ ev.event_type === 'comment' ? 'Comentário' : 'Mensagem' }}
                     </span>
                   </td>
-                  <td class="py-3 px-4 font-mono text-slate-600">
+
+                  <td class="py-3 px-4 font-mono text-slate-600 whitespace-nowrap">
                     {{ ev.sender_id }}
                   </td>
+
                   <td class="py-3 px-4 font-medium text-slate-900 max-w-xs truncate">
-                    "{{ ev.message_text }}"
+                    {{ ev.message_text }}
                   </td>
+
+                  <!-- Column 1: Auto Reply status (Req 7 & 8) -->
                   <td class="py-3 px-4">
                     <span v-if="ev.auto_reply_sent" class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">
-                      ✓ Respondido
+                      ✓ Enviado
                     </span>
                     <span v-else-if="ev.matched_rule_id" class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-[10px]" title="Regra acionada em modo seguro">
                       ⚡ Regra Acionada
                     </span>
-                    <span v-else-if="ev.error_message" class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px]" :title="ev.error_message">
-                      {{ ev.error_message }}
-                    </span>
                     <span v-else class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px]">
-                      Recebido
+                      Sem regra
                     </span>
+                  </td>
+
+                  <!-- Column 2: Human Agent status -->
+                  <td class="py-3 px-4">
+                    <span
+                      v-if="ev.human_reply_status === 'sent' || ev.human_reply_status === 'simulated' || ev.human_reply_text"
+                      class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px] flex items-center gap-1 w-fit"
+                      :title="ev.human_reply_status === 'simulated' ? 'Resposta simulada para revisão' : 'Enviado via API oficial'"
+                    >
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Respondido
+                    </span>
+                    <span
+                      v-else-if="ev.human_reply_status === 'error'"
+                      class="px-2 py-0.5 bg-red-100 text-red-800 rounded font-bold text-[10px] flex items-center gap-1 w-fit"
+                    >
+                      Erro Envio
+                    </span>
+                    <span v-else class="px-2 py-0.5 bg-slate-100 text-slate-400 rounded text-[10px]">
+                      Pendente
+                    </span>
+                  </td>
+
+                  <!-- Action: Open Atendimento Modal (Req 4) -->
+                  <td class="py-3 px-4 text-right whitespace-nowrap">
+                    <button
+                      @click="openAtendimentoModal(ev)"
+                      class="px-3 py-1.5 rounded-xl border border-purple-200 text-purple-700 hover:bg-purple-50 font-bold text-xs transition-all flex items-center gap-1 ml-auto"
+                    >
+                      <span class="material-symbols-outlined text-sm">support_agent</span>
+                      Abrir atendimento
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -642,6 +806,142 @@ function formatDate(dateStr?: string) {
       </div>
 
     </main>
+
+    <!-- ─── MODAL DE ATENDIMENTO HUMAN AGENT (Req 4, 5 & 6) ─── -->
+    <div v-if="isAtendimentoModalOpen && selectedLead" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-5 border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">
+              🎧
+            </span>
+            <div>
+              <h3 class="font-heading font-extrabold text-lg text-slate-900">
+                Atendimento Human Agent
+              </h3>
+              <p class="text-xs text-slate-400">Atendimento manual e histórico do lead</p>
+            </div>
+          </div>
+          <button @click="closeAtendimentoModal" class="text-slate-400 hover:text-slate-600 p-1">
+            <span class="material-symbols-outlined text-xl">close</span>
+          </button>
+        </div>
+
+        <!-- Feedback notice inside modal -->
+        <div
+          v-if="humanReplyNotice"
+          class="p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-2"
+          :class="{
+            'bg-emerald-50 border-emerald-200 text-emerald-800': humanReplyNotice.type === 'success',
+            'bg-amber-50 border-amber-200 text-amber-900': humanReplyNotice.type === 'warning',
+            'bg-red-50 border-red-200 text-red-800': humanReplyNotice.type === 'error'
+          }"
+        >
+          <span class="material-symbols-outlined text-base">
+            {{ humanReplyNotice.type === 'success' ? 'check_circle' : (humanReplyNotice.type === 'warning' ? 'info' : 'error') }}
+          </span>
+          <span>{{ humanReplyNotice.message }}</span>
+        </div>
+
+        <!-- Lead details card (Req 5) -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-3 pb-3 border-b border-slate-200/60">
+            <div>
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Sender ID (Remetente):</span>
+              <p class="font-mono font-bold text-slate-800">{{ selectedLead.sender_id }}</p>
+            </div>
+            <div>
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Data / Hora:</span>
+              <p class="font-mono text-slate-700">{{ formatDate(selectedLead.created_at) }}</p>
+            </div>
+          </div>
+
+          <!-- Received message text without quotes -->
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Mensagem Recebida do Cliente:</span>
+            <div class="p-3 bg-white rounded-xl border border-slate-200 text-slate-900 font-medium whitespace-pre-line">
+              {{ selectedLead.message_text }}
+            </div>
+          </div>
+
+          <!-- Triggered Auto Reply rule if exists (Req 5 & 7) -->
+          <div v-if="selectedLead.matched_rule" class="p-3 bg-purple-50/70 border border-purple-200/80 rounded-xl space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 bg-purple-200 text-purple-800 rounded font-bold text-[10px] uppercase">
+                🤖 Resposta Automática (Auto Reply)
+              </span>
+              <span class="text-[11px] font-bold text-purple-900 font-mono">
+                Gatilho: "{{ selectedLead.matched_rule.keyword }}"
+              </span>
+            </div>
+            <p class="text-[11px] text-purple-900 whitespace-pre-line font-medium pt-1">
+              {{ selectedLead.matched_rule.response_message }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Previous Human Reply record if exists -->
+        <div v-if="selectedLead.human_reply_text" class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-extrabold text-emerald-800 uppercase flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Resposta Manual Anterior (Human Agent)
+            </span>
+            <span class="text-[10px] font-mono text-emerald-700">
+              {{ formatDate(selectedLead.human_reply_at) }}
+            </span>
+          </div>
+          <p class="font-medium text-emerald-950 whitespace-pre-line bg-white p-3 rounded-xl border border-emerald-200/60">
+            {{ selectedLead.human_reply_text }}
+          </p>
+          <div class="flex items-center gap-1 text-[11px] font-bold text-emerald-800 pt-1">
+            <span class="material-symbols-outlined text-sm">
+              {{ selectedLead.human_reply_status === 'sent' ? 'check_circle' : 'science' }}
+            </span>
+            <span>
+              {{ selectedLead.human_reply_status === 'sent' ? 'Enviado via API oficial do Instagram' : 'Resposta simulada para revisão' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Human Agent manual reply input box (Req 5 & 6) -->
+        <div class="space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <label class="font-bold text-slate-800 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-purple-600 text-base">edit_note</span>
+              Enviar Resposta Manual (Human Agent):
+            </label>
+            <span class="text-[10px] text-slate-400">Atendimento por pessoa real</span>
+          </div>
+
+          <textarea
+            v-model="humanReplyMessage"
+            rows="3"
+            placeholder="Digite a resposta manual a ser enviada ao cliente..."
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-purple-500 font-medium"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+          <button
+            @click="closeAtendimentoModal"
+            type="button"
+            class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-all"
+          >
+            Fechar
+          </button>
+          <button
+            @click="handleSendHumanReply"
+            :disabled="submittingHumanReply || !humanReplyMessage.trim()"
+            type="button"
+            class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5"
+          >
+            <span class="material-symbols-outlined text-base">send</span>
+            {{ submittingHumanReply ? 'Enviando...' : 'Enviar Resposta Manual' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL DE INFORMAÇÃO OAUTH SAFE / PENDING -->
     <div v-if="isOAuthInfoModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
@@ -762,7 +1062,7 @@ function formatDate(dateStr?: string) {
           </div>
         </div>
 
-        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+        <div class="flex justify-end pt-3 border-t border-slate-100">
           <button
             @click="closeModal"
             type="button"

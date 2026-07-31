@@ -65,6 +65,10 @@ CREATE TABLE IF NOT EXISTS instagram_webhook_events (
   processed BOOLEAN NOT NULL DEFAULT false,
   auto_reply_sent BOOLEAN NOT NULL DEFAULT false,
   matched_rule_id UUID,
+  human_reply_text TEXT,
+  human_reply_sent BOOLEAN NOT NULL DEFAULT false,
+  human_reply_status TEXT,
+  human_reply_at TIMESTAMPTZ,
   error_message TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
