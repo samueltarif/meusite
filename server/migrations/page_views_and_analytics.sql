@@ -18,12 +18,14 @@ CREATE TABLE IF NOT EXISTS page_views (
 -- 3. Habilitar RLS na tabela page_views
 ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;
 
--- Politica para permitir insercoes de acessos anonimos
+-- Politica para permitir insercoes de acessos anonimos (com DROP IF EXISTS para evitar erros ao re-executar)
+DROP POLICY IF EXISTS "Permitir insercao publica em page_views" ON page_views;
 CREATE POLICY "Permitir insercao publica em page_views" 
 ON page_views FOR INSERT 
 WITH CHECK (true);
 
 -- Politica para leitura autenticada ou servico
+DROP POLICY IF EXISTS "Permitir leitura publica/servico em page_views" ON page_views;
 CREATE POLICY "Permitir leitura publica/servico em page_views" 
 ON page_views FOR SELECT 
 USING (true);

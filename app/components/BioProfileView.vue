@@ -187,39 +187,52 @@ function detectClickPlatform(): string {
   return 'Direto'
 }
 
+const hasTrackedView = ref(false)
+
+function sendTrackView(profileId: string) {
+  if (hasTrackedView.value || !profileId || import.meta.server) return
+  hasTrackedView.value = true
+
+  const source = detectClickPlatform()
+  if (source && source !== 'Direto') {
+    sessionStorage.setItem('avyro_traffic_source', source)
+  }
+
+  const viewPayload = {
+    profileId,
+    platform: source || 'Direto',
+    referrer: document.referrer || ''
+  }
+
+  try {
+    const blob = new Blob([JSON.stringify(viewPayload)], { type: 'application/json' })
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/analytics/track-view', blob)
+    } else {
+      fetch('/api/analytics/track-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(viewPayload),
+        keepalive: true
+      }).catch(() => {})
+    }
+  } catch (e) {
+    $fetch('/api/analytics/track-view', {
+      method: 'POST',
+      body: viewPayload
+    }).catch(() => {})
+  }
+}
+
+watch(profile, (newVal) => {
+  if (newVal?.id) {
+    sendTrackView(newVal.id)
+  }
+}, { immediate: true })
+
 onMounted(() => {
-  if (import.meta.client) {
-    const source = detectClickPlatform()
-    if (source && source !== 'Direto') {
-      sessionStorage.setItem('avyro_traffic_source', source)
-    }
-
-    if (profile.value?.id) {
-      const viewPayload = {
-        profileId: profile.value.id,
-        platform: source || 'Direto',
-        referrer: document.referrer || ''
-      }
-
-      try {
-        const blob = new Blob([JSON.stringify(viewPayload)], { type: 'application/json' })
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon('/api/analytics/track-view', blob)
-        } else {
-          fetch('/api/analytics/track-view', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(viewPayload),
-            keepalive: true
-          }).catch(() => {})
-        }
-      } catch (e) {
-        $fetch('/api/analytics/track-view', {
-          method: 'POST',
-          body: viewPayload
-        }).catch(() => {})
-      }
-    }
+  if (import.meta.client && profile.value?.id) {
+    sendTrackView(profile.value.id)
   }
 })
 
