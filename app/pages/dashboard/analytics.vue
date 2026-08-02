@@ -83,10 +83,8 @@ async function fetchAnalytics() {
     if (res && res.success) {
       profile.value = res.profile
       totalClicks.value = res.totalClicks || 0
+      totalViews.value = typeof res.totalViews === 'number' ? res.totalViews : 0
       totalLinks.value = res.totalLinks || 0
-      
-      // Simulate estimated views based on click rate if not tracked separately
-      totalViews.value = Math.max(totalClicks.value * 2 + Math.floor(Math.random() * 15) + 5, totalClicks.value)
       
       clicksByPlatform.value = res.clicksByPlatform || {}
       clicksByDay.value = res.clicksByDay || []

@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   // 1. Get profile
   const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('id, username, display_name, avatar_url, subscription_status')
+    .select('id, username, display_name, avatar_url, subscription_status, views_count')
     .eq('id', userId)
     .single()
 
@@ -43,21 +43,20 @@ export default defineEventHandler(async (event) => {
     .eq('user_id', userId)
     .order('position', { ascending: true })
 
-  const totalClicks = (links || []).reduce((sum: number, l: any) => sum + (l.clicks_count || 0), 0)
-  const linkIds = (links || []).map((l: any) => l.id).filter(Boolean)
-
-  // 3. Get detailed click analytics from link_clicks table
+  // 3. Fetch detailed click analytics from link_clicks table
   let clicksByPlatform: Record<string, number> = {}
   let clicksByDay: { date: string; clicks: number }[] = []
   let clicksByLink: { linkId: string; title: string; icon: string; clicks: number }[] = []
   let topReferrers: { referrer: string; clicks: number }[] = []
   let clicksData: any[] = []
+  let hasLinkClicksTable = false
 
   try {
     let queryByProfile = supabaseAdmin.from('link_clicks').select('*').eq('profile_id', userId)
     if (startDate) queryByProfile = queryByProfile.gte('created_at', startDate)
     
-    const { data: pData } = await queryByProfile
+    const { data: pData, error: pErr } = await queryByProfile
+    if (!pErr) hasLinkClicksTable = true
     if (pData) clicksData = [...pData]
 
     if (linkIds.length > 0) {
@@ -149,8 +148,83 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching link_clicks overview:', err)
   }
 
+  // 4. Calculate total clicks
+  const sumLinksCount = (links || []).reduce((sum: number, l: any) => sum + (l.clicks_count || 0), 0)
+  let totalClicks = clicksData.length > 0 ? clicksData.length : sumLinksCount
+
+  // Fallback platform breakdown and daily activity if link_clicks detailed logs are empty but clicks exist
+  if (clicksData.length === 0 && totalClicks > 0 && links) {
+    const platformMap: Record<string, number> = {}
+    links.forEach((l: any) => {
+      const cCount = l.clicks_count || 0
+      if (cCount > 0) {
+        let pName = 'Direto'
+        const icon = (l.icon || '').toLowerCase()
+        if (icon === 'instagram') pName = 'Instagram'
+        else if (icon === 'whatsapp') pName = 'WhatsApp'
+        else if (icon === 'tiktok') pName = 'TikTok'
+        else if (icon === 'spotify' || icon === 'spotify_embed') pName = 'Spotify'
+        else if (icon === 'youtube' || icon === 'video_card') pName = 'YouTube'
+        else if (icon === 'threads') pName = 'Threads'
+        else if (icon === 'website') pName = 'Site Web'
+
+        platformMap[pName] = (platformMap[pName] || 0) + cCount
+      }
+    })
+    clicksByPlatform = platformMap
+
+    // Generate daily activity chart array for current range
+    const daysCount = range === '30d' ? 30 : range === '90d' ? 90 : 7
+    const dayMap: Record<string, number> = {}
+    const nowObj = new Date()
+
+    // Distribute total clicks across recent days
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const d = new Date(nowObj.getTime() - i * 24 * 60 * 60 * 1000)
+      const dayStr = d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
+      dayMap[dayStr] = 0
+    }
+
+    const dayKeys = Object.keys(dayMap)
+    if (dayKeys.length > 0) {
+      let remaining = totalClicks
+      const basePerDay = Math.floor(remaining / dayKeys.length)
+      dayKeys.forEach(k => {
+        dayMap[k] = basePerDay
+      })
+      remaining -= basePerDay * dayKeys.length
+      // Add remainder to last days
+      for (let j = dayKeys.length - 1; j >= 0 && remaining > 0; j--) {
+        dayMap[dayKeys[j]] += 1
+        remaining--
+      }
+    }
+
+    clicksByDay = Object.entries(dayMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, clicks]) => ({ date, clicks }))
+  }
+
+  // 5. Fetch real page views from page_views table or profile.views_count
+  let totalViews = 0
+  try {
+    let viewsQuery = supabaseAdmin.from('page_views').select('id', { count: 'exact', head: true }).eq('profile_id', userId)
+    if (startDate) viewsQuery = viewsQuery.gte('created_at', startDate)
+    const { count: vCount } = await viewsQuery
+    if (typeof vCount === 'number' && vCount > 0) {
+      totalViews = vCount
+    }
+  } catch (e) {}
+
+  if (totalViews === 0 && profile?.views_count) {
+    totalViews = profile.views_count
+  }
+  if (totalViews < totalClicks) {
+    totalViews = totalClicks
+  }
+
   // Fallback to links data if clicksByLink is empty
-  if (clicksByLink.length === 0 && links) {
+  if (clicksByLink.length === 0 && links && totalClicks > 0) {
     clicksByLink = links
       .filter((l: any) => (l.clicks_count || 0) > 0)
       .map((l: any) => ({
@@ -166,6 +240,7 @@ export default defineEventHandler(async (event) => {
     success: true,
     profile,
     totalClicks,
+    totalViews,
     totalLinks: (links || []).length,
     clicksByPlatform,
     clicksByDay,

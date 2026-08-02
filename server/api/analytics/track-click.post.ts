@@ -54,15 +54,20 @@ export default defineEventHandler(async (event) => {
 
   // 2. Registrar o clique na tabela link_clicks com a plataforma de origem (Instagram, TikTok, WhatsApp, etc.)
   try {
-    const { error: insErr } = await supabaseAdmin.from('link_clicks').insert({
+    const insertData: any = {
       link_id: linkId,
-      profile_id: resolvedProfileId || null,
       platform: platform || 'Direto',
       referrer: referrer || null,
       created_at: new Date().toISOString()
-    })
+    }
+    if (resolvedProfileId && !resolvedProfileId.includes('_p2')) {
+      insertData.profile_id = resolvedProfileId
+    }
+
+    const { error: insErr } = await supabaseAdmin.from('link_clicks').insert(insertData)
     if (insErr) {
-      console.error('Insert link_clicks error:', insErr)
+      delete insertData.profile_id
+      await supabaseAdmin.from('link_clicks').insert(insertData)
     }
   } catch (err: any) {
     console.error('Exception inserting link_clicks:', err)

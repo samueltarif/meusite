@@ -330,19 +330,49 @@ const currentDomainHost = computed(() => {
   return 'avyro.com.br'
 })
 
+const copyLink1Success = ref(false)
+const copyLink2Success = ref(false)
+
+// ─── Dual Profiles State (Perfil 1 e Perfil 2) ───
+const activeProfileTab = ref<1 | 2>(1)
+const activeProfileId = ref<string>('')
+
+const profile1 = ref<any>(null)
+const profile2 = ref<any>(null)
+
+const profile1Links = ref<LinkItem[]>([])
+const profile2Links = ref<LinkItem[]>([])
+
 function copyBioLink() {
+  if (activeProfileTab.value === 1) copyBioLink1()
+  else copyBioLink2()
+}
+
+function copyBioLink1() {
   const domain = import.meta.client ? window.location.origin : 'https://www.avyro.com.br'
-  const cleanName = profileUsername.value.replace(/^@/, '')
-  const fullUrl = `${domain}/${cleanName}`
+  const name = (profile1.value?.username || profileUsername.value).replace(/^@/, '')
+  const fullUrl = `${domain}/${name}`
   navigator.clipboard.writeText(fullUrl)
+  copyLink1Success.value = true
   copyBioSuccess.value = true
-  setTimeout(() => { copyBioSuccess.value = false }, 3000)
+  setTimeout(() => { copyLink1Success.value = false; copyBioSuccess.value = false }, 3000)
+}
+
+function copyBioLink2() {
+  const domain = import.meta.client ? window.location.origin : 'https://www.avyro.com.br'
+  const name = (profile2.value?.username || `${profile1.value?.username || 'usuario'}-2`).replace(/^@/, '')
+  const fullUrl = `${domain}/${name}`
+  navigator.clipboard.writeText(fullUrl)
+  copyLink2Success.value = true
+  setTimeout(() => { copyLink2Success.value = false }, 3000)
 }
 
 // Customizer State (Mirrors /link-in-bio playground exactly)
 const activeThemeId = ref('monica-vera')
 const customBgColor = ref('#4b3e34')
 const customBgImage = ref('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800')
+const customBgBlur = ref(false)
+const customBgBlurAmount = ref<number>(16)
 const customBgStyle = ref('background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800"); background-size: cover; background-position: center;')
 const customTextColor = ref('#ffffff')
 const customBtnBgColor = ref('#6b5d52')
@@ -845,50 +875,139 @@ async function activateProPlan(userId: string) {
 }
 
 async function loadUserData(userId: string) {
-  const { data: p } = await supabase.from('profiles').select('*').eq('id', userId).single()
-  if (p) {
-    profileId.value = p.id
-    profileUsername.value = p.username || ''
-    customUsername.value = p.display_name || p.username || ''
-    customBio.value = p.bio_description || ''
-    if (p.avatar_url && p.avatar_url.startsWith('animated:')) {
-      isAnimatedAvatar.value = true
-      customAvatar.value = p.avatar_url.replace('animated:', '')
+  // 1. Fetch Profile 1
+  const { data: p1 } = await supabase.from('profiles').select('*').eq('id', userId).single()
+  if (p1) {
+    profile1.value = p1
+    profileId.value = p1.id
+    subscriptionStatus.value = p1.subscription_status || 'free'
+  }
+
+  // 2. Fetch Profile 1 Links
+  if (p1) {
+    const { data: l1 } = await supabase.from('links').select('*').eq('user_id', p1.id).order('position', { ascending: true })
+    profile1Links.value = l1 || []
+  }
+
+  // 3. Fetch Profile 2 via API
+  try {
+    const res = await $fetch<{ success: boolean; profile: any }>('/api/profiles/secondary', {
+      method: 'POST',
+      body: { action: 'get', userId }
+    })
+
+    if (res && res.profile) {
+      profile2.value = res.profile
+      const { data: l2 } = await supabase.from('links').select('*').eq('user_id', res.profile.id).order('position', { ascending: true })
+      profile2Links.value = l2 || []
     } else {
-      isAnimatedAvatar.value = false
-      customAvatar.value = p.avatar_url || ''
-    }
-    subscriptionStatus.value = p.subscription_status || 'free'
-    activeThemeId.value = p.theme_id || 'monica-vera'
-    customBgColor.value = p.bg_color || '#4b3e34'
-    customBgImage.value = p.bg_image_url || ''
-    customTextColor.value = p.text_color || '#ffffff'
-    customBtnBgColor.value = p.btn_bg_color || '#6b5d52'
-    customBtnTextColor.value = p.btn_text_color || '#ffffff'
-    customBtnBorder.value = p.btn_border || ''
-    customFontClass.value = p.font_class || 'font-serif'
-    selectedSocials.value = p.socials || ['tiktok', 'youtube', 'instagram']
-    customBgStyle.value = p.bg_style || (customBgImage.value ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${customBgImage.value}"); background-size: cover; background-position: center;` : `background-color: ${customBgColor.value};`)
-    
-    if (p.roundness && p.roundness.startsWith('custom:')) {
-      isCustomBtn.value = true
-      try {
-        customBtnConfig.value = {
-          ...customBtnConfig.value,
-          ...JSON.parse(p.roundness.slice(7))
-        }
-      } catch (e) {
-        console.error('Failed to parse custom button style:', e)
+      // Default initial Profile 2 template
+      const defaultSecUsername = p1?.username ? `${p1.username}-2` : 'perfil-2'
+      profile2.value = {
+        id: `${userId}_p2`,
+        username: defaultSecUsername,
+        display_name: p1?.display_name ? `${p1.display_name} #2` : 'Meu Perfil 2',
+        bio_description: 'Seu segundo perfil de links na bio',
+        avatar_url: p1?.avatar_url || '',
+        theme_id: 'lexie-candis',
+        bg_color: '#8b5cf6',
+        bg_image_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800',
+        bg_style: 'background: linear-gradient(rgba(139,92,246,0.5), rgba(109,40,217,0.75)), url("https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800"); background-size: cover; background-position: center;',
+        bg_blur: false,
+        text_color: '#ffffff',
+        btn_bg_color: '#ede9fe',
+        btn_text_color: '#6d28d9',
+        btn_border: '',
+        roundness: 'rounded-full',
+        font_class: 'font-serif',
+        socials: ['tiktok', 'instagram', 'youtube'],
       }
-      customRoundness.value = p.roundness
-    } else {
-      isCustomBtn.value = false
-      customRoundness.value = p.roundness || 'rounded-full'
+      profile2Links.value = []
+    }
+  } catch (err) {
+    console.warn('Alerta ao carregar Perfil 2:', err)
+  }
+
+  // Populate active tab without wiping loaded DB data
+  switchProfileTab(1, true)
+}
+
+function switchProfileTab(tab: 1 | 2, skipSync = false) {
+  // Sync current form into active profile memory object before switching (unless initial load)
+  if (!skipSync) {
+    if (activeProfileTab.value === 1 && profile1.value) {
+      syncFormToProfileObj(profile1.value)
+      profile1Links.value = [...links.value]
+    } else if (activeProfileTab.value === 2 && profile2.value) {
+      syncFormToProfileObj(profile2.value)
+      profile2Links.value = [...links.value]
     }
   }
 
-  const { data: linksData } = await supabase.from('links').select('*').eq('user_id', userId).order('position', { ascending: true })
-  if (linksData) { links.value = linksData }
+  activeProfileTab.value = tab
+
+  const activeP = tab === 1 ? profile1.value : profile2.value
+  if (!activeP) return
+
+  activeProfileId.value = activeP.id || (tab === 1 ? currentUser.value?.id : `${currentUser.value?.id}_p2`)
+  profileUsername.value = activeP.username || (tab === 1 ? 'usuario' : `${profile1.value?.username || 'usuario'}-2`)
+  customUsername.value = activeP.display_name || activeP.username || ''
+  customBio.value = activeP.bio_description || ''
+  
+  if (activeP.avatar_url && activeP.avatar_url.startsWith('animated:')) {
+    isAnimatedAvatar.value = true
+    customAvatar.value = activeP.avatar_url.replace('animated:', '')
+  } else {
+    isAnimatedAvatar.value = false
+    customAvatar.value = activeP.avatar_url || ''
+  }
+
+  activeThemeId.value = activeP.theme_id || 'monica-vera'
+  customBgColor.value = activeP.bg_color || '#4b3e34'
+  customBgImage.value = activeP.bg_image_url || ''
+  customBgBlurAmount.value = typeof activeP.bg_blur_amount === 'number' ? activeP.bg_blur_amount : (typeof activeP.bg_blur === 'number' ? activeP.bg_blur : (activeP.bg_blur ? 16 : 0))
+  customBgBlur.value = customBgBlurAmount.value > 0
+  customTextColor.value = activeP.text_color || '#ffffff'
+  customBtnBgColor.value = activeP.btn_bg_color || '#6b5d52'
+  customBtnTextColor.value = activeP.btn_text_color || '#ffffff'
+  customBtnBorder.value = activeP.btn_border || ''
+  customFontClass.value = activeP.font_class || 'font-serif'
+  selectedSocials.value = activeP.socials || ['tiktok', 'youtube', 'instagram']
+  customBgStyle.value = activeP.bg_style || (customBgImage.value ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${customBgImage.value}"); background-size: cover; background-position: center;` : `background-color: ${customBgColor.value};`)
+
+  if (activeP.roundness && activeP.roundness.startsWith('custom:')) {
+    isCustomBtn.value = true
+    try {
+      customBtnConfig.value = { ...customBtnConfig.value, ...JSON.parse(activeP.roundness.slice(7)) }
+    } catch (e) {}
+    customRoundness.value = activeP.roundness
+  } else {
+    isCustomBtn.value = false
+    customRoundness.value = activeP.roundness || 'rounded-full'
+  }
+
+  links.value = tab === 1 ? [...profile1Links.value] : [...profile2Links.value]
+}
+
+function syncFormToProfileObj(target: any) {
+  const roundnessValue = isCustomBtn.value ? `custom:${JSON.stringify(customBtnConfig.value)}` : customRoundness.value
+  target.username = profileUsername.value.replace(/^@/, '').trim().toLowerCase()
+  target.display_name = customUsername.value
+  target.bio_description = customBio.value
+  target.avatar_url = customAvatar.value
+  target.theme_id = activeThemeId.value
+  target.bg_color = customBgColor.value
+  target.bg_image_url = customBgImage.value
+  target.bg_style = customBgStyle.value
+  target.bg_blur_amount = customBgBlurAmount.value
+  target.bg_blur = customBgBlurAmount.value > 0
+  target.text_color = customTextColor.value
+  target.btn_bg_color = customBtnBgColor.value
+  target.btn_text_color = customBtnTextColor.value
+  target.btn_border = customBtnBorder.value
+  target.roundness = roundnessValue
+  target.font_class = customFontClass.value
+  target.socials = selectedSocials.value
 }
 
 function isThemePro(theme: any): boolean {
@@ -935,9 +1054,10 @@ async function addPlatformLink() {
   if (links.value.length >= 5 && !checkProGate('link_limit')) return
   if (!platformInputTitle.value || !platformInputUrl.value || !currentUser.value) return
   const plat = platforms.find(p => p.id === showAddPlatformId.value)
+  const targetId = activeProfileId.value || profile1.value?.id || currentUser.value.id
 
   const { data, error } = await supabase.from('links').insert({
-    user_id: currentUser.value.id,
+    user_id: targetId,
     title: platformInputTitle.value,
     url: platformInputUrl.value,
     icon: plat ? plat.icon : 'website',
@@ -951,7 +1071,11 @@ async function addPlatformLink() {
     return
   }
 
-  if (data) links.value.push(data)
+  if (data) {
+    links.value.push(data)
+    if (activeProfileTab.value === 1) profile1Links.value = [...links.value]
+    else profile2Links.value = [...links.value]
+  }
   if (showAddPlatformId.value && !selectedSocials.value.includes(showAddPlatformId.value)) {
     selectedSocials.value.push(showAddPlatformId.value)
   }
@@ -966,9 +1090,10 @@ async function addCustomLink() {
   if (!newLinkTitle.value || !newLinkUrl.value || !currentUser.value) return
   let url = newLinkUrl.value
   if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url
+  const targetId = activeProfileId.value || profile1.value?.id || currentUser.value.id
 
   const { data, error } = await supabase.from('links').insert({
-    user_id: currentUser.value.id,
+    user_id: targetId,
     title: newLinkTitle.value,
     url,
     icon: newLinkIcon.value || 'website',
@@ -982,7 +1107,11 @@ async function addCustomLink() {
     return
   }
 
-  if (data) links.value.push(data)
+  if (data) {
+    links.value.push(data)
+    if (activeProfileTab.value === 1) profile1Links.value = [...links.value]
+    else profile2Links.value = [...links.value]
+  }
   newLinkTitle.value = ''
   newLinkUrl.value = ''
   newLinkIcon.value = ''
@@ -993,6 +1122,7 @@ async function addSpotifyBlock() {
   if (links.value.length >= 5 && !checkProGate('link_limit')) return
   if (!spotifyInputUrl.value || !currentUser.value) return
   let url = spotifyInputUrl.value.trim()
+  const targetId = activeProfileId.value || profile1.value?.id || currentUser.value.id
   
   if (url.includes('open.spotify.com/')) {
     if (!url.includes('open.spotify.com/embed/')) {
@@ -1002,7 +1132,7 @@ async function addSpotifyBlock() {
   url = url.split('?')[0]
 
   const { data, error } = await supabase.from('links').insert({
-    user_id: currentUser.value.id,
+    user_id: targetId,
     title: 'Player Spotify',
     url,
     icon: 'spotify_embed',
@@ -1016,12 +1146,17 @@ async function addSpotifyBlock() {
     return
   }
 
-  if (data) links.value.push(data)
+  if (data) {
+    links.value.push(data)
+    if (activeProfileTab.value === 1) profile1Links.value = [...links.value]
+    else profile2Links.value = [...links.value]
+  }
   spotifyInputUrl.value = ''
 }
 
 async function addVideoBlock() {
   if (!newVideoTitle.value || !newVideoUrl.value || !currentUser.value) return
+  const targetId = activeProfileId.value || profile1.value?.id || currentUser.value.id
 
   const payload = JSON.stringify({
     videoUrl: newVideoUrl.value,
@@ -1030,7 +1165,7 @@ async function addVideoBlock() {
   })
 
   const { data, error } = await supabase.from('links').insert({
-    user_id: currentUser.value.id,
+    user_id: targetId,
     title: newVideoTitle.value,
     url: payload,
     icon: 'video_card',
@@ -1044,7 +1179,11 @@ async function addVideoBlock() {
     return
   }
 
-  if (data) links.value.push(data)
+  if (data) {
+    links.value.push(data)
+    if (activeProfileTab.value === 1) profile1Links.value = [...links.value]
+    else profile2Links.value = [...links.value]
+  }
   newVideoTitle.value = ''
   newVideoUrl.value = ''
   newVideoThumbUrl.value = ''
@@ -1224,6 +1363,8 @@ async function removeLink(id: any) {
   const { error } = await supabase.from('links').delete().eq('id', id)
   if (error) { console.error('Erro ao remover link:', error); return }
   links.value = links.value.filter(l => l.id !== id)
+  if (activeProfileTab.value === 1) profile1Links.value = [...links.value]
+  else profile2Links.value = [...links.value]
   await updateLinksPositions()
 }
 
@@ -1234,6 +1375,8 @@ async function moveLinkUp(index: number) {
   links.value[index] = links.value[index - 1]
   links.value[index - 1] = temp
   links.value = [...links.value]
+  if (activeProfileTab.value === 1) profile1Links.value = [...links.value]
+  else profile2Links.value = [...links.value]
   await updateLinksPositions()
 }
 
@@ -1243,6 +1386,8 @@ async function moveLinkDown(index: number) {
   links.value[index] = links.value[index + 1]
   links.value[index + 1] = temp
   links.value = [...links.value]
+  if (activeProfileTab.value === 1) profile1Links.value = [...links.value]
+  else profile2Links.value = [...links.value]
   await updateLinksPositions()
 }
 
@@ -1299,15 +1444,18 @@ function copyToClipboard(text: string) {
   setTimeout(() => { copySuccess.value = false }, 3000)
 }
 
-// ─── Save Profile to DB ───
+// ─── Save Active Profile to DB ───
 async function saveProfile() {
   if (!currentUser.value) return
   savingProfile.value = true
   saveSuccess.value = false
+  errorMsg.value = ''
 
   const roundnessValue = isCustomBtn.value 
     ? `custom:${JSON.stringify(customBtnConfig.value)}`
     : customRoundness.value
+
+  const cleanUsernameSlug = profileUsername.value.replace(/[@\s]/g, '').toLowerCase()
 
   let finalAvatarUrl = customAvatar.value
   if (isAnimatedAvatar.value && finalAvatarUrl) {
@@ -1316,14 +1464,17 @@ async function saveProfile() {
     }
   }
 
-  await supabase.from('profiles').update({
+  const payload = {
     display_name: customUsername.value,
+    username: cleanUsernameSlug,
     bio_description: customBio.value,
     avatar_url: finalAvatarUrl,
     theme_id: activeThemeId.value,
     bg_color: customBgColor.value,
     bg_image_url: customBgImage.value,
     bg_style: customBgStyle.value,
+    bg_blur_amount: customBgBlurAmount.value,
+    bg_blur: customBgBlurAmount.value > 0,
     text_color: customTextColor.value,
     btn_bg_color: customBtnBgColor.value,
     btn_text_color: customBtnTextColor.value,
@@ -1332,11 +1483,44 @@ async function saveProfile() {
     font_class: customFontClass.value,
     socials: selectedSocials.value,
     updated_at: new Date().toISOString(),
-  }).eq('id', currentUser.value.id)
+  }
+
+  if (activeProfileTab.value === 1) {
+    // Save Profile 1
+    const { error } = await supabase.from('profiles').update(payload).eq('id', currentUser.value.id)
+    if (error) {
+      console.error('Erro ao salvar Perfil 1:', error)
+      errorMsg.value = `Erro ao salvar Perfil 1: ${error.message}`
+    } else {
+      if (profile1.value) Object.assign(profile1.value, payload)
+    }
+  } else {
+    // Save Profile 2
+    try {
+      const res = await $fetch<{ success: boolean; profile: any }>('/api/profiles/secondary', {
+        method: 'POST',
+        body: {
+          action: 'create_or_update',
+          userId: currentUser.value.id,
+          profileData: payload
+        }
+      })
+
+      if (res && res.profile) {
+        profile2.value = res.profile
+        activeProfileId.value = res.profile.id
+      }
+    } catch (err: any) {
+      console.error('Erro ao salvar Perfil 2:', err)
+      errorMsg.value = `Erro ao salvar Perfil 2: ${err.statusMessage || err.message}`
+    }
+  }
 
   savingProfile.value = false
-  saveSuccess.value = true
-  setTimeout(() => { saveSuccess.value = false }, 3000)
+  if (!errorMsg.value) {
+    saveSuccess.value = true
+    setTimeout(() => { saveSuccess.value = false }, 4000)
+  }
 }
 
 function parseVideoPayload(urlStr: string) {
@@ -1392,11 +1576,11 @@ async function logout() {
         </div>
       </div>
 
-      <!-- Top Status Bar (Mobile First Responsive Card) -->
-      <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4 mb-8">
+      <!-- Dual Profiles Switcher Header Card -->
+      <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200/80 shadow-xs space-y-4 mb-8">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
           <div class="space-y-1">
-            <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap">
               <span :class="[
                 'px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider',
                 subscriptionStatus === 'active'
@@ -1405,23 +1589,93 @@ async function logout() {
               ]">
                 {{ subscriptionStatus === 'active' ? '✨ Plano Pro Ativo' : '🔒 Plano Gratuito' }}
               </span>
-              <span class="text-xs font-extrabold text-gray-900 font-mono">@{{ profileUsername }}</span>
+              <span class="text-xs font-extrabold text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <span class="material-symbols-outlined text-[13px]">badge</span> 2 Perfis de Bio Ativos
+              </span>
             </div>
             <p class="text-xs text-gray-500 font-medium">
-              Link da Bio:
-              <a :href="`/${profileUsername.replace(/^@/, '')}`" target="_blank" class="text-secondary font-bold hover:underline font-mono ml-1 break-all">
-                {{ currentDomainHost }}/{{ profileUsername.replace(/^@/, '') }}
-              </a>
+              Alterne entre seus 2 perfis de bio para editar temas, links, fotos, cores e nomes de usuário de forma 100% independente.
             </p>
           </div>
 
-          <button @click="logout" class="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 self-end sm:self-auto pt-1 sm:pt-0">
-            <span class="material-symbols-outlined text-[16px]">logout</span> Sair da Conta
+          <button @click="logout" class="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 self-end sm:self-auto">
+            <span class="material-symbols-outlined text-[16px]">logout</span> Sair
           </button>
         </div>
 
-        <!-- Mobile-first Action Bar Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+        <!-- Interactive Profile Tabs: Perfil 1 vs Perfil 2 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80">
+          <!-- Tab 1 Button -->
+          <div
+            @click="switchProfileTab(1)"
+            :class="[
+              'p-3.5 rounded-xl transition-all cursor-pointer border flex flex-col justify-between space-y-2 relative overflow-hidden',
+              activeProfileTab === 1
+                ? 'bg-white border-purple-500 shadow-md ring-2 ring-purple-500/20'
+                : 'bg-white/60 border-gray-200 hover:bg-white text-gray-600'
+            ]"
+          >
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-purple-600 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-purple-600"></span> Perfil 1 (Principal)
+              </span>
+              <span v-if="activeProfileTab === 1" class="text-[10px] font-extrabold bg-purple-600 text-white px-2 py-0.5 rounded-full">
+                Editando Agora
+              </span>
+            </div>
+
+            <p class="text-xs font-mono font-bold text-gray-900 truncate bg-slate-50 p-2 rounded-lg border border-slate-100">
+              {{ currentDomainHost }}/{{ (profile1?.username || profileUsername).replace(/^@/, '') }}
+            </p>
+
+            <div class="flex items-center justify-between pt-1">
+              <a :href="`/${(profile1?.username || profileUsername).replace(/^@/, '')}`" target="_blank" @click.stop class="text-xs font-bold text-purple-600 hover:underline flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-[14px]">open_in_new</span> Ver Página 1
+              </a>
+              <button @click.stop="copyBioLink1" class="px-2.5 py-1 text-[11px] font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg flex items-center gap-1">
+                <span class="material-symbols-outlined text-[13px]">{{ copyLink1Success ? 'check' : 'content_copy' }}</span>
+                {{ copyLink1Success ? 'Copiado!' : 'Copiar Link 1' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab 2 Button -->
+          <div
+            @click="switchProfileTab(2)"
+            :class="[
+              'p-3.5 rounded-xl transition-all cursor-pointer border flex flex-col justify-between space-y-2 relative overflow-hidden',
+              activeProfileTab === 2
+                ? 'bg-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                : 'bg-white/60 border-gray-200 hover:bg-white text-gray-600'
+            ]"
+          >
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Perfil 2 (Secundário)
+              </span>
+              <span v-if="activeProfileTab === 2" class="text-[10px] font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                Editando Agora
+              </span>
+            </div>
+
+            <p class="text-xs font-mono font-bold text-gray-900 truncate bg-slate-50 p-2 rounded-lg border border-slate-100">
+              {{ currentDomainHost }}/{{ (profile2?.username || `${profile1?.username || 'usuario'}-2`).replace(/^@/, '') }}
+            </p>
+
+            <div class="flex items-center justify-between pt-1">
+              <a :href="`/${(profile2?.username || `${profile1?.username || 'usuario'}-2`).replace(/^@/, '')}`" target="_blank" @click.stop class="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-[14px]">open_in_new</span> Ver Página 2
+              </a>
+              <button @click.stop="copyBioLink2" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg flex items-center gap-1">
+                <span class="material-symbols-outlined text-[13px]">{{ copyLink2Success ? 'check' : 'content_copy' }}</span>
+                {{ copyLink2Success ? 'Copiado!' : 'Copiar Link 2' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Bar Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-1">
           <NuxtLink to="/dashboard/analytics" class="w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-[18px]">analytics</span>
             <span>Métricas & Analytics</span>
@@ -1432,14 +1686,9 @@ async function logout() {
             <span>Instagram Auto Reply</span>
           </NuxtLink>
 
-          <button @click="copyBioLink" class="w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
-            <span class="material-symbols-outlined text-[18px]">{{ copyBioSuccess ? 'check' : 'content_copy' }}</span>
-            <span>{{ copyBioSuccess ? 'Copiado!' : 'Copiar Link' }}</span>
-          </button>
-
           <a :href="`/${profileUsername.replace(/^@/, '')}`" target="_blank" class="w-full py-2.5 px-3 rounded-2xl text-xs font-bold bg-gray-50 text-gray-800 border border-gray-200 hover:bg-gray-100 active:scale-95 transition-all flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-            <span>Ver Minha Página</span>
+            <span>Ver Perfil Selecionado</span>
           </a>
 
           <button @click="showCouponModal = true" class="w-full py-2.5 px-3 rounded-2xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 active:scale-95 transition-all flex items-center justify-center gap-1.5">
@@ -1609,7 +1858,19 @@ async function logout() {
             <!-- Info & Media inputs -->
             <div class="space-y-4">
               <div>
-                <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider mb-1.5">Nome de Exibição</label>
+                <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Nome de Usuário (URL da Página)</span>
+                  <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md" :class="activeProfileTab === 1 ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'">
+                    Editando Perfil {{ activeProfileTab }}
+                  </span>
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-purple-600 font-bold text-xs font-mono">{{ currentDomainHost }}/</span>
+                  <input v-model="profileUsername" type="text" class="w-full pl-36 pr-3 py-2.5 text-xs font-mono border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-bold text-gray-900">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider mb-1.5">Nome de Exibição (Título)</label>
                 <input v-model="customUsername" type="text" class="w-full px-3 py-2.5 text-sm border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-medium">
               </div>
               <div>
@@ -1673,6 +1934,31 @@ async function logout() {
                   </div>
                 </div>
                 <input v-model="customBgImage" @input="updateBgStyle" type="text" class="w-full px-3 py-2.5 text-xs border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-mono" placeholder="URL da imagem (ou escolha uma das opções acima)">
+                <div class="mt-2.5 p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-base">blur_on</span>
+                      </div>
+                      <div>
+                        <span class="text-xs font-bold text-gray-800 block">Nível de Desfoque da Foto (Blur)</span>
+                        <span class="text-[10px] text-gray-500 block">Ajuste a intensidade de 0px (nítida) até 30px</span>
+                      </div>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
+                      {{ customBgBlurAmount }}px
+                    </span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max="30"
+                    step="1"
+                    v-model.number="customBgBlurAmount"
+                    class="w-full accent-purple-600 cursor-pointer"
+                  >
+                </div>
               </div>
             </div>
 
@@ -2372,6 +2658,21 @@ async function logout() {
             <!-- Phone Screen -->
             <div class="w-full h-full rounded-[38px] overflow-y-auto overflow-x-hidden pt-14 pb-8 px-5 relative transition-all duration-500 hide-scrollbar" 
               :style="[customBgStyle, customFontClass.startsWith('custom:') ? { fontFamily: customFontClass.slice(7) } : {}]">
+              <!-- Background Blur Layer (When customBgBlurAmount > 0) -->
+              <div
+                v-if="customBgBlurAmount > 0 && customBgImage"
+                class="absolute inset-0 -z-0 overflow-hidden pointer-events-none"
+              >
+                <div
+                  class="w-full h-full bg-cover bg-center transition-all duration-300 scale-110"
+                  :style="{
+                    backgroundImage: `url('${customBgImage}')`,
+                    filter: `blur(${customBgBlurAmount}px)`
+                  }"
+                ></div>
+                <div class="absolute inset-0 bg-black/40"></div>
+              </div>
+
               <div class="relative z-10 flex flex-col items-center h-full">
                 <!-- Avatar -->
                 <div v-if="isAnimatedAvatar" class="w-20 h-20 mb-4 flex items-center justify-center shrink-0">
@@ -2969,6 +3270,41 @@ async function logout() {
           </button>
         </div>
 
+      </div>
+    </div>
+
+    <!-- Modal: Editar Link Bio 2 -->
+    <div v-if="showEditLink2Modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-heading font-extrabold text-lg text-gray-900 flex items-center gap-2">
+            <span class="material-symbols-outlined text-purple-600">link</span>
+            Configurar Link Bio 2
+          </h3>
+          <button @click="showEditLink2Modal = false" class="text-gray-400 hover:text-gray-600 p-1">
+            <span class="material-symbols-outlined text-xl">close</span>
+          </button>
+        </div>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Escolha a URL personalizada do seu segundo link de bio. Ambos os links direcionam visitantes para a sua página oficial com seus botões e temas.
+        </p>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">URL do Link Bio 2</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-purple-600 font-mono">{{ currentDomainHost }}/</span>
+            <input v-model="editingSecondaryInput" type="text" class="w-full pl-36 pr-3 py-2.5 text-xs font-mono border border-gray-300 rounded-xl focus:outline-none focus:border-purple-600 text-gray-900 font-bold" placeholder="seu_segundo_link">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button @click="showEditLink2Modal = false" class="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl">
+            Cancelar
+          </button>
+          <button @click="saveSecondaryLink2" class="px-5 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-md">
+            Confirmar Link 2
+          </button>
+        </div>
       </div>
     </div>
   </div>

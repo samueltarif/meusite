@@ -10,12 +10,15 @@ const cleanUsername = rawParam.replace(/[@\s]/g, '').replace(/\/$/, '').trim().t
 interface Profile {
   id: string
   username: string
+  secondary_username?: string
   display_name: string
   bio_description: string
   avatar_url: string
   bg_color: string
   bg_image_url: string
   bg_style: string
+  bg_blur?: boolean | number
+  bg_blur_amount?: number
   text_color: string
   btn_bg_color: string
   btn_text_color: string
@@ -37,15 +40,39 @@ interface LinkItem {
 const { data: pageData, pending: loading } = await useAsyncData(`bio-${cleanUsername}`, async () => {
   if (!cleanUsername) return null
 
-  // 1. Fetch profile (case-insensitive match)
-  const { data: profileData, error: profErr } = await supabase
-    .from('profiles')
-    .select('*')
-    .ilike('username', cleanUsername)
-    .maybeSingle()
+  // 1. Fetch profile (match by primary username or secondary username)
+  let profileData: any = null
+  let profErr: any = null
+
+  try {
+    const res = await supabase
+      .from('profiles')
+      .select('*')
+      .or(`username.ilike.${cleanUsername},secondary_username.ilike.${cleanUsername}`)
+      .maybeSingle()
+    profileData = res.data
+    profErr = res.error
+  } catch (e) {
+    // Fallback if secondary_username column is missing in DB schema
+    const res = await supabase
+      .from('profiles')
+      .select('*')
+      .ilike('username', cleanUsername)
+      .maybeSingle()
+    profileData = res.data
+    profErr = res.error
+  }
 
   if (profErr || !profileData) {
-    return null
+    // Retry direct fallback by username
+    const { data: fallbackData } = await supabase
+      .from('profiles')
+      .select('*')
+      .ilike('username', cleanUsername)
+      .maybeSingle()
+
+    if (!fallbackData) return null
+    profileData = fallbackData
   }
 
   // 2. Fetch active links
@@ -65,6 +92,15 @@ const { data: pageData, pending: loading } = await useAsyncData(`bio-${cleanUser
 const profile = computed(() => pageData.value?.profile || null)
 const links = computed(() => pageData.value?.links || [])
 const notFound = computed(() => !loading.value && !profile.value)
+
+const blurAmount = computed(() => {
+  if (!profile.value) return 0
+  const p = profile.value
+  if (typeof p.bg_blur_amount === 'number') return p.bg_blur_amount
+  if (typeof p.bg_blur === 'number') return p.bg_blur
+  if (p.bg_blur === true || (p.bg_blur as any) === 'true') return 16
+  return 0
+})
 
 if (profile.value) {
   useSeoMeta({
@@ -156,6 +192,33 @@ onMounted(() => {
     const source = detectClickPlatform()
     if (source && source !== 'Direto') {
       sessionStorage.setItem('avyro_traffic_source', source)
+    }
+
+    if (profile.value?.id) {
+      const viewPayload = {
+        profileId: profile.value.id,
+        platform: source || 'Direto',
+        referrer: document.referrer || ''
+      }
+
+      try {
+        const blob = new Blob([JSON.stringify(viewPayload)], { type: 'application/json' })
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/api/analytics/track-view', blob)
+        } else {
+          fetch('/api/analytics/track-view', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(viewPayload),
+            keepalive: true
+          }).catch(() => {})
+        }
+      } catch (e) {
+        $fetch('/api/analytics/track-view', {
+          method: 'POST',
+          body: viewPayload
+        }).catch(() => {})
+      }
     }
   }
 })
@@ -427,9 +490,12 @@ function isImageUrl(urlStr?: string) {
 const pageCssStyle = computed(() => {
   if (!profile.value) return ''
   const p = profile.value
+  if (blurAmount.value > 0 && p.bg_image_url) {
+    return `background-color: ${p.bg_color || '#060318'};`
+  }
   if (p.bg_style) return p.bg_style
   if (p.bg_image_url) {
-    return `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.65)), url("${p.bg_image_url}"); background-size: cover; background-position: center;`
+    return `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.65)), url("${p.bg_image_url}"); background-size: cover; background-position: center; background-attachment: fixed;`
   }
   return `background-color: ${p.bg_color || '#060318'};`
 })
@@ -441,6 +507,21 @@ const pageCssStyle = computed(() => {
     :style="[pageCssStyle, computedFontFamily ? { fontFamily: computedFontFamily } : {}]"
     :class="profile?.font_class?.startsWith('custom:') ? '' : (profile?.font_class || 'font-sans')"
   >
+    <!-- Background Blur Photo Layer (Fixed position so scroll down stays 100% blurred) -->
+    <div
+      v-if="blurAmount > 0 && profile?.bg_image_url"
+      class="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
+    >
+      <div
+        class="w-full h-full bg-cover bg-center scale-110 transition-all duration-300"
+        :style="{
+          backgroundImage: `url('${profile.bg_image_url}')`,
+          filter: `blur(${blurAmount}px)`
+        }"
+      ></div>
+      <div class="fixed inset-0 bg-black/40"></div>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="flex flex-col items-center justify-center flex-1 my-auto">
       <span class="material-symbols-outlined animate-spin text-4xl text-[#00f0ff] mb-4">progress_activity</span>
