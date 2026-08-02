@@ -36,6 +36,8 @@ export default defineEventHandler(async (event) => {
     .eq('id', userId)
     .single()
 
+  const profileId = profile?.id || userId
+
   // 2. Get all links for this user
   const { data: links } = await supabaseAdmin
     .from('links')
@@ -43,16 +45,20 @@ export default defineEventHandler(async (event) => {
     .eq('user_id', userId)
     .order('position', { ascending: true })
 
+  const linkIds = (links || []).map((l: any) => l.id).filter(Boolean)
+  const sumLinksCount = (links || []).reduce((sum: number, l: any) => sum + (l.clicks_count || 0), 0)
+
   // 3. Fetch detailed click analytics from link_clicks table
   let clicksByPlatform: Record<string, number> = {}
   let clicksByDay: { date: string; clicks: number }[] = []
   let clicksByLink: { linkId: string; title: string; icon: string; clicks: number }[] = []
   let topReferrers: { referrer: string; clicks: number }[] = []
   let clicksData: any[] = []
+  let pageViewsData: any[] = []
   let hasLinkClicksTable = false
 
   try {
-    let queryByProfile = supabaseAdmin.from('link_clicks').select('*').eq('profile_id', userId)
+    let queryByProfile = supabaseAdmin.from('link_clicks').select('*').or(`profile_id.eq.${userId},profile_id.eq.${profileId}`)
     if (startDate) queryByProfile = queryByProfile.gte('created_at', startDate)
     
     const { data: pData, error: pErr } = await queryByProfile
@@ -73,94 +79,107 @@ export default defineEventHandler(async (event) => {
         })
       }
     }
-
-    if (clicksData.length > 0) {
-      // Group by platform
-      const platformMap: Record<string, number> = {}
-      clicksData.forEach((c: any) => {
-        let p = c.platform || 'Direto'
-        const ref = (c.referrer || '').toLowerCase()
-        if (p === 'Outro Site' || p === 'Direto') {
-          if (ref.includes('wl.co') || ref.includes('whatsapp') || ref.includes('wa.me') || ref.includes('com.whatsapp')) {
-            p = 'WhatsApp'
-          } else if (ref.includes('threads') || ref.includes('barcelona')) {
-            p = 'Threads'
-          } else if (ref.includes('instagram') || ref.includes('com.instagram')) {
-            p = 'Instagram'
-          } else if (ref.includes('tiktok') || ref.includes('musically') || ref.includes('zhiliaoapp')) {
-            p = 'TikTok'
-          }
-        }
-        platformMap[p] = (platformMap[p] || 0) + 1
-      })
-      clicksByPlatform = platformMap
-
-      // Group by day adjusted to America/Sao_Paulo timezone (UTC-3)
-      const dayMap: Record<string, number> = {}
-      clicksData.forEach((c: any) => {
-        if (!c.created_at) return
-        try {
-          const dateObj = new Date(c.created_at)
-          const day = dateObj.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
-          if (day && day !== 'Invalid Date') {
-            dayMap[day] = (dayMap[day] || 0) + 1
-          }
-        } catch (e) {
-          const day = c.created_at.split('T')[0]
-          if (day) dayMap[day] = (dayMap[day] || 0) + 1
-        }
-      })
-      clicksByDay = Object.entries(dayMap)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, clicks]) => ({ date, clicks }))
-
-      // Group by link
-      const linkMap: Record<string, number> = {}
-      clicksData.forEach((c: any) => {
-        const lid = c.link_id || 'unknown'
-        linkMap[lid] = (linkMap[lid] || 0) + 1
-      })
-
-      clicksByLink = Object.entries(linkMap).map(([linkId, clicks]) => {
-        const found = (links || []).find((l: any) => l.id === linkId)
-        return {
-          linkId,
-          title: found?.title || 'Link Removido',
-          icon: found?.icon || '',
-          clicks
-        }
-      }).sort((a, b) => b.clicks - a.clicks)
-
-      // Group by referrer
-      const refMap: Record<string, number> = {}
-      clicksData.forEach((c: any) => {
-        const ref = c.referrer || 'Direto'
-        if (ref && ref !== '') {
-          refMap[ref] = (refMap[ref] || 0) + 1
-        }
-      })
-      topReferrers = Object.entries(refMap)
-        .map(([referrer, clicks]) => ({ referrer, clicks }))
-        .sort((a, b) => b.clicks - a.clicks)
-        .slice(0, 10)
-    }
   } catch (err: any) {
     console.error('Error fetching link_clicks overview:', err)
   }
 
-  // 4. Calculate total clicks strictly from database records
-  const sumLinksCount = (links || []).reduce((sum: number, l: any) => sum + (l.clicks_count || 0), 0)
-  let totalClicks = clicksData.length
+  // 4. Fetch page views logs from page_views table for traffic source breakdown
+  try {
+    let pvQuery = supabaseAdmin.from('page_views').select('*').or(`profile_id.eq.${userId},profile_id.eq.${profileId}`)
+    if (startDate) pvQuery = pvQuery.gte('created_at', startDate)
+    const { data: pvData } = await pvQuery
+    if (pvData) pageViewsData = [...pvData]
+  } catch (e) {}
 
-  // If link_clicks is not populated or empty, fallback totalClicks to links.clicks_count
+  // Combine events for platform breakdown (preferring link_clicks, or page_views if link_clicks has few events)
+  const platformEvents = clicksData.length > 0 ? clicksData : pageViewsData
+  if (platformEvents.length > 0) {
+    const platformMap: Record<string, number> = {}
+    platformEvents.forEach((c: any) => {
+      let p = c.platform || 'Direto'
+      const ref = (c.referrer || '').toLowerCase()
+      if (p === 'Outro Site' || p === 'Direto') {
+        if (ref.includes('wl.co') || ref.includes('whatsapp') || ref.includes('wa.me') || ref.includes('com.whatsapp')) {
+          p = 'WhatsApp'
+        } else if (ref.includes('threads') || ref.includes('barcelona')) {
+          p = 'Threads'
+        } else if (ref.includes('instagram') || ref.includes('com.instagram')) {
+          p = 'Instagram'
+        } else if (ref.includes('tiktok') || ref.includes('musically') || ref.includes('zhiliaoapp')) {
+          p = 'TikTok'
+        } else if (ref.includes('facebook') || ref.includes('fb.com')) {
+          p = 'Facebook'
+        } else if (ref.includes('youtube') || ref.includes('youtu.be')) {
+          p = 'YouTube'
+        }
+      }
+      platformMap[p] = (platformMap[p] || 0) + 1
+    })
+    clicksByPlatform = platformMap
+  }
+
+  // Build daily clicks timeline (clicksByDay)
+  if (clicksData.length > 0) {
+    const dayMap: Record<string, number> = {}
+    clicksData.forEach((c: any) => {
+      if (!c.created_at) return
+      try {
+        const dateObj = new Date(c.created_at)
+        const day = dateObj.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
+        if (day && day !== 'Invalid Date') {
+          dayMap[day] = (dayMap[day] || 0) + 1
+        }
+      } catch (e) {
+        const day = c.created_at.split('T')[0]
+        if (day) dayMap[day] = (dayMap[day] || 0) + 1
+      }
+    })
+
+    clicksByDay = Object.entries(dayMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, clicks]) => ({ date, clicks }))
+
+    // Group by link
+    const linkMap: Record<string, number> = {}
+    clicksData.forEach((c: any) => {
+      const lid = c.link_id || 'unknown'
+      linkMap[lid] = (linkMap[lid] || 0) + 1
+    })
+
+    clicksByLink = Object.entries(linkMap).map(([linkId, clicks]) => {
+      const found = (links || []).find((l: any) => l.id === linkId)
+      return {
+        linkId,
+        title: found?.title || 'Link Removido',
+        icon: found?.icon || '',
+        clicks
+      }
+    }).sort((a, b) => b.clicks - a.clicks)
+
+    // Group by referrer
+    const refMap: Record<string, number> = {}
+    clicksData.forEach((c: any) => {
+      const ref = c.referrer || 'Direto'
+      if (ref && ref !== '') {
+        refMap[ref] = (refMap[ref] || 0) + 1
+      }
+    })
+    topReferrers = Object.entries(refMap)
+      .map(([referrer, clicks]) => ({ referrer, clicks }))
+      .sort((a, b) => b.clicks - a.clicks)
+      .slice(0, 10)
+  }
+
+  // Calculate total clicks
+  let totalClicks = clicksData.length
   if (!hasLinkClicksTable || (clicksData.length === 0 && sumLinksCount > 0)) {
     totalClicks = sumLinksCount
   }
 
-  // 5. Fetch real page views from page_views table or profile.views_count
-  let totalViews = 0
+  // Fetch real page views count
+  let totalViews = pageViewsData.length
   try {
-    let viewsQuery = supabaseAdmin.from('page_views').select('id', { count: 'exact', head: true }).eq('profile_id', userId)
+    let viewsQuery = supabaseAdmin.from('page_views').select('id', { count: 'exact', head: true }).or(`profile_id.eq.${userId},profile_id.eq.${profileId}`)
     if (startDate) viewsQuery = viewsQuery.gte('created_at', startDate)
     const { count: vCount } = await viewsQuery
     if (typeof vCount === 'number' && vCount > 0) {
@@ -175,7 +194,7 @@ export default defineEventHandler(async (event) => {
     totalViews = totalClicks
   }
 
-  // Fallback to links data for clicksByLink if link_clicks events are empty but totalClicks > 0
+  // Fallback to links data for clicksByLink if clicksByLink is empty but totalClicks > 0
   if (clicksByLink.length === 0 && links && totalClicks > 0) {
     clicksByLink = links
       .filter((l: any) => (l.clicks_count || 0) > 0)

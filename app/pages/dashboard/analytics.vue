@@ -284,7 +284,8 @@ function formatDayLabel(dateStr: string) {
           </div>
 
           <!-- Timeline Chart Graphic (Blurred if Free User) -->
-          <div :class="[profile?.subscription_status !== 'active' ? 'filter blur-sm select-none pointer-events-none opacity-40' : '']">
+          <!-- Timeline Chart Graphic -->
+          <div>
             <div v-if="clicksByDay.length > 0" class="h-64 pt-6 flex items-end justify-start gap-6 border-b border-gray-100 pb-2 overflow-x-auto hide-scrollbar">
               <div
                 v-for="d in clicksByDay"
@@ -308,21 +309,6 @@ function formatDayLabel(dateStr: string) {
               <p class="text-xs text-gray-500">Seus dados de cliques diários aparecerão aqui conforme os visitantes interagirem com seus links.</p>
             </div>
           </div>
-
-          <!-- PRO Lock Overlay for Daily Clicks -->
-          <div v-if="profile?.subscription_status !== 'active'" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
-              <span class="material-symbols-outlined text-2xl">lock</span>
-            </div>
-            <div class="space-y-1">
-              <h3 class="font-extrabold text-base text-gray-900 font-heading">Gráfico de Cliques Diários Bloqueado</h3>
-              <p class="text-xs text-gray-600 max-w-sm">Acompanhe o gráfico e a evolução diária dos seus acessos no Plano Pro.</p>
-            </div>
-            <NuxtLink to="/dashboard" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-sm">workspace_premium</span>
-              Desbloquear no Plano Pro
-            </NuxtLink>
-          </div>
         </div>
 
         <!-- Section 3: Two Columns Layout (Traffic Sources & Content Analytics) -->
@@ -338,8 +324,8 @@ function formatDayLabel(dateStr: string) {
               <p class="text-xs text-gray-500">De onde vêm os visitantes que clicam na sua página.</p>
             </div>
 
-            <!-- Platform Progress Breakdown (Blurred if Free User) -->
-            <div :class="['flex-1 space-y-4', profile?.subscription_status !== 'active' ? 'filter blur-sm select-none pointer-events-none opacity-40' : '']">
+            <!-- Platform Progress Breakdown -->
+            <div class="flex-1 space-y-4">
               <div v-if="Object.keys(clicksByPlatform).length > 0" class="space-y-4">
                 <div
                   v-for="(count, plat) in clicksByPlatform"
@@ -353,7 +339,7 @@ function formatDayLabel(dateStr: string) {
                       <span>{{ plat }}</span>
                     </div>
                     <div class="flex items-center gap-2">
-                      <span class="text-gray-900 font-mono font-extrabold">{{ count }} cliques</span>
+                      <span class="text-gray-900 font-mono font-extrabold">{{ count }} acessos/cliques</span>
                       <span class="text-[10px] text-gray-400 font-mono">({{ Math.round((count / totalPlatformClicks) * 100) }}%)</span>
                     </div>
                   </div>
@@ -374,21 +360,6 @@ function formatDayLabel(dateStr: string) {
                 <span class="material-symbols-outlined text-4xl text-gray-300">hub</span>
                 <p class="text-xs text-gray-500 max-w-xs">Quando visitantes navegarem pelo Instagram, TikTok ou WhatsApp, a distribuição de origem aparecerá aqui automaticamente.</p>
               </div>
-            </div>
-
-            <!-- PRO Lock Overlay for Traffic Sources -->
-            <div v-if="profile?.subscription_status !== 'active'" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
-                <span class="material-symbols-outlined text-2xl">lock</span>
-              </div>
-              <div class="space-y-1">
-                <h3 class="font-extrabold text-base text-gray-900 font-heading">Origem do Tráfego Bloqueada</h3>
-                <p class="text-xs text-gray-600 max-w-sm">Descubra se seus visitantes vêm do Instagram, WhatsApp ou TikTok no Plano Pro.</p>
-              </div>
-              <NuxtLink to="/dashboard" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-sm">workspace_premium</span>
-                Desbloquear no Plano Pro
-              </NuxtLink>
             </div>
           </div>
 
