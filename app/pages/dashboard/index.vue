@@ -217,8 +217,77 @@ const themeFilterCategories = [
   { id: 'music', name: '🎵 Música' }
 ]
 
+const communityProfiles = ref<any[]>([])
+
+async function fetchCommunityProfiles() {
+  try {
+    const { data: pList } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, bio_description, avatar_url, bg_color, bg_image_url, bg_style, text_color, btn_bg_color, btn_text_color, btn_border, roundness, font_class, category, socials')
+      .not('username', 'is', null)
+      .limit(16)
+
+    if (pList && pList.length > 0) {
+      const pIds = pList.map((p: any) => p.id)
+      const { data: allLinks } = await supabase
+        .from('links')
+        .select('*')
+        .in('user_id', pIds)
+        .order('position', { ascending: true })
+
+      communityProfiles.value = pList.map((p: any) => {
+        const uLinks = (allLinks || []).filter((l: any) => l.user_id === p.id)
+        return {
+          id: `community-${p.id}`,
+          name: `🌟 ${p.display_name || p.username} (@${p.username})`,
+          categories: [p.category || 'general', 'all'],
+          bio: p.bio_description || `@${p.username}`,
+          bgColor: p.bg_color || '#111827',
+          bgImageUrl: p.bg_image_url || '',
+          bgStyle: p.bg_style || (p.bg_image_url ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${p.bg_image_url}"); background-size: cover; background-position: center;` : `background-color: ${p.bg_color || '#111827'};`),
+          textColor: p.text_color || '#ffffff',
+          btnBgColor: p.btn_bg_color || '#1f2937',
+          btnTextColor: p.btn_text_color || '#ffffff',
+          btnBorder: p.btn_border || '',
+          roundness: p.roundness || 'rounded-xl',
+          fontClass: p.font_class || 'font-sans',
+          avatarUrl: p.avatar_url ? p.avatar_url.replace('animated:', '') : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+          socials: p.socials || ['instagram', 'whatsapp'],
+          links: uLinks.map((l: any) => ({ id: l.id, title: l.title, icon: l.icon }))
+        }
+      })
+    }
+  } catch (e) {
+    console.warn('Erro ao buscar perfis da comunidade:', e)
+  }
+}
+
+const userSuggestedTheme = computed<Theme>(() => {
+  const currentTabName = activeProfileTab.value === 1 ? (profile1.value?.display_name || customUsername.value || profileUsername.value) : (profile2.value?.display_name || customUsername.value || profileUsername.value)
+  const currentTabUsername = activeProfileTab.value === 1 ? (profile1.value?.username || profileUsername.value) : (profile2.value?.username || profileUsername.value)
+  
+  return {
+    id: `user-suggested-active-tab-${activeProfileTab.value}`,
+    name: `⭐ ${currentTabName || currentTabUsername} (Modelo Sugerido)`,
+    categories: [profileCategory.value || 'beauty', 'all', 'fashion', 'beauty', 'small-business', 'marketing'],
+    bio: customBio.value || `@${currentTabUsername}`,
+    bgColor: customBgColor.value || '#4b3e34',
+    bgImageUrl: customBgImage.value || '',
+    bgStyle: customBgStyle.value || (customBgImage.value ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${customBgImage.value}"); background-size: cover; background-position: center;` : `background-color: ${customBgColor.value};`),
+    textColor: customTextColor.value || '#ffffff',
+    btnBgColor: customBtnBgColor.value || '#6b5d52',
+    btnTextColor: customBtnTextColor.value || '#ffffff',
+    btnBorder: customBtnBorder.value || '',
+    roundness: isCustomBtn.value ? `custom:${JSON.stringify(customBtnConfig.value)}` : (customRoundness.value || 'rounded-full'),
+    fontClass: customFontClass.value || 'font-serif',
+    avatarUrl: customAvatar.value || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+    socials: selectedSocials.value || ['instagram', 'tiktok', 'youtube'],
+    links: links.value.map((l: any, idx: number) => ({ id: l.id || idx, title: l.title, icon: l.icon }))
+  }
+})
+
 const displayedThemes = computed(() => {
-  let list = [...themes]
+  let list = [...themes, ...communityProfiles.value]
   if (activeThemeCategoryFilter.value !== 'all') {
     const fCat = activeThemeCategoryFilter.value
     list = list.filter(t => {
@@ -235,30 +304,54 @@ const displayedThemes = computed(() => {
   }
 
   // Prepend live user template suggestion if available
-  if (customUsername.value || profileUsername.value) {
-    const userTheme: Theme = {
-      id: `user-suggested-${activeProfileTab.value}`,
-      name: `⭐ ${customUsername.value || profileUsername.value} (Modelo Sugerido)`,
-      categories: [profileCategory.value, 'all', 'fashion', 'beauty', 'small-business', 'marketing'],
-      bio: customBio.value || 'Modelo do seu perfil ativo',
-      bgColor: customBgColor.value,
-      bgImageUrl: customBgImage.value,
-      bgStyle: customBgStyle.value,
-      textColor: customTextColor.value,
-      btnBgColor: customBtnBgColor.value,
-      btnTextColor: customBtnTextColor.value,
-      btnBorder: customBtnBorder.value,
-      roundness: customRoundness.value,
-      fontClass: customFontClass.value,
-      avatarUrl: customAvatar.value || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
-      socials: selectedSocials.value,
-      links: links.value.map((l: any, idx: number) => ({ id: l.id || idx, title: l.title, icon: l.icon, url: l.url || '#' }))
-    }
-    list.unshift(userTheme)
+  if (userSuggestedTheme.value) {
+    list.unshift(userSuggestedTheme.value)
   }
 
   return list
 })
+
+function getThemeCardBgStyle(theme: any) {
+  if (theme.bgStyle) return theme.bgStyle
+  if (theme.bgImageUrl) {
+    return `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${theme.bgImageUrl}"); background-size: cover; background-position: center;`
+  }
+  return `background-color: ${theme.bgColor || '#111827'};`
+}
+
+function getThemeCardBtnClass(theme: any) {
+  if (theme.roundness && theme.roundness.startsWith('custom:')) return ''
+  return [theme.roundness || 'rounded-full', theme.btnBorder || '']
+}
+
+function getThemeCardBtnStyle(theme: any) {
+  if (theme.roundness && theme.roundness.startsWith('custom:')) {
+    try {
+      const c = JSON.parse(theme.roundness.slice(7))
+      const isTransparent = c.isTransparentBg
+      let shadowStr = undefined
+      if (c.shadowType === 'drop') shadowStr = `${c.shadowOffsetX || 2}px ${c.shadowOffsetY || 2}px ${c.shadowBlur || 4}px ${c.shadowColor || 'rgba(0,0,0,0.15)'}`
+      else if (c.shadowType === 'brutal') shadowStr = `${c.shadowOffsetX || 2}px ${c.shadowOffsetY || 2}px 0px ${c.shadowColor || 'rgba(0,0,0,0.15)'}`
+      else if (c.shadowType === 'neon') shadowStr = `0 0 ${c.shadowBlur || 4}px ${c.shadowColor || 'rgba(0,0,0,0.15)'}`
+
+      return {
+        backgroundColor: isTransparent ? 'transparent' : (theme.btnBgColor || '#ffffff'),
+        color: theme.btnTextColor || '#111111',
+        borderRadius: `${c.borderRadius || 12}px`,
+        borderWidth: `${c.borderWidth || 0}px`,
+        borderStyle: c.borderStyle || 'solid',
+        borderColor: c.borderColor || '#111111',
+        boxShadow: shadowStr,
+        fontFamily: theme.fontClass && theme.fontClass.startsWith('custom:') ? theme.fontClass.slice(7) : undefined
+      }
+    } catch (e) {}
+  }
+  return {
+    backgroundColor: theme.btnBgColor || '#ffffff',
+    color: theme.btnTextColor || '#111111',
+    fontFamily: theme.fontClass && theme.fontClass.startsWith('custom:') ? theme.fontClass.slice(7) : undefined
+  }
+}
 
 const uploadingTarget = ref<'avatar' | 'bg' | 'standalone' | null>(null)
 const standaloneR2Url = ref('')
@@ -1002,6 +1095,9 @@ async function loadUserData(userId: string) {
   } catch (err) {
     console.warn('Alerta ao carregar Perfil 2:', err)
   }
+
+  // 4. Fetch real community profiles from database
+  await fetchCommunityProfiles()
 
   // Populate active tab without wiping loaded DB data
   switchProfileTab(1, true)
@@ -1832,22 +1928,38 @@ async function logout() {
             PRO
           </div>
 
-          <!-- Mini phone mockup -->
-          <div class="w-full h-[280px] rounded-[24px] overflow-hidden pt-7 px-4 flex flex-col items-center relative" :style="theme.bgStyle">
-            <div class="w-12 h-12 rounded-full overflow-hidden border border-black/10 mb-2 relative z-10 shrink-0 shadow-sm">
-              <img :src="theme.avatarUrl" :alt="theme.name" class="w-full h-full object-cover">
+          <!-- Mini phone mockup (100% Faithful Rendering) -->
+          <div class="w-full h-[280px] rounded-[24px] overflow-hidden pt-7 px-4 flex flex-col items-center relative transition-all duration-300 shadow-inner" :style="getThemeCardBgStyle(theme)">
+            <div class="w-12 h-12 rounded-full overflow-hidden border border-black/10 mb-2 relative z-10 shrink-0 shadow-sm bg-slate-200">
+              <img :src="theme.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150'" :alt="theme.name" class="w-full h-full object-cover">
             </div>
-            <h3 class="text-xs font-bold text-center truncate w-full mb-0.5 relative z-10" :style="{ color: theme.textColor }">{{ theme.name }}</h3>
-            <p class="text-[9px] opacity-75 text-center truncate w-full mb-3 relative z-10" :style="{ color: theme.textColor }">{{ theme.bio }}</p>
+            <h3
+              class="text-xs font-bold text-center truncate w-full mb-0.5 relative z-10"
+              :class="[theme.fontClass && !theme.fontClass.startsWith('custom:') ? theme.fontClass : '']"
+              :style="[theme.fontClass && theme.fontClass.startsWith('custom:') ? { fontFamily: theme.fontClass.slice(7) } : {}, { color: theme.textColor || '#ffffff' }]"
+            >
+              {{ theme.name }}
+            </h3>
+            <p
+              class="text-[9px] opacity-85 text-center truncate w-full mb-3 relative z-10 font-medium"
+              :class="[theme.fontClass && !theme.fontClass.startsWith('custom:') ? theme.fontClass : '']"
+              :style="[theme.fontClass && theme.fontClass.startsWith('custom:') ? { fontFamily: theme.fontClass.slice(7) } : {}, { color: theme.textColor || '#ffffff' }]"
+            >
+              {{ theme.bio }}
+            </p>
             <div class="space-y-1.5 w-full relative z-10">
               <div
-                v-for="(lk, idx) in (theme.links || []).slice(0, 3)"
+                v-for="(lk, idx) in (theme.links || []).slice(0, 4)"
                 :key="idx"
-                class="w-full h-6 flex items-center justify-center gap-1.5 text-[8px] font-bold border truncate px-2"
-                :class="[theme.roundness, theme.btnBorder]"
-                :style="{ backgroundColor: theme.btnBgColor, color: theme.btnTextColor }"
+                class="w-full h-6 flex items-center justify-center gap-1.5 text-[8px] font-bold truncate px-2 transition-all shadow-2xs"
+                :class="[getThemeCardBtnClass(theme), theme.fontClass && !theme.fontClass.startsWith('custom:') ? theme.fontClass : '']"
+                :style="getThemeCardBtnStyle(theme)"
               >
-                <div v-if="lk.icon && brandIcons[lk.icon]" class="w-2.5 h-2.5 shrink-0 flex items-center justify-center" v-html="brandIcons[lk.icon]"></div>
+                <div v-if="lk.icon && isImageUrl(lk.icon)" class="w-3 h-3 rounded-full overflow-hidden shrink-0">
+                  <img :src="lk.icon" class="w-full h-full object-cover">
+                </div>
+                <div v-else-if="lk.icon && brandIcons[lk.icon]" class="w-2.5 h-2.5 shrink-0 flex items-center justify-center" v-html="brandIcons[lk.icon]"></div>
+                <span v-else-if="lk.icon && lk.icon !== 'website'" class="material-symbols-outlined text-[10px] shrink-0">{{ lk.icon }}</span>
                 <span class="truncate">{{ lk.title }}</span>
               </div>
             </div>
