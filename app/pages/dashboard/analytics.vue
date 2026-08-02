@@ -339,7 +339,7 @@ function formatDayLabel(dateStr: string) {
                       <span>{{ plat }}</span>
                     </div>
                     <div class="flex items-center gap-2">
-                      <span class="text-gray-900 font-mono font-extrabold">{{ count }} acessos/cliques</span>
+                      <span class="text-gray-900 font-mono font-extrabold">{{ count }} cliques</span>
                       <span class="text-[10px] text-gray-400 font-mono">({{ Math.round((count / totalPlatformClicks) * 100) }}%)</span>
                     </div>
                   </div>
