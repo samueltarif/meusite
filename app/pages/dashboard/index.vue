@@ -184,12 +184,81 @@ const loading = ref(true)
 const currentUser = ref<any>(null)
 const profileId = ref('')
 const profileUsername = ref('')
+const profileCategory = ref('beauty')
+const activeThemeCategoryFilter = ref('all')
 const subscriptionStatus = ref('free')
 const checkoutLoading = ref(false)
 const saveSuccess = ref(false)
 const savingProfile = ref(false)
 const activatedSuccess = ref(false)
 const errorMsg = ref('')
+
+const profileCategories = [
+  { id: 'beauty', name: '💅 Beleza, Joias & Estética' },
+  { id: 'gastronomy', name: '🥐 Padaria, Gastronomia & Confeitaria' },
+  { id: 'barbershop', name: '💈 Barbearia & Salão' },
+  { id: 'fashion', name: '👗 Moda, Boutique & Acessórios' },
+  { id: 'fitness', name: '🏋️ Saúde, Academia & Fitness' },
+  { id: 'professional', name: '💼 Profissional, Advocacia & Serviços' },
+  { id: 'creators', name: '📱 Influencer & Criador de Conteúdo' },
+  { id: 'music', name: '🎵 Música, Artistas & Entretenimento' },
+  { id: 'general', name: '👤 Pessoal / Outros' }
+]
+
+const themeFilterCategories = [
+  { id: 'all', name: '✨ Todos os Temas' },
+  { id: 'beauty', name: '💅 Beleza & Joias' },
+  { id: 'gastronomy', name: '🥐 Padaria & Gastronomia' },
+  { id: 'barbershop', name: '💈 Barbearia' },
+  { id: 'fashion', name: '👗 Moda' },
+  { id: 'fitness', name: '🏋️ Fitness' },
+  { id: 'professional', name: '💼 Profissional' },
+  { id: 'creators', name: '📱 Criadores' },
+  { id: 'music', name: '🎵 Música' }
+]
+
+const displayedThemes = computed(() => {
+  let list = [...themes]
+  if (activeThemeCategoryFilter.value !== 'all') {
+    const fCat = activeThemeCategoryFilter.value
+    list = list.filter(t => {
+      const catArr = t.categories || []
+      if (fCat === 'beauty') return catArr.includes('fashion') || catArr.includes('small-business') || catArr.includes('beauty')
+      if (fCat === 'gastronomy') return catArr.includes('small-business') || catArr.includes('gastronomy')
+      if (fCat === 'barbershop') return catArr.includes('fashion') || catArr.includes('barbershop')
+      if (fCat === 'fitness') return catArr.includes('health-fitness') || catArr.includes('fitness')
+      if (fCat === 'professional') return catArr.includes('marketing') || catArr.includes('social-media') || catArr.includes('professional')
+      if (fCat === 'music') return catArr.includes('music') || catArr.includes('telegram')
+      if (fCat === 'creators') return catArr.includes('influencer-creator')
+      return catArr.includes(fCat)
+    })
+  }
+
+  // Prepend live user template suggestion if available
+  if (customUsername.value || profileUsername.value) {
+    const userTheme: Theme = {
+      id: `user-suggested-${activeProfileTab.value}`,
+      name: `⭐ ${customUsername.value || profileUsername.value} (Modelo Sugerido)`,
+      categories: [profileCategory.value, 'all', 'fashion', 'beauty', 'small-business', 'marketing'],
+      bio: customBio.value || 'Modelo do seu perfil ativo',
+      bgColor: customBgColor.value,
+      bgImageUrl: customBgImage.value,
+      bgStyle: customBgStyle.value,
+      textColor: customTextColor.value,
+      btnBgColor: customBtnBgColor.value,
+      btnTextColor: customBtnTextColor.value,
+      btnBorder: customBtnBorder.value,
+      roundness: customRoundness.value,
+      fontClass: customFontClass.value,
+      avatarUrl: customAvatar.value || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+      socials: selectedSocials.value,
+      links: links.value.map((l: any, idx: number) => ({ id: l.id || idx, title: l.title, icon: l.icon, url: l.url || '#' }))
+    }
+    list.unshift(userTheme)
+  }
+
+  return list
+})
 
 const uploadingTarget = ref<'avatar' | 'bg' | 'standalone' | null>(null)
 const standaloneR2Url = ref('')
@@ -957,6 +1026,7 @@ function switchProfileTab(tab: 1 | 2, skipSync = false) {
 
   activeProfileId.value = activeP.id || (tab === 1 ? currentUser.value?.id : `${currentUser.value?.id}_p2`)
   profileUsername.value = activeP.username || (tab === 1 ? 'usuario' : `${profile1.value?.username || 'usuario'}-2`)
+  profileCategory.value = activeP.category || 'beauty'
   customUsername.value = activeP.display_name || activeP.username || ''
   customBio.value = activeP.bio_description || ''
   
@@ -998,6 +1068,7 @@ function switchProfileTab(tab: 1 | 2, skipSync = false) {
 function syncFormToProfileObj(target: any) {
   const roundnessValue = isCustomBtn.value ? `custom:${JSON.stringify(customBtnConfig.value)}` : customRoundness.value
   target.username = profileUsername.value.replace(/^@/, '').trim().toLowerCase()
+  target.category = profileCategory.value
   target.display_name = customUsername.value
   target.bio_description = customBio.value
   target.avatar_url = customAvatar.value
@@ -1473,6 +1544,7 @@ async function saveProfile() {
   const payload = {
     display_name: customUsername.value,
     username: cleanUsernameSlug,
+    category: profileCategory.value,
     bio_description: customBio.value,
     avatar_url: finalAvatarUrl,
     theme_id: activeThemeId.value,
@@ -1710,19 +1782,36 @@ async function logout() {
         <span>{{ errorMsg }}</span>
       </div>
 
-      <!-- Step 1: Theme Selection Grid (Mini phone cards - IDENTICAL to /link-in-bio) -->
-      <div class="text-center mb-8">
+      <!-- Step 1: Theme Selection Grid with Category Filter -->
+      <div class="text-center mb-6">
         <h2 class="font-heading text-[28px] md:text-[32px] font-extrabold text-[#111111] mb-2">
           Selecione um tema
         </h2>
-        <p class="text-[#666666] font-body text-sm max-w-2xl mx-auto">
-          Escolha o estilo que combina com você — sua página pública será atualizada ao salvar.
+        <p class="text-[#666666] font-body text-sm max-w-2xl mx-auto mb-6">
+          Escolha o estilo que combina com você ou filtre pelo seu segmento de negócio.
         </p>
+
+        <!-- Category Filter Tabs -->
+        <div class="flex items-center justify-center gap-2 mb-8 flex-wrap max-w-4xl mx-auto">
+          <button
+            v-for="cat in themeFilterCategories"
+            :key="cat.id"
+            @click="activeThemeCategoryFilter = cat.id"
+            :class="[
+              'px-3.5 py-2 text-xs font-bold rounded-2xl transition-all duration-300 shadow-2xs',
+              activeThemeCategoryFilter === cat.id
+                ? 'bg-secondary text-white shadow-md scale-105'
+                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+            ]"
+          >
+            {{ cat.name }}
+          </button>
+        </div>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mb-16">
         <div
-          v-for="theme in themes"
+          v-for="theme in displayedThemes"
           :key="theme.id"
           @click="applyTheme(theme)"
           :class="[
@@ -1874,6 +1963,17 @@ async function logout() {
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-purple-600 font-bold text-xs font-mono">{{ currentDomainHost }}/</span>
                   <input v-model="profileUsername" type="text" class="w-full pl-36 pr-3 py-2.5 text-xs font-mono border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary font-bold text-gray-900">
                 </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Segmento / Categoria do Negócio</span>
+                  <span class="text-[10px] text-purple-600 font-bold">Usado na sugestão de modelos</span>
+                </label>
+                <select v-model="profileCategory" class="w-full px-3 py-2.5 text-xs font-bold border border-[#DDDDDD] rounded-xl focus:outline-none focus:border-secondary bg-white text-gray-900">
+                  <option v-for="cat in profileCategories" :key="cat.id" :value="cat.id">
+                    {{ cat.name }}
+                  </option>
+                </select>
               </div>
               <div>
                 <label class="block text-xs font-bold text-[#111111] uppercase tracking-wider mb-1.5">Nome de Exibição (Título)</label>

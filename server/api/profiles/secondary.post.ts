@@ -83,6 +83,7 @@ export default defineEventHandler(async (event) => {
     const payload = {
       display_name: profileData.display_name,
       username: profileData.username,
+      category: profileData.category || 'beauty',
       bio_description: profileData.bio_description,
       avatar_url: profileData.avatar_url,
       theme_id: profileData.theme_id,
