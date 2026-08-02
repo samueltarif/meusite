@@ -113,15 +113,16 @@ function detectClickPlatform(): string {
   if (import.meta.server) return 'Direto'
   
   const savedSource = sessionStorage.getItem('avyro_traffic_source')
-  if (savedSource && savedSource !== 'Direto') return savedSource
+  if (savedSource && savedSource !== 'Direto' && savedSource !== 'Site Web') return savedSource
 
   const referrer = (document.referrer || '').toLowerCase()
   const userAgent = (navigator.userAgent || '').toLowerCase()
   const searchStr = (window.location.search || '').toLowerCase()
 
-  // 1. WhatsApp (Detects l.wl.co, wl.co, android-app://com.whatsapp, wa.me, web.whatsapp, and in-app User-Agent)
+  // 1. WhatsApp
   if (
     searchStr.includes('whatsapp') ||
+    searchStr.includes('utm_source=wa') ||
     searchStr.includes('wa.me') ||
     referrer.includes('whatsapp') ||
     referrer.includes('wa.me') ||
@@ -132,7 +133,19 @@ function detectClickPlatform(): string {
     return 'WhatsApp'
   }
 
-  // 2. Threads (Detects l.threads.com, threads.net, threads.com, com.instagram.barcelona, and User-Agent)
+  // 2. Instagram
+  if (
+    searchStr.includes('utm_source=instagram') ||
+    searchStr.includes('utm_source=insta') ||
+    searchStr.includes('igshid') ||
+    referrer.includes('instagram') ||
+    referrer.includes('com.instagram') ||
+    userAgent.includes('instagram')
+  ) {
+    return 'Instagram'
+  }
+
+  // 3. Threads
   if (
     searchStr.includes('threads') ||
     referrer.includes('threads') ||
@@ -143,47 +156,44 @@ function detectClickPlatform(): string {
     return 'Threads'
   }
 
-  // 3. TikTok (Detects android-app://com.zhiliaoapp.musically, ttclid, tiktok.com, and User-Agent)
+  // 4. TikTok
   if (
-    searchStr.includes('ttclid=') ||
+    searchStr.includes('ttclid') ||
     searchStr.includes('tiktok') ||
     referrer.includes('tiktok') ||
     referrer.includes('musically') ||
     referrer.includes('zhiliaoapp') ||
     referrer.includes('trill') ||
     userAgent.includes('tiktok') ||
-    userAgent.includes('musical_ly')
+    userAgent.includes('musical_ly') ||
+    userAgent.includes('bytedance')
   ) {
     return 'TikTok'
   }
 
-  // 4. Instagram (Detects android-app://com.instagram.android, instagram.com, l.instagram.com, and User-Agent)
+  // 5. Facebook
   if (
-    searchStr.includes('utm_source=instagram') ||
-    searchStr.includes('utm_source=insta') ||
-    searchStr.includes('ig') ||
-    referrer.includes('instagram') ||
-    referrer.includes('com.instagram') ||
-    userAgent.includes('instagram')
+    searchStr.includes('fbclid') ||
+    searchStr.includes('facebook') ||
+    referrer.includes('facebook') ||
+    referrer.includes('fb.com') ||
+    referrer.includes('com.facebook') ||
+    userAgent.includes('fban') ||
+    userAgent.includes('fbav')
   ) {
-    return 'Instagram'
+    return 'Facebook'
   }
 
-  // Meta's fbclid parameter is automatically added to bio links clicked on Instagram/Facebook/Threads
-  if (searchStr.includes('fbclid=')) {
-    if (referrer.includes('threads')) return 'Threads'
-    if (referrer.includes('instagram') || userAgent.includes('instagram')) return 'Instagram'
-    if (referrer.includes('facebook') || userAgent.includes('facebook')) return 'Facebook'
-    return 'Instagram'
-  }
+  // 6. YouTube
+  if (searchStr.includes('youtube') || searchStr.includes('youtu.be') || referrer.includes('youtube.com') || referrer.includes('youtu.be')) return 'YouTube'
 
-  // 5. Other Networks
-  if (searchStr.includes('youtube') || referrer.includes('youtube.com') || referrer.includes('youtu.be')) return 'YouTube'
+  // 7. X (Twitter)
   if (searchStr.includes('twitter') || searchStr.includes('x.com') || referrer.includes('t.co') || referrer.includes('twitter.com') || referrer.includes('x.com') || referrer.includes('com.twitter')) return 'X (Twitter)'
-  if (referrer.includes('facebook') || referrer.includes('fb.com') || referrer.includes('com.facebook')) return 'Facebook'
-  if (referrer.includes('google.com')) return 'Google'
 
-  if (referrer) return 'Outro Site'
+  // 8. Google
+  if (referrer.includes('google.com') || referrer.includes('google.com.br')) return 'Google'
+
+  if (referrer && !referrer.includes(window.location.hostname)) return 'Outro Site'
   return 'Direto'
 }
 

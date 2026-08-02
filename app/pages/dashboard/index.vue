@@ -8,6 +8,12 @@ useSeoMeta({
   description: 'Gerencie seus links, personalize seu tema e acompanhe métricas de cliques.',
 })
 
+useHead({
+  meta: [
+    { name: 'viewport', content: 'width=1280, initial-scale=0.35, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes' }
+  ]
+})
+
 export interface LinkItem {
   id: any
   title: string

@@ -148,61 +148,13 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching link_clicks overview:', err)
   }
 
-  // 4. Calculate total clicks
+  // 4. Calculate total clicks strictly from database records
   const sumLinksCount = (links || []).reduce((sum: number, l: any) => sum + (l.clicks_count || 0), 0)
-  let totalClicks = clicksData.length > 0 ? clicksData.length : sumLinksCount
+  let totalClicks = clicksData.length
 
-  // Fallback platform breakdown and daily activity if link_clicks detailed logs are empty but clicks exist
-  if (clicksData.length === 0 && totalClicks > 0 && links) {
-    const platformMap: Record<string, number> = {}
-    links.forEach((l: any) => {
-      const cCount = l.clicks_count || 0
-      if (cCount > 0) {
-        let pName = 'Direto'
-        const icon = (l.icon || '').toLowerCase()
-        if (icon === 'instagram') pName = 'Instagram'
-        else if (icon === 'whatsapp') pName = 'WhatsApp'
-        else if (icon === 'tiktok') pName = 'TikTok'
-        else if (icon === 'spotify' || icon === 'spotify_embed') pName = 'Spotify'
-        else if (icon === 'youtube' || icon === 'video_card') pName = 'YouTube'
-        else if (icon === 'threads') pName = 'Threads'
-        else if (icon === 'website') pName = 'Site Web'
-
-        platformMap[pName] = (platformMap[pName] || 0) + cCount
-      }
-    })
-    clicksByPlatform = platformMap
-
-    // Generate daily activity chart array for current range
-    const daysCount = range === '30d' ? 30 : range === '90d' ? 90 : 7
-    const dayMap: Record<string, number> = {}
-    const nowObj = new Date()
-
-    // Distribute total clicks across recent days
-    for (let i = daysCount - 1; i >= 0; i--) {
-      const d = new Date(nowObj.getTime() - i * 24 * 60 * 60 * 1000)
-      const dayStr = d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
-      dayMap[dayStr] = 0
-    }
-
-    const dayKeys = Object.keys(dayMap)
-    if (dayKeys.length > 0) {
-      let remaining = totalClicks
-      const basePerDay = Math.floor(remaining / dayKeys.length)
-      dayKeys.forEach(k => {
-        dayMap[k] = basePerDay
-      })
-      remaining -= basePerDay * dayKeys.length
-      // Add remainder to last days
-      for (let j = dayKeys.length - 1; j >= 0 && remaining > 0; j--) {
-        dayMap[dayKeys[j]] += 1
-        remaining--
-      }
-    }
-
-    clicksByDay = Object.entries(dayMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, clicks]) => ({ date, clicks }))
+  // If link_clicks is not populated or empty, fallback totalClicks to links.clicks_count
+  if (!hasLinkClicksTable || (clicksData.length === 0 && sumLinksCount > 0)) {
+    totalClicks = sumLinksCount
   }
 
   // 5. Fetch real page views from page_views table or profile.views_count
@@ -223,7 +175,7 @@ export default defineEventHandler(async (event) => {
     totalViews = totalClicks
   }
 
-  // Fallback to links data if clicksByLink is empty
+  // Fallback to links data for clicksByLink if link_clicks events are empty but totalClicks > 0
   if (clicksByLink.length === 0 && links && totalClicks > 0) {
     clicksByLink = links
       .filter((l: any) => (l.clicks_count || 0) > 0)

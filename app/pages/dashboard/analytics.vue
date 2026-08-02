@@ -8,6 +8,12 @@ useSeoMeta({
   description: 'Acompanhe dados detalhados sobre cliques, origens de tráfego (Instagram, TikTok, WhatsApp) e engajamento dos seus links.',
 })
 
+useHead({
+  meta: [
+    { name: 'viewport', content: 'width=1280, initial-scale=0.35, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes' }
+  ]
+})
+
 const loading = ref(true)
 const currentUser = ref<any>(null)
 const profile = ref<any>(null)
