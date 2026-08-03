@@ -1,162 +1,143 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { action, userId, profileData } = body
+  try {
+    const body = await readBody(event)
+    const { action, userId, profileData } = body
 
-  if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: 'userId é obrigatório.' })
-  }
-
-  const supabaseUrl = process.env.SUPABASE_URL || 'https://mwrtluebbiyrmjrqwhut.supabase.co'
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-  if (!supabaseServiceKey) {
-    throw createError({ statusCode: 500, statusMessage: 'Supabase Service Key ausente.' })
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
-
-  // 1. Obter o perfil principal do usuário
-  const { data: primaryProfile, error: pErr } = await supabaseAdmin
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
-
-  if (pErr || !primaryProfile) {
-    throw createError({ statusCode: 404, statusMessage: 'Perfil principal não encontrado.' })
-  }
-
-  // Identificador do perfil secundário (Perfil 2)
-  const secondaryId = primaryProfile.secondary_profile_id || `${userId}_p2`
-
-  if (action === 'get') {
-    // Tentar buscar perfil 2 por ID ou secondary_profile_id
-    const { data: secProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', secondaryId)
-      .maybeSingle()
-
-    if (secProfile) {
-      return { success: true, profile: secProfile }
+    if (!userId) {
+      return { success: false, error: 'userId é obrigatório.' }
     }
 
-    // Tentar buscar perfil 2 por username alternativo
+    const supabaseUrl = process.env.SUPABASE_URL || 'https://mwrtluebbiyrmjrqwhut.supabase.co'
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+    if (!supabaseServiceKey) {
+      return { success: false, error: 'Supabase Service Key ausente.' }
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+
+    // 1. Obter o perfil principal do usuário
+    const { data: primaryProfile, error: pErr } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (pErr || !primaryProfile) {
+      return { success: false, error: 'Perfil principal não encontrado.' }
+    }
+
+    const secUserEmail = `sec_${userId.replace(/[^a-zA-Z0-9]/g, '')}@avyro.internal`
     const defaultSecUsername = `${primaryProfile.username || 'usuario'}-2`
-    const { data: secByUsername } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .ilike('username', defaultSecUsername)
-      .maybeSingle()
 
-    if (secByUsername) {
-      // Atualizar o perfil principal com o ID encontrado
-      await supabaseAdmin.from('profiles').update({ secondary_profile_id: secByUsername.id }).eq('id', userId)
-      return { success: true, profile: secByUsername }
-    }
-
-    return { success: true, profile: null }
-  }
-
-  if (action === 'create_or_update') {
-    if (!profileData) {
-      throw createError({ statusCode: 400, statusMessage: 'profileData é obrigatório.' })
-    }
-
-    // Verificar se já existe perfil 2
-    let existingProfileId = primaryProfile.secondary_profile_id
-
-    if (!existingProfileId) {
-      const { data: checkSec } = await supabaseAdmin
+    // Helper: Encontrar ou auto-criar o usuário/perfil secundário no Supabase Auth + Database
+    async function getOrCreateSecondaryProfile() {
+      // Tentar buscar por username direto (ex: samuel.tarif-2)
+      const { data: secByUsername } = await supabaseAdmin
         .from('profiles')
-        .select('id')
-        .eq('id', secondaryId)
+        .select('*')
+        .ilike('username', defaultSecUsername)
         .maybeSingle()
 
-      if (checkSec) {
-        existingProfileId = checkSec.id
-      }
-    }
+      if (secByUsername) return secByUsername
 
-    const payload = {
-      display_name: profileData.display_name,
-      username: profileData.username,
-      category: profileData.category || 'beauty',
-      bio_description: profileData.bio_description,
-      avatar_url: profileData.avatar_url,
-      theme_id: profileData.theme_id,
-      bg_color: profileData.bg_color,
-      bg_image_url: profileData.bg_image_url,
-      bg_style: profileData.bg_style,
-      bg_blur: profileData.bg_blur,
-      text_color: profileData.text_color,
-      btn_bg_color: profileData.btn_bg_color,
-      btn_text_color: profileData.btn_text_color,
-      btn_border: profileData.btn_border,
-      roundness: profileData.roundness,
-      font_class: profileData.font_class,
-      socials: profileData.socials,
-      subscription_status: primaryProfile.subscription_status || 'free',
-      updated_at: new Date().toISOString(),
-    }
+      // Se não encontrou por username, criar um novo usuário interno via Auth Admin
+      const { data: newUserObj } = await supabaseAdmin.auth.admin.createUser({
+        email: secUserEmail,
+        email_confirm: true,
+        user_metadata: { is_secondary_for: userId }
+      })
 
-    if (existingProfileId) {
-      // Atualizar perfil 2 existente
-      const { data: updated, error: uErr } = await supabaseAdmin
-        .from('profiles')
-        .update(payload)
-        .eq('id', existingProfileId)
-        .select()
-        .single()
-
-      if (uErr) {
-        throw createError({ statusCode: 500, statusMessage: `Erro ao atualizar Perfil 2: ${uErr.message}` })
-      }
-
-      return { success: true, profile: updated }
-    } else {
-      // Criar novo perfil 2
-      const newSecId = secondaryId
-      const newPayload = {
-        ...payload,
-        id: newSecId,
-        created_at: new Date().toISOString()
-      }
-
-      const { data: inserted, error: iErr } = await supabaseAdmin
-        .from('profiles')
-        .insert(newPayload)
-        .select()
-        .single()
-
-      if (iErr) {
-        // Tentar sem forçar ID se falhar por constraint
-        const fallbackInsert = {
-          ...payload,
-          created_at: new Date().toISOString()
+      if (newUserObj?.user) {
+        const secId = newUserObj.user.id
+        const initialPayload = {
+          username: defaultSecUsername,
+          display_name: primaryProfile.display_name ? `${primaryProfile.display_name} #2` : 'Meu Perfil 2',
+          bio_description: 'Seu segundo perfil de links na bio',
+          avatar_url: primaryProfile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
+          theme_id: 'lexie-candis',
+          bg_color: '#8b5cf6',
+          bg_image_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800',
+          bg_style: 'background: linear-gradient(rgba(139,92,246,0.5), rgba(109,40,217,0.75)), url("https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800"); background-size: cover; background-position: center;',
+          text_color: '#ffffff',
+          btn_bg_color: '#ede9fe',
+          btn_text_color: '#6d28d9',
+          btn_border: '',
+          roundness: 'rounded-full',
+          font_class: 'font-serif',
+          socials: ['tiktok', 'instagram', 'youtube'],
+          subscription_status: primaryProfile.subscription_status || 'free',
+          updated_at: new Date().toISOString(),
         }
-        const { data: insertedFallback, error: fbErr } = await supabaseAdmin
+
+        const { data: updatedSec } = await supabaseAdmin
           .from('profiles')
-          .insert(fallbackInsert)
+          .update(initialPayload)
+          .eq('id', secId)
           .select()
           .single()
 
-        if (fbErr) {
-          throw createError({ statusCode: 500, statusMessage: `Erro ao criar Perfil 2: ${fbErr.message}` })
-        }
-
-        // Vincular ao perfil 1
-        await supabaseAdmin.from('profiles').update({ secondary_profile_id: insertedFallback.id }).eq('id', userId)
-        return { success: true, profile: insertedFallback }
+        if (updatedSec) return updatedSec
       }
 
-      // Vincular ao perfil 1
-      await supabaseAdmin.from('profiles').update({ secondary_profile_id: newSecId }).eq('id', userId)
-      return { success: true, profile: inserted }
+      return null
     }
-  }
 
-  throw createError({ statusCode: 400, statusMessage: 'Ação inválida.' })
+    if (action === 'get') {
+      const secProfile = await getOrCreateSecondaryProfile()
+      return { success: true, profile: secProfile }
+    }
+
+    if (action === 'create_or_update') {
+      if (!profileData) {
+        return { success: false, error: 'profileData é obrigatório.' }
+      }
+
+      let secProfile = await getOrCreateSecondaryProfile()
+
+      const payload = {
+        display_name: profileData.display_name,
+        username: profileData.username,
+        category: profileData.category || 'beauty',
+        bio_description: profileData.bio_description,
+        avatar_url: profileData.avatar_url,
+        theme_id: profileData.theme_id,
+        bg_color: profileData.bg_color,
+        bg_image_url: profileData.bg_image_url,
+        bg_style: profileData.bg_style,
+        bg_blur: profileData.bg_blur,
+        text_color: profileData.text_color,
+        btn_bg_color: profileData.btn_bg_color,
+        btn_text_color: profileData.btn_text_color,
+        btn_border: profileData.btn_border,
+        roundness: profileData.roundness,
+        font_class: profileData.font_class,
+        socials: profileData.socials,
+        subscription_status: primaryProfile.subscription_status || 'free',
+        updated_at: new Date().toISOString(),
+      }
+
+      if (secProfile) {
+        const { data: updated } = await supabaseAdmin
+          .from('profiles')
+          .update(payload)
+          .eq('id', secProfile.id)
+          .select()
+          .single()
+
+        if (updated) {
+          return { success: true, profile: updated }
+        }
+      }
+
+      return { success: false, error: 'Não foi possível salvar o Perfil 2.' }
+    }
+
+    return { success: false, error: 'Ação inválida.' }
+  } catch (err: any) {
+    console.error('Erro na API de Perfil Secundário:', err)
+    return { success: false, error: err?.message || 'Erro interno no servidor.' }
+  }
 })

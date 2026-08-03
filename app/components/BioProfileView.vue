@@ -37,43 +37,52 @@ interface LinkItem {
 }
 
 // Fetch profile & links on SSR + Client
-const { data: pageData, pending: loading } = await useAsyncData(`bio-${cleanUsername}`, async () => {
+const { data: pageData, pending: loading, refresh } = await useAsyncData(`bio-${cleanUsername}`, async () => {
   if (!cleanUsername) return null
 
   // 1. Fetch profile (match by primary username or secondary username)
   let profileData: any = null
-  let profErr: any = null
 
-  try {
-    const res = await supabase
+  // Busca direta por ilike username
+  const { data: directData } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('username', cleanUsername)
+    .maybeSingle()
+
+  if (directData) {
+    profileData = directData
+  } else {
+    // Tentar variação com/sem pontos ou traços (ex: samuel.tarif-2 vs samueltarif-2)
+    const altUsername = cleanUsername.includes('.') ? cleanUsername.replace(/\./g, '') : cleanUsername.replace(/[-_]/g, '.')
+    const { data: altData } = await supabase
       .from('profiles')
       .select('*')
-      .or(`username.ilike.${cleanUsername},secondary_username.ilike.${cleanUsername}`)
+      .ilike('username', altUsername)
       .maybeSingle()
-    profileData = res.data
-    profErr = res.error
-  } catch (e) {
-    // Fallback if secondary_username column is missing in DB schema
-    const res = await supabase
-      .from('profiles')
-      .select('*')
-      .ilike('username', cleanUsername)
-      .maybeSingle()
-    profileData = res.data
-    profErr = res.error
+
+    if (altData) {
+      profileData = altData
+    } else {
+      // Fallback abrangente comparando slugs normalizados
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .not('username', 'is', null)
+
+      if (allProfiles && allProfiles.length > 0) {
+        const targetClean = cleanUsername.replace(/[-._]/g, '')
+        profileData = allProfiles.find((p: any) => {
+          if (!p.username) return false
+          const uClean = p.username.toLowerCase().trim()
+          const uSimple = uClean.replace(/[-._]/g, '')
+          return uClean === cleanUsername || uSimple === targetClean || (p.secondary_username && p.secondary_username.toLowerCase() === cleanUsername)
+        }) || null
+      }
+    }
   }
 
-  if (profErr || !profileData) {
-    // Retry direct fallback by username
-    const { data: fallbackData } = await supabase
-      .from('profiles')
-      .select('*')
-      .ilike('username', cleanUsername)
-      .maybeSingle()
-
-    if (!fallbackData) return null
-    profileData = fallbackData
-  }
+  if (!profileData) return null
 
   // 2. Fetch active links
   const { data: linksData } = await supabase

@@ -218,6 +218,52 @@ const themeFilterCategories = [
 ]
 
 const communityProfiles = ref<any[]>([])
+const savedProfile1Snapshot = ref<Theme | null>(null)
+const savedProfile2Snapshot = ref<Theme | null>(null)
+
+function updateProfileSnapshots() {
+  if (profile1.value) {
+    savedProfile1Snapshot.value = {
+      id: `user-saved-profile-1`,
+      name: `⭐ ${profile1.value.display_name || profile1.value.username || 'Perfil 1'} (Seu Modelo Salvo)`,
+      categories: [profile1.value.category || 'beauty', 'all', 'fashion', 'beauty', 'small-business', 'marketing'],
+      bio: profile1.value.bio_description || `@${profile1.value.username}`,
+      bgColor: profile1.value.bg_color || '#4b3e34',
+      bgImageUrl: profile1.value.bg_image_url || '',
+      bgStyle: profile1.value.bg_style || (profile1.value.bg_image_url ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${profile1.value.bg_image_url}"); background-size: cover; background-position: center;` : `background-color: ${profile1.value.bg_color || '#4b3e34'};`),
+      textColor: profile1.value.text_color || '#ffffff',
+      btnBgColor: profile1.value.btn_bg_color || '#6b5d52',
+      btnTextColor: profile1.value.btn_text_color || '#ffffff',
+      btnBorder: profile1.value.btn_border || '',
+      roundness: profile1.value.roundness || 'rounded-full',
+      fontClass: profile1.value.font_class || 'font-serif',
+      avatarUrl: profile1.value.avatar_url ? profile1.value.avatar_url.replace('animated:', '') : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+      socials: profile1.value.socials || ['instagram', 'tiktok', 'youtube'],
+      links: (profile1Links.value || []).map((l: any, idx: number) => ({ id: l.id || idx, title: l.title, url: l.url || '#', icon: l.icon }))
+    }
+  }
+
+  if (profile2.value) {
+    savedProfile2Snapshot.value = {
+      id: `user-saved-profile-2`,
+      name: `⭐ ${profile2.value.display_name || profile2.value.username || 'Perfil 2'} (Modelo Perfil 2)`,
+      categories: [profile2.value.category || 'beauty', 'all', 'fashion', 'beauty', 'small-business', 'marketing'],
+      bio: profile2.value.bio_description || `@${profile2.value.username}`,
+      bgColor: profile2.value.bg_color || '#8b5cf6',
+      bgImageUrl: profile2.value.bg_image_url || '',
+      bgStyle: profile2.value.bg_style || (profile2.value.bg_image_url ? `background: linear-gradient(rgba(139,92,246,0.5), rgba(109,40,217,0.75)), url("${profile2.value.bg_image_url}"); background-size: cover; background-position: center;` : `background-color: ${profile2.value.bg_color || '#8b5cf6'};`),
+      textColor: profile2.value.text_color || '#ffffff',
+      btnBgColor: profile2.value.btn_bg_color || '#ede9fe',
+      btnTextColor: profile2.value.btn_text_color || '#6d28d9',
+      btnBorder: profile2.value.btn_border || '',
+      roundness: profile2.value.roundness || 'rounded-full',
+      fontClass: profile2.value.font_class || 'font-serif',
+      avatarUrl: profile2.value.avatar_url ? profile2.value.avatar_url.replace('animated:', '') : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+      socials: profile2.value.socials || ['instagram', 'tiktok', 'youtube'],
+      links: (profile2Links.value || []).map((l: any, idx: number) => ({ id: l.id || idx, title: l.title, url: l.url || '#', icon: l.icon }))
+    }
+  }
+}
 
 async function fetchCommunityProfiles() {
   try {
@@ -262,30 +308,6 @@ async function fetchCommunityProfiles() {
   }
 }
 
-const userSuggestedTheme = computed<Theme>(() => {
-  const currentTabName = activeProfileTab.value === 1 ? (profile1.value?.display_name || customUsername.value || profileUsername.value) : (profile2.value?.display_name || customUsername.value || profileUsername.value)
-  const currentTabUsername = activeProfileTab.value === 1 ? (profile1.value?.username || profileUsername.value) : (profile2.value?.username || profileUsername.value)
-  
-  return {
-    id: `user-suggested-active-tab-${activeProfileTab.value}`,
-    name: `⭐ ${currentTabName || currentTabUsername} (Modelo Sugerido)`,
-    categories: [profileCategory.value || 'beauty', 'all', 'fashion', 'beauty', 'small-business', 'marketing'],
-    bio: customBio.value || `@${currentTabUsername}`,
-    bgColor: customBgColor.value || '#4b3e34',
-    bgImageUrl: customBgImage.value || '',
-    bgStyle: customBgStyle.value || (customBgImage.value ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${customBgImage.value}"); background-size: cover; background-position: center;` : `background-color: ${customBgColor.value};`),
-    textColor: customTextColor.value || '#ffffff',
-    btnBgColor: customBtnBgColor.value || '#6b5d52',
-    btnTextColor: customBtnTextColor.value || '#ffffff',
-    btnBorder: customBtnBorder.value || '',
-    roundness: isCustomBtn.value ? `custom:${JSON.stringify(customBtnConfig.value)}` : (customRoundness.value || 'rounded-full'),
-    fontClass: customFontClass.value || 'font-serif',
-    avatarUrl: customAvatar.value || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
-    socials: selectedSocials.value || ['instagram', 'tiktok', 'youtube'],
-    links: links.value.map((l: any, idx: number) => ({ id: l.id || idx, title: l.title, icon: l.icon }))
-  }
-})
-
 const displayedThemes = computed(() => {
   let list = [...themes, ...communityProfiles.value]
   if (activeThemeCategoryFilter.value !== 'all') {
@@ -303,9 +325,12 @@ const displayedThemes = computed(() => {
     })
   }
 
-  // Prepend live user template suggestion if available
-  if (userSuggestedTheme.value) {
-    list.unshift(userSuggestedTheme.value)
+  // Prepend fixed saved profile templates (persistent, freeze state from database!)
+  if (savedProfile2Snapshot.value) {
+    list.unshift(savedProfile2Snapshot.value)
+  }
+  if (savedProfile1Snapshot.value) {
+    list.unshift(savedProfile1Snapshot.value)
   }
 
   return list
@@ -1099,6 +1124,9 @@ async function loadUserData(userId: string) {
   // 4. Fetch real community profiles from database
   await fetchCommunityProfiles()
 
+  // Snapshots para exibicao na galeria de modelos
+  updateProfileSnapshots()
+
   // Populate active tab without wiping loaded DB data
   switchProfileTab(1, true)
 }
@@ -1194,16 +1222,64 @@ function applyTheme(theme: Theme) {
     return
   }
   activeThemeId.value = theme.id
-  customBgColor.value = theme.bgColor
+
+  // 1. Cores e Fundo
+  customBgColor.value = theme.bgColor || '#111827'
   customBgImage.value = theme.bgImageUrl || ''
-  customBgStyle.value = theme.bgStyle
-  customTextColor.value = theme.textColor
-  customBtnBgColor.value = theme.btnBgColor
-  customBtnTextColor.value = theme.btnTextColor
-  customBtnBorder.value = theme.btnBorder
-  customRoundness.value = theme.roundness
-  customFontClass.value = theme.fontClass
-  selectedSocials.value = [...theme.socials]
+  customBgStyle.value = theme.bgStyle || (customBgImage.value ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url("${customBgImage.value}"); background-size: cover; background-position: center;` : `background-color: ${customBgColor.value};`)
+  customTextColor.value = theme.textColor || '#ffffff'
+  customBtnBgColor.value = theme.btnBgColor || '#1f2937'
+  customBtnTextColor.value = theme.btnTextColor || '#ffffff'
+  customBtnBorder.value = theme.btnBorder || ''
+
+  // 2. Estilo do Botão & Custom Config
+  if (theme.roundness && theme.roundness.startsWith('custom:')) {
+    isCustomBtn.value = true
+    try {
+      customBtnConfig.value = { ...customBtnConfig.value, ...JSON.parse(theme.roundness.slice(7)) }
+    } catch (e) {}
+    customRoundness.value = theme.roundness
+  } else {
+    isCustomBtn.value = false
+    customRoundness.value = theme.roundness || 'rounded-full'
+  }
+
+  // 3. Tipografia (Fonte)
+  customFontClass.value = theme.fontClass || 'font-sans'
+  if (theme.fontClass && theme.fontClass.startsWith('custom:')) {
+    loadGoogleFont(theme.fontClass.slice(7))
+  }
+
+  // 4. Redes Sociais
+  if (theme.socials && theme.socials.length > 0) {
+    selectedSocials.value = [...theme.socials]
+  }
+
+  // 5. Copiar Links & Produtos da Loja (Shop) do Modelo
+  if (theme.links && theme.links.length > 0) {
+    links.value = theme.links.map((l: any, idx: number) => ({
+      id: l.id || `tpl-${idx}-${Date.now()}`,
+      title: l.title,
+      url: l.url || '#',
+      icon: l.icon || 'website',
+      clicks_count: l.clicks_count || 0
+    }))
+
+    if (activeProfileTab.value === 1) {
+      profile1Links.value = [...links.value]
+    } else {
+      profile2Links.value = [...links.value]
+    }
+  }
+
+  // 6. Sincronizar estado na memoria do perfil ativo
+  if (activeProfileTab.value === 1 && profile1.value) {
+    syncFormToProfileObj(profile1.value)
+  } else if (activeProfileTab.value === 2 && profile2.value) {
+    syncFormToProfileObj(profile2.value)
+  }
+
+  updateProfileSnapshots()
 }
 
 // ─── Background Style Updater ───
@@ -1692,6 +1768,7 @@ async function saveProfile() {
 
   savingProfile.value = false
   if (!errorMsg.value) {
+    updateProfileSnapshots()
     saveSuccess.value = true
     setTimeout(() => { saveSuccess.value = false }, 4000)
   }
@@ -3491,40 +3568,7 @@ async function logout() {
       </div>
     </div>
 
-    <!-- Modal: Editar Link Bio 2 -->
-    <div v-if="showEditLink2Modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="font-heading font-extrabold text-lg text-gray-900 flex items-center gap-2">
-            <span class="material-symbols-outlined text-purple-600">link</span>
-            Configurar Link Bio 2
-          </h3>
-          <button @click="showEditLink2Modal = false" class="text-gray-400 hover:text-gray-600 p-1">
-            <span class="material-symbols-outlined text-xl">close</span>
-          </button>
-        </div>
-        <p class="text-xs text-gray-500 leading-relaxed">
-          Escolha a URL personalizada do seu segundo link de bio. Ambos os links direcionam visitantes para a sua página oficial com seus botões e temas.
-        </p>
 
-        <div>
-          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">URL do Link Bio 2</label>
-          <div class="relative">
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-purple-600 font-mono">{{ currentDomainHost }}/</span>
-            <input v-model="editingSecondaryInput" type="text" class="w-full pl-36 pr-3 py-2.5 text-xs font-mono border border-gray-300 rounded-xl focus:outline-none focus:border-purple-600 text-gray-900 font-bold" placeholder="seu_segundo_link">
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button @click="showEditLink2Modal = false" class="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl">
-            Cancelar
-          </button>
-          <button @click="saveSecondaryLink2" class="px-5 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-md">
-            Confirmar Link 2
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
