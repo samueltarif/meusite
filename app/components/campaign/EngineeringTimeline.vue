@@ -1,0 +1,12 @@
+<script setup lang="ts">
+const activities = [
+  { name: 'Preparação', start: 1, span: 2, text: 'Levantamento e organização das frentes de trabalho.' },
+  { name: 'Infraestrutura', start: 3, span: 3, text: 'Etapas de base coordenadas antes dos acabamentos.' },
+  { name: 'Acabamentos', start: 5, span: 3, text: 'Execução e conferência dos detalhes previstos no escopo.' },
+  { name: 'Conferência', start: 8, span: 1, text: 'Revisão final dos itens e registro de conclusão.' },
+]
+const selected = ref<number>(0)
+</script>
+<template>
+  <section id="visao-da-obra" class="px-6 py-20 md:px-12"><div class="mx-auto max-w-6xl"><p class="text-sm uppercase tracking-widest text-[#8a583f]">Uma visão além do canteiro</p><h2 class="mt-5 text-4xl font-semibold tracking-tight">O trabalho tem sequência.<br>E você consegue enxergar.</h2><p class="mt-5 max-w-2xl text-base leading-8 text-[#73796d]">Uma linha de trabalho mostra o que pode acontecer em paralelo e o que depende da fase anterior. Toque em uma faixa para explorar.</p><div class="mt-10 overflow-x-auto border border-[#cbd0c6] bg-white p-5"><div class="min-w-[620px]"><div class="mb-5 grid grid-cols-[140px_1fr] text-sm text-[#73796d]"><span>FRENTE DE TRABALHO</span><div class="grid grid-cols-8 text-center"><span v-for="n in 8" :key="n">{{ n }}</span></div></div><div v-for="(activity, i) in activities" :key="activity.name" class="grid grid-cols-[140px_1fr] items-center border-t border-[#e1e4dc] py-4"><span class="text-sm font-semibold">{{ activity.name }}</span><div class="grid grid-cols-8 gap-1"><button :aria-label="`Explorar ${activity.name}`" :aria-pressed="selected === i" class="h-10 border border-[#30362f] transition-colors" :class="selected === i ? 'bg-[#d7e78f]' : 'bg-[#dfe3d9] hover:bg-[#c6d0bd]'" :style="{ gridColumn: `${activity.start} / span ${activity.span}` }" @click="selected = i"><span aria-hidden="true">↗</span></button></div></div></div></div><div class="mt-5 border-l-4 border-[#8a583f] pl-5" aria-live="polite"><h3 class="text-xl font-semibold">{{ activities[selected]?.name }}</h3><p class="mt-2 text-base text-[#73796d]">{{ activities[selected]?.text }}</p></div><p class="mt-6 text-sm leading-6 text-[#73796d]">Diagrama ilustrativo. Os números representam períodos de referência, sem compromisso de prazo. O cronograma real depende de cada projeto.</p></div></section>
+</template>

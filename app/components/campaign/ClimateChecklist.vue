@@ -1,0 +1,7 @@
+<script setup lang="ts">
+const checked = ref<string[]>([])
+const items = ['Fotos do ambiente separadas', 'Quantidade de ambientes anotada', 'Uso do espaço descrito', 'Modelo do equipamento identificado, se houver']
+</script>
+<template>
+  <section id="preparar-visita" class="bg-[#163946] px-6 py-20 text-white"><div class="mx-auto grid max-w-6xl gap-12 md:grid-cols-[0.8fr_1.2fr]"><div><p class="text-sm uppercase tracking-widest text-[#9ed3d6]">Uma visita começa antes da porta abrir</p><h2 class="mt-5 text-4xl font-semibold leading-tight">Vamos preparar<br>o seu atendimento?</h2><p class="mt-6 text-base leading-8 text-slate-300">Um pequeno checklist para reunir as informações que ajudam a conhecer o ambiente.</p><p class="mt-8 text-5xl font-light text-[#9ed3d6]" role="status">{{ checked.length }}<span class="text-xl text-white/50"> / 4</span></p><progress :value="checked.length" max="4" aria-label="Informações reunidas" class="mt-5 h-2 w-full accent-[#9ed3d6]" /></div><div class="rounded-3xl bg-white p-6 text-[#163946] md:p-9"><label v-for="item in items" :key="item" class="flex cursor-pointer items-start gap-4 border-b border-slate-200 py-6 text-base"><input v-model="checked" :value="item" type="checkbox" class="mt-1 h-5 w-5 shrink-0 accent-[#163946]">{{ item }}</label><p class="mt-6 text-sm leading-6 text-slate-500">Checklist de demonstração. Nada é enviado ou salvo ao sair da página.</p><button v-if="checked.length" class="mt-4 text-sm underline underline-offset-4" @click="checked = []">Começar novamente</button></div></div></section>
+</template>

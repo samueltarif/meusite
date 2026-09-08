@@ -1,0 +1,202 @@
+[
+  {
+    "file": "images/campaign/workshop.jpg",
+    "url": "https://images.unsplash.com/photo-1632733711679-529326f6db12?auto=format&fit=crop&w=1600&q=85",
+    "source": "https://unsplash.com/photos/a-man-is-working-on-a-cars-engine-s4d_ESS0ylA",
+    "credit": "Maxim Hopman / Unsplash"
+  },
+  {
+    "file": "images/campaign/nails-hero.jpg",
+    "url": "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=1400&q=85",
+    "source": "Existing site catalogue / Unsplash"
+  },
+  {
+    "file": "images/campaign/nails-1.jpg",
+    "url": "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=1000&q=85",
+    "source": "Existing site catalogue / Unsplash"
+  },
+  {
+    "file": "images/campaign/nails-2.jpg",
+    "url": "https://unsplash.com/photos/tXwBDZS2JxQ/download?force=true",
+    "source": "https://unsplash.com/s/photos/manicure",
+    "credit": "Bryony Elena / Unsplash"
+  },
+  {
+    "file": "images/campaign/nails-3.jpg",
+    "url": "https://unsplash.com/photos/vtQHwU4F13s/download?force=true",
+    "source": "https://unsplash.com/s/photos/manicure",
+    "credit": "Chelson Tamares / Unsplash"
+  },
+  {
+    "file": "images/campaign/architecture-1.jpg",
+    "url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85",
+    "source": "Existing site catalogue / Unsplash"
+  },
+  {
+    "file": "images/campaign/architecture-2.jpg",
+    "url": "https://unsplash.com/photos/_HqHX3LBN18/download?force=true",
+    "source": "https://unsplash.com/s/photos/modern-interior",
+    "credit": "Kam Idris / Unsplash"
+  },
+  {
+    "file": "images/campaign/architecture-3.jpg",
+    "url": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=85",
+    "source": "Existing site catalogue / Unsplash"
+  },
+  {
+    "file": "images/campaign/industrial.jpg",
+    "url": "https://images.unsplash.com/photo-1620203853151-496c7228306c?auto=format&fit=crop&w=1800&q=85",
+    "source": "https://unsplash.com/photos/industrial-metal-pipes-and-valves-41X6FwTwPh4",
+    "credit": "Ricardo Gomez Angel / Unsplash"
+  },
+  {
+    "file": "images/campaign/gdr.png",
+    "url": "https://static.wixstatic.com/media/e6a741_ebd67f5cbf454d37bd2fb2878f593921~mv2.png",
+    "source": "https://catalogo-tecnico-qualitec.vercel.app/catalogo"
+  },
+  {
+    "file": "images/campaign/591.png",
+    "url": "https://static.wixstatic.com/media/e6a741_190412d9e3eb4593823963dc77c889c0~mv2.png",
+    "source": "https://catalogo-tecnico-qualitec.vercel.app/catalogo"
+  },
+  {
+    "file": "images/campaign/06510.png",
+    "url": "https://static.wixstatic.com/media/e6a741_7fb61735f91a4089b064a95d1defec07~mv2.png",
+    "source": "https://catalogo-tecnico-qualitec.vercel.app/catalogo"
+  },
+  {
+    "file": "images/campaign/06512.png",
+    "url": "https://static.wixstatic.com/media/e6a741_7d50b067bdae495c93f995d5ebb863e8~mv2.png",
+    "source": "https://catalogo-tecnico-qualitec.vercel.app/catalogo"
+  },
+  {
+    "file": "images/campaign/06530.png",
+    "url": "https://static.wixstatic.com/media/e6a741_b1eaa5fba940467cac2a1bc3bd089d1b~mv2.png",
+    "source": "https://catalogo-tecnico-qualitec.vercel.app/catalogo"
+  },
+  {
+    "file": "images/campaign/21353.jpg",
+    "url": "https://www.wika.com/media/Images/Product_700x700/Pressure/213.53_en_co_rs_w410_h410_image.jpg",
+    "source": "https://www.wika.com/en-gb/213_53.WIKA"
+  },
+  {
+    "file": "images/campaign/a10.jpg",
+    "url": "https://www.wika.com/media/Images/Product_700x700/Pressure/a_10_en_co_rs_w410_h410_image.jpg",
+    "source": "https://www.wika.com/pt-br/a_10.WIKA"
+  },
+  {
+    "file": "datasheets/gdr.pdf",
+    "url": "https://e6a7419c-0a2f-4144-bad0-463d4c02a260.usrfiles.com/ugd/e6a741_978f6ee24dfd402784a2628f433c42db.pdf"
+  },
+  {
+    "file": "datasheets/591.pdf",
+    "url": "https://e6a7419c-0a2f-4144-bad0-463d4c02a260.usrfiles.com/ugd/e6a741_1b73c73bed4c40b69bbe72480439a837.pdf"
+  },
+  {
+    "file": "datasheets/bprx.pdf",
+    "url": "https://products.herose.com/media/herose-import/product-40-183e584293fd-BPRX-Product-Literature_12_24.pdf"
+  },
+  {
+    "file": "datasheets/06510.pdf",
+    "url": "https://e6a7419c-0a2f-4144-bad0-463d4c02a260.usrfiles.com/ugd/e6a741_e23a91a060f84c5a821fcb2388855f82.pdf"
+  },
+  {
+    "file": "datasheets/06512.pdf",
+    "url": "https://e6a7419c-0a2f-4144-bad0-463d4c02a260.usrfiles.com/ugd/e6a741_263c75a2674444c7956d8773028ca79d.pdf"
+  },
+  {
+    "file": "datasheets/06530.pdf",
+    "url": "https://e6a7419c-0a2f-4144-bad0-463d4c02a260.usrfiles.com/ugd/e6a741_05735452cb0742b5a6177068478796f3.pdf"
+  },
+  {
+    "file": "datasheets/21353.pdf",
+    "url": "https://www.wika.com/media/Data-sheets/Pressure/Pressure-gauges/ds_pm0212_en_co.pdf"
+  },
+  {
+    "file": "datasheets/a10.pdf",
+    "url": "https://www.wika.com/media/Data-sheets/Pressure/Pressure-sensors/ds_pe8160_pt_br.pdf"
+  },
+  {
+    "file": "images/campaign/bprx.png",
+    "url": "https://products.herose.com/media/catalog/product/cache/67ee89799642c567a71fc92f3699d937/B/P/BPRX-500B_Edelstahl.png?___store=de",
+    "source": "https://products.herose.com/de/produkte/bprx.html"
+  },
+  {
+    "file": "images/campaign/climate.jpg",
+    "url": "https://unsplash.com/photos/SJnak9YYFWU/download?force=true",
+    "source": "https://unsplash.com/photos/SJnak9YYFWU",
+    "license": "Unsplash License; fotografia ilustrativa"
+  },
+  {
+    "file": "images/campaign/dental.jpg",
+    "url": "https://unsplash.com/photos/T5si0dm2dGo/download?force=true",
+    "source": "https://unsplash.com/photos/T5si0dm2dGo",
+    "license": "Unsplash License; fotografia ilustrativa"
+  },
+  {
+    "file": "images/campaign/dental-care.jpg",
+    "url": "https://unsplash.com/photos/Bg81yWKZlMg/download?force=true",
+    "source": "https://unsplash.com/photos/Bg81yWKZlMg",
+    "license": "Unsplash License; fotografia ilustrativa"
+  },
+  {
+    "file": "images/campaign/wood-kitchen.jpg",
+    "url": "https://unsplash.com/photos/htmZWzApbJE/download?force=true",
+    "source": "https://unsplash.com/photos/htmZWzApbJE",
+    "license": "Unsplash License; fotografia ilustrativa"
+  },
+  {
+    "file": "images/campaign/construction.jpg",
+    "url": "https://unsplash.com/photos/kO8f82u73Es/download?force=true",
+    "source": "https://unsplash.com/photos/kO8f82u73Es",
+    "license": "Unsplash License; fotografia ilustrativa"
+  },
+  {
+    "file": "images/campaign/accounting.jpg",
+    "url": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1400&q=85",
+    "source": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1400&q=85",
+    "note": "Fotografia de referência já usada pelo catálogo original da Avyro."
+  },
+  {
+    "file": "images/campaign/photo-landscape.jpg",
+    "url": "https://unsplash.com/photos/_MMP5j_fCqw/download?force=true",
+    "source": "https://unsplash.com/photos/_MMP5j_fCqw",
+    "author": "Willian Justen de Vasconcellos",
+    "license": "Unsplash License; imagens de referência, não de autoria do estúdio demonstrativo"
+  },
+  {
+    "file": "images/campaign/photo-mountain.jpg",
+    "url": "https://unsplash.com/photos/ZN-XuAa9Ts8/download?force=true",
+    "source": "https://unsplash.com/photos/ZN-XuAa9Ts8",
+    "author": "Simon Peel",
+    "license": "Unsplash License; imagens de referência, não de autoria do estúdio demonstrativo"
+  },
+  {
+    "file": "images/campaign/photo-portrait.jpg",
+    "url": "https://unsplash.com/photos/l0uhKKvNaak/download?force=true",
+    "source": "https://unsplash.com/photos/l0uhKKvNaak",
+    "author": "Eugenia Pan’kiv",
+    "license": "Unsplash License; imagens de referência, não de autoria do estúdio demonstrativo"
+  },
+  {
+    "file": "images/campaign/photo-studio.jpg",
+    "url": "https://unsplash.com/photos/dKy82cGE0Rw/download?force=true",
+    "source": "https://unsplash.com/photos/dKy82cGE0Rw",
+    "author": "Ionela Mat",
+    "license": "Unsplash License; imagens de referência, não de autoria do estúdio demonstrativo"
+  },
+  {
+    "file": "images/campaign/photo-wedding.jpg",
+    "url": "https://unsplash.com/photos/ejUtbAi71_s/download?force=true",
+    "source": "https://unsplash.com/photos/ejUtbAi71_s",
+    "author": "Fotógrafo Samuel Cruz",
+    "license": "Unsplash License; imagens de referência, não de autoria do estúdio demonstrativo"
+  },
+  {
+    "file": "images/campaign/photo-couple.jpg",
+    "url": "https://unsplash.com/photos/rQSauuUzx0w/download?force=true",
+    "source": "https://unsplash.com/photos/rQSauuUzx0w",
+    "author": "Anna Vi",
+    "license": "Unsplash License; imagens de referência, não de autoria do estúdio demonstrativo"
+  }
+]
