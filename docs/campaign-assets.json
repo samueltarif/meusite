@@ -198,5 +198,47 @@
     "source": "https://unsplash.com/photos/rQSauuUzx0w",
     "author": "Anna Vi",
     "license": "Unsplash License; imagens de referência, não de autoria do estúdio demonstrativo"
+  },
+  {
+    "file": "images/campaign/flowers-bouquet.jpg",
+    "url": "https://unsplash.com/photos/01Wa3tPoQQ8/download?force=true",
+    "source": "https://unsplash.com/photos/01Wa3tPoQQ8",
+    "author": "Annie Spratt",
+    "license": "Unsplash License; fotografia de referência para catálogo demonstrativo"
+  },
+  {
+    "file": "images/campaign/flowers-tulips.jpg",
+    "url": "https://unsplash.com/photos/pbl0BPKikig/download?force=true",
+    "source": "https://unsplash.com/photos/pbl0BPKikig",
+    "author": "Inna Gurina",
+    "license": "Unsplash License; fotografia de referência para catálogo demonstrativo"
+  },
+  {
+    "file": "images/campaign/flowers-sun.jpg",
+    "url": "https://unsplash.com/photos/W64CE6C2VeE/download?force=true",
+    "source": "https://unsplash.com/photos/W64CE6C2VeE",
+    "author": "Hoang Minh Hai",
+    "license": "Unsplash License; fotografia de referência para catálogo demonstrativo"
+  },
+  {
+    "file": "images/campaign/flowers-window.jpg",
+    "url": "https://unsplash.com/photos/3-O4QTtdZeM/download?force=true",
+    "source": "https://unsplash.com/photos/3-O4QTtdZeM",
+    "author": "Elijah Pilchard",
+    "license": "Unsplash License; fotografia de referência para catálogo demonstrativo"
+  },
+  {
+    "file": "images/campaign/flowers-white.jpg",
+    "url": "https://unsplash.com/photos/UsTcHwFDjkI/download?force=true",
+    "source": "https://unsplash.com/photos/UsTcHwFDjkI",
+    "author": "Jonathan Borba",
+    "license": "Unsplash License; fotografia de referência para catálogo demonstrativo"
+  },
+  {
+    "file": "images/campaign/flowers-color.jpg",
+    "url": "https://unsplash.com/photos/dqQL1yrzIto/download?force=true",
+    "source": "https://unsplash.com/photos/dqQL1yrzIto",
+    "author": "Ray Shrewsberry",
+    "license": "Unsplash License; fotografia de referência para catálogo demonstrativo"
   }
 ]

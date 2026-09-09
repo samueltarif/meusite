@@ -82,3 +82,22 @@ assert.equal(photos.selectedId.value, '01')
 photos.toggle('invalid')
 assert.ok(!photos.favorites.value.includes('invalid'))
 console.log('Photography filtering, favorites and gallery navigation passed.')
+
+const { useFloralCatalog } = await jiti.import('../app/composables/useFloralCatalog.ts')
+const floral = useFloralCatalog()
+assert.equal(floral.visible.value.length, 6)
+floral.query.value = '  TULIPAS '
+assert.deepEqual(floral.visible.value.map(p => p.id), ['calma'])
+floral.query.value = ''; floral.occasion.value = 'Agradecimento'
+assert.equal(floral.visible.value.length, 3)
+floral.category.value = 'Buquês'
+assert.deepEqual(floral.visible.value.map(p => p.id), ['sol'])
+floral.toggle('sol'); floral.toggle('invalid')
+assert.equal(floral.saved.value.length, 1)
+floral.onlySaved.value = true
+assert.equal(floral.visible.value.length, 1)
+floral.toggle('sol')
+assert.equal(floral.visible.value.length, 0)
+floral.reset()
+assert.equal(floral.visible.value.length, 6)
+console.log('Floral search, combined filters, selection and empty state passed.')

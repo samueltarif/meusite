@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '~/assets/css/campaign-mobile.css'
 import CampaignHeader from '~/components/campaign/Header.vue'
 import CampaignFooter from '~/components/campaign/Footer.vue'
 </script>

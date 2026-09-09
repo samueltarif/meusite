@@ -73,3 +73,33 @@ Fotografias de referência: Eugenia Pan’kiv, Ionela Mat, Fotógrafo Samuel Cru
 Recursos: abertura com troca manual de imagem; filtros por coleção; favoritos temporários com estado vazio; galeria ampliada com imagem inteira, fechamento por Escape e navegação por botões/setas; ensaio visual; apresentação da experiência e contato para criação do site. Nenhuma seleção é enviada ou persistida.
 
 Verificação: 13 rotas, 37 arquivos e testes de filtros, favoritos e navegação circular. Sem teste visual de navegador, conforme fluxo de prévia local.
+
+
+## Mobile first e floriculturas — setembro de 2026
+
+Revisão da campanha e dos 12 modelos: navegação recolhível abaixo de 1024px, títulos fluidos no celular, logotipos compactos, controles com altura mínima de 44px, campos de 16px, filhos de grades flexíveis e diálogos limitados à altura disponível. Galeria fotográfica reorganiza os controles no celular; comparação industrial e cronograma mantêm rolagem interna acessível. O restante do aplicativo não recebe esses estilos.
+
+Afeto Flores (/exemplos/floricultura): identidade vinho e rosa, catálogo com seis referências, busca sem distinção de acentos, filtros combinados por tipo e ocasião, seleção temporária, detalhes e cartão de 180 caracteres com prévia local.
+Casa Flora (/exemplos/floricultura-atelie): identidade botânica oliva, coleção editorial assimétrica, catálogo por composição, referências guardadas e simulação de frequência de flores para ambientes.
+
+Referências oficiais consultadas em 8 de setembro de 2026:
+- https://www.giulianaflores.com.br/ — organização por ocasiões, tipos de flores e personalização de presentes.
+- https://www.isabelaflores.com/mais-vendidos.html — catálogo com variedades florais e navegação de presentes.
+- https://www.floresonline.com.br/sobre-nos — composições, personalização e atendimento corporativo.
+
+Referências de marcas conhecidas; não foi realizado ranking de tamanho de mercado. Identidades, textos e layouts próprios, sem copiar fotografias dessas lojas. Seis fotos licenciadas pelo Unsplash, com autores e fontes em campaign-assets.json. Empresas fictícias; sem preços, compras, assinaturas, envio ou promessa de entrega. Os contatos são para criação de sites com a Avyro.
+
+Validação: 15 rotas e 43 arquivos de mídia/documentação respondendo; testes de filtros combinados, pesquisa, seleção e estados vazios aprovados. Revisão de responsividade pelo código, sem inspeção visual de navegador ou dispositivo físico.
+
+
+## Componentes avançados e modelos 3D
+
+Seis componentes integrados aos exemplos: ArchitectureProject, WoodConfigurator, PhotoEssay, FlowerGift, IndustrialExplorer e FloralMoodboard.
+
+Três cenas geométricas originais com Three.js: aparador com estrutura, frentes e puxadores configuráveis; válvula genérica com realce de componentes e separação de peças; ambiente conceitual para explorar volumes. As cenas são estudos ilustrativos, sem associação às fotografias ou aos fabricantes do catálogo. Carregamento apenas por ação explícita, controles nativos de rotação/inclinação/distância para teclado e toque, sem animação contínua; resolução limitada e liberação de geometria, materiais e contexto ao sair. Se WebGL não estiver disponível, a mensagem orienta a continuar nas fotos e opções existentes.
+
+Afeto apresenta seleção de composição, paleta de embalagem e cartão em prévia; Casa Flora reúne fotografias e paletas em painel de referências; Lume tem sequência imersiva com navegação por setas e botões; arquitetura combina fotografias, estudo 3D e exploração dos materiais. Não há compra, envio, preço ou alteração nos contatos da Avyro.
+
+Documentação técnica consultada: https://threejs.org/manual/en/creating-a-scene.html, https://threejs.org/manual/en/responsive.html e https://threejs.org/manual/en/cleanup.html.
+
+Build de produção aprovado. Testes de geração geométrica, materiais, puxadores, separação de peças, realce e descarte aprovados, além dos testes de interações existentes. A renderização WebGL não foi inspecionada visualmente em navegador ou aparelho físico.

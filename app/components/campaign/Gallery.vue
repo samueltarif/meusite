@@ -3,7 +3,7 @@ import type { GalleryImage } from '~/types/campaign'
 defineProps<{ images: GalleryImage[]; dark?: boolean }>()
 const selected = ref<GalleryImage | null>(null)
 const modal = ref<HTMLDialogElement | null>(null)
-const open = (item: GalleryImage): void => { selected.value = item; modal.value?.showModal() }
+const open = async (item: GalleryImage): Promise<void> => { selected.value = item; await nextTick(); modal.value?.showModal() }
 const close = (): void => { modal.value?.close() }
 </script>
 <template>

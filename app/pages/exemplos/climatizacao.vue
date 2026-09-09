@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DemoNavigation from '~/components/campaign/DemoNavigation.vue'
 import ClimateChecklist from '~/components/campaign/ClimateChecklist.vue'
 import DemoContact from '~/components/campaign/DemoContact.vue'
 import { climateEnvironments } from '~/constants/sectorDemos'
@@ -8,7 +9,7 @@ const { index, current, choose } = useDemoChoice(climateEnvironments)
 </script>
 <template>
   <div class="bg-[#f7fbfc] text-[#163946]">
-    <header class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-6 py-7"><NuxtLink to="/exemplos/climatizacao" class="text-3xl font-semibold tracking-tight">brisa<span class="text-[#428e98]">°</span></NuxtLink><nav aria-label="Brisa" class="flex flex-wrap gap-6 text-sm"><a href="#ambientes">Seu ambiente</a><a href="#servicos">Nossos serviços</a><a href="#contato" class="font-semibold">Vamos conversar ↗</a></nav></header>
+    <header class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-6 py-7"><NuxtLink to="/exemplos/climatizacao" class="text-3xl font-semibold tracking-tight">brisa<span class="text-[#428e98]">°</span></NuxtLink><DemoNavigation><nav aria-label="Brisa" class="flex flex-wrap gap-6 text-sm"><a href="#ambientes">Seu ambiente</a><a href="#servicos">Nossos serviços</a><a href="#contato" class="font-semibold">Vamos conversar ↗</a></nav></DemoNavigation></header>
     <section class="mx-auto grid max-w-7xl gap-10 px-6 pb-16 pt-9 lg:grid-cols-[1.05fr_1fr] lg:items-center">
       <div><p class="text-sm uppercase tracking-[0.2em] text-[#428e98]">Climatização, do projeto ao cuidado.</p><h1 class="mt-7 text-5xl font-semibold leading-[1.08] tracking-[-0.055em] md:text-7xl">O clima muda.<br>Seu conforto<br><span class="text-[#428e98]">permanece.</span></h1><p class="mt-7 max-w-md text-lg leading-8 text-slate-500">Instalação e manutenção de ar-condicionado com atenção ao espaço, à rotina e a quem está nele.</p><a href="#ambientes" class="mt-8 inline-flex gap-8 rounded-full bg-[#163946] px-7 py-4 text-sm font-semibold text-white hover:bg-[#286071]">Encontrar meu tipo de projeto ↓</a></div>
       <div class="overflow-hidden rounded-t-[150px] rounded-b-3xl bg-[#dfecee]"><img src="/images/campaign/climate.jpg" alt="Ar-condicionado de parede em ambiente interno" width="1200" height="1400" fetchpriority="high" class="aspect-[4/5] w-full object-cover"><p class="px-7 py-5 text-sm">Um bom ambiente começa com um projeto bem pensado.</p></div>

@@ -1,0 +1,14 @@
+/* Shared ergonomics are restricted to the marketing campaign and its examples. */
+:is(.campaign-shell, .demo-shell) :is(.grid, .flex) > * { min-width: 0; }
+:is(.campaign-shell, .demo-shell) :is(h1, h2, h3, p) { overflow-wrap: break-word; }
+:is(.campaign-shell, .demo-shell) :is(button, summary) { touch-action: manipulation; }
+.demo-shell dialog { max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; }
+@media (max-width: 639px) {
+  :is(.campaign-shell, .demo-shell) :is(input:not([type=checkbox]):not([type=radio]), select, textarea) { font-size: 16px; max-width: 100%; }
+  :is(.campaign-shell, .demo-shell) :is(button, summary, nav a) { min-height: 44px; }
+  .demo-shell header { padding-top: 16px; padding-bottom: 16px; }
+  .demo-shell h1 { font-size: clamp(2rem, 9vw, 3rem); }
+  .demo-shell h2 { text-wrap: balance; }
+  .demo-shell dialog { padding: 20px; max-width: calc(100vw - 24px); }
+  .demo-shell .overflow-x-auto { overscroll-behavior-x: contain; }
+}

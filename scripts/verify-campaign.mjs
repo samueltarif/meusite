@@ -13,7 +13,7 @@ assert.equal(filterIndustrialProducts(products, '06512', 'todos')[0]?.manufactur
 assert.equal(filterIndustrialProducts(products, '', 'reguladores').length, 3)
 assert.equal(filterIndustrialProducts(products, '', 'valvulas').length, 3)
 const base = 'http://127.0.0.1:3000'
-const routes = ['/', '/modelos-site', '/exemplos/manicure', '/exemplos/arquitetura', '/exemplos/oficina', '/exemplos/industrial', '/exemplos/industrial/catalogo', '/exemplos/climatizacao', '/exemplos/odontologia', '/exemplos/contabilidade', '/exemplos/marcenaria', '/exemplos/engenharia', '/exemplos/fotografia']
+const routes = ['/', '/modelos-site', '/exemplos/manicure', '/exemplos/arquitetura', '/exemplos/oficina', '/exemplos/industrial', '/exemplos/industrial/catalogo', '/exemplos/climatizacao', '/exemplos/odontologia', '/exemplos/contabilidade', '/exemplos/marcenaria', '/exemplos/engenharia', '/exemplos/fotografia', '/exemplos/floricultura', '/exemplos/floricultura-atelie']
 const assets = new Set(products.flatMap(p => [p.image, p.pdf]))
 for (const route of routes) {
  const response = await fetch(base + route)
