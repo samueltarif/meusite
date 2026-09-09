@@ -1,4 +1,4 @@
-import type { Prospect, ProspectHeat, ProspectStage } from '~/types/prospecting'
+import type { Prospect, ProspectHeat, ProspectStage, ProspectActivityDraft } from '~/types/prospecting'
 export function localDay(date = new Date()): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` }
 export function addDays(day: string, count: number): string { const date = new Date(`${day}T12:00:00`); date.setDate(date.getDate() + count); return localDay(date) }
 export function heat(lead: Prospect): ProspectHeat {
@@ -16,6 +16,12 @@ export const terminalStage = (stage: ProspectStage): boolean => ['Fechado', 'Sem
 export const contactCounted = (lead: Prospect): boolean => lead.history.some(item => item.stage !== 'Selecionado')
 export const responseCounted = (lead: Prospect): boolean => lead.history.some(item => ['Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar'].includes(item.stage))
 export const interestCounted = (lead: Prospect): boolean => lead.history.some(item => ['Interessado', 'Proposta enviada', 'Fechado'].includes(item.stage))
+export function recordActivity(lead: Prospect, activity: ProspectActivityDraft): Prospect {
+  const latestDate = lead.history.reduce((latest, item) => item.date > latest ? item.date : latest, '')
+  const history = [...lead.history, { id: crypto.randomUUID(), date: activity.date, channel: activity.channel, stage: activity.stage, note: activity.note }]
+  if (activity.date < latestDate) return { ...lead, history }
+  return { ...lead, history, stage: activity.stage, followUp: terminalStage(activity.stage) ? '' : activity.followUp, nextAction: terminalStage(activity.stage) ? '' : activity.nextAction }
+}
 export function newProspect(): Prospect {
   const now = new Date().toISOString()
   return { id: crypto.randomUUID(), company: '', person: '', city: '', segment: '', source: 'Google Maps', maps: '', instagram: '', website: '', phone: '', email: '', websiteStatus: 'Não verificado', activity: 'Não verificada', goodReviews: false, recentPhotos: false, professional: false, rating: null, reviewCount: null, heatOverride: '', opportunity: '', personalization: '', stage: 'Selecionado', nextAction: '', followUp: '', notes: '', proposalValue: 0, monthlyValue: 0, archived: false, createdAt: now, updatedAt: now, history: [] }

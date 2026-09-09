@@ -1,16 +1,16 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import type { Prospect, ProspectData, ProspectActivityDraft, ProspectSettings } from '~/types/prospecting'
-import { loadProspecting, persistProspecting, downloadProspecting, readProspectingBackup } from '~/services/prospecting'
+import { loadProspecting, persistProspecting, downloadProspecting, downloadOriginalProspecting, readProspectingBackup } from '~/services/prospecting'
 import { activitySchema, prospectSchema, settingsSchema } from '~/validation/prospecting'
-import { localDay, heat, terminalStage, contactCounted, responseCounted, interestCounted, segmentResults } from '~/utils/prospecting'
+import { localDay, heat, terminalStage, contactCounted, responseCounted, interestCounted, segmentResults, recordActivity } from '~/utils/prospecting'
 import { prospectStorageKey } from '~/constants/prospecting'
 export function useProspecting() {
-  const data = ref<ProspectData>({ version: 1, leads: [], settings: { target: 30, budget: 150 } })
+  const data = ref<ProspectData>({ version: 1, leads: [], settings: { target: 30, budget: 0 } })
   const ready = ref(false); const blocked = ref(false); const error = ref(''); const notice = ref('')
   const query = ref(''); const city = ref(''); const segment = ref(''); const priority = ref(''); const stage = ref(''); const view = ref('Contatos')
   const today = ref(localDay()); let timer: ReturnType<typeof setInterval> | undefined
   function refresh() { today.value = localDay() }
-  function external(event: StorageEvent) { if (event.key === prospectStorageKey) { try { data.value = loadProspecting(); notice.value = 'Dados atualizados por outra aba.' } catch { error.value = 'Não foi possível ler a alteração de outra aba.' } } }
+  function external(event: StorageEvent) { if (event.key === prospectStorageKey) { try { data.value = loadProspecting(); notice.value = 'Dados atualizados por outra aba.' } catch { blocked.value = true; error.value = 'Não foi possível ler a alteração de outra aba. Os dados foram preservados; reabra o painel antes de editar.' } } }
   onMounted(() => {
     try { data.value = loadProspecting() } catch { blocked.value = true; error.value = 'Não foi possível ler os dados salvos. Eles foram preservados; exporte o arquivo original antes de tentar uma recuperação.' }
     ready.value = true; timer = setInterval(refresh, 60000); window.addEventListener('storage', external); window.addEventListener('focus', refresh)
@@ -34,7 +34,7 @@ export function useProspecting() {
     if (!parsed.success || !lead) { error.value = parsed.error?.issues[0]?.message || 'Contato não encontrado.'; return false }
     if (lead.stage === 'Não contatar') { error.value = 'Este contato foi marcado como Não contatar. Reabra o acompanhamento antes de registrar uma nova abordagem.'; return false }
     if (activity.date > today.value) { error.value = 'Registre uma interação já realizada. Use o retorno para planejar uma data futura.'; return false }
-    const record = { ...lead, stage: activity.stage, nextAction: terminalStage(activity.stage) ? '' : activity.nextAction, followUp: terminalStage(activity.stage) ? '' : activity.followUp, history: [...lead.history, { id: crypto.randomUUID(), date: activity.date, channel: activity.channel, stage: activity.stage, note: activity.note }] }
+    const record = recordActivity(lead, activity)
     return save(record)
   }
   function archive(id: string) { const lead = data.value.leads.find(item => item.id === id); if (lead) save({ ...lead, archived: !lead.archived }) }
@@ -51,8 +51,8 @@ export function useProspecting() {
   const results = computed(() => segmentResults(data.value.leads))
   const pendingImport = ref<ProspectData | null>(null)
   async function prepareImport(file: File) { try { pendingImport.value = await readProspectingBackup(file); error.value = '' } catch { error.value = 'Backup inválido. Use um arquivo JSON exportado por este painel, de até 10 MB.' } }
-  function importBackup() { if (!pendingImport.value) return; const fresh = pendingImport.value.leads.filter(lead => !data.value.leads.some(item => item.id === lead.id)); if (commit({ ...data.value, leads: [...data.value.leads, ...fresh] })) { notice.value = `${fresh.length} contatos importados. Registros existentes e sua meta foram preservados.`; pendingImport.value = null } }
-  function exportBackup() { try { downloadProspecting(data.value); notice.value = 'Backup preparado para download.' } catch { error.value = 'Não foi possível exportar o backup.' } }
+  function importBackup() { if (!pendingImport.value) return; const fresh = pendingImport.value.leads.filter(lead => !data.value.leads.some(item => item.id === lead.id)); if (commit({ ...data.value, settings: data.value.leads.length ? data.value.settings : pendingImport.value.settings, leads: [...data.value.leads, ...fresh] })) { notice.value = `${fresh.length} contatos importados. Registros existentes foram preservados.`; pendingImport.value = null } }
+  function exportBackup() { try { if (blocked.value) downloadOriginalProspecting(); else downloadProspecting(data.value); notice.value = 'Backup preparado para download.' } catch { error.value = 'Não foi possível exportar o backup.' } }
   function clearFilters() { query.value = ''; city.value = ''; segment.value = ''; priority.value = ''; stage.value = '' }
   return { data, ready, blocked, error, notice, query, city, segment, priority, stage, view, today, active, due, filtered, stats, results, save, log, archive, reopen, settings, pendingImport, prepareImport, importBackup, exportBackup, clearFilters }
 }
