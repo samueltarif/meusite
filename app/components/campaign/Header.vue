@@ -5,7 +5,7 @@ const isOpen = ref<boolean>(false)
 const route = useRoute()
 const links = [
   { label: 'Exemplos', to: '/#portfolio' },
-  { label: 'Soluções', to: '/#services' },
+  { label: 'Para sua empresa', to: '/criacao-de-sites' },
   { label: 'Como funciona', to: '/#processo' },
 ]
 watch(() => route.fullPath, () => { isOpen.value = false })

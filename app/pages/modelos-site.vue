@@ -2,7 +2,7 @@
 import HomeExamples from '~/components/campaign/HomeExamples.vue'
 import { campaignWhatsapp } from '~/utils/campaign'
 definePageMeta({ layout: 'marketing' })
-useSeoMeta({ title: 'Exemplos de sites sob medida | Avyro', description: 'Explore doze sites demonstrativos para indústria, climatização, odontologia, contabilidade, marcenaria, engenharia, fotografia, floricultura e outros segmentos. Converse sobre um projeto sob medida para o seu negócio.' })
+useMarketingSeo('Modelos de sites profissionais para empresas', 'Explore modelos para indústria, fotografia, floriculturas e serviços. Conheça as possibilidades de um site sob medida para sua empresa.', '/modelos-site')
 const segments = [
   { name: 'Advocacia', text: 'Áreas de atuação, equipe e conteúdo institucional para apresentar o escritório.' },
   { name: 'Medicina & saúde', text: 'Especialidades, profissionais e orientações para quem procura atendimento.' },

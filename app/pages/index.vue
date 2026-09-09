@@ -4,17 +4,9 @@ import HomeExamples from '~/components/campaign/HomeExamples.vue'
 import HomeSolutions from '~/components/campaign/HomeSolutions.vue'
 import HomeClosing from '~/components/campaign/HomeClosing.vue'
 definePageMeta({ layout: 'marketing' })
-useSeoMeta({
-  title: 'Avyro — Sites sob medida para o seu negócio',
-  description: 'Sites profissionais para serviços e indústrias, com manutenção mensal opcional e painel sob medida. Converse com a Avyro sobre seu projeto.',
-  ogTitle: 'Avyro Growth Company — Sites Profissionais e Landing Pages',
-  ogDescription: 'Sites sob medida, manutenção opcional e painel para sua empresa. Conheça as possibilidades e converse com a Avyro.',
-  twitterTitle: 'Avyro — Sites sob medida para o seu negócio',
-  twitterDescription: 'Design, conteúdo e recursos pensados para sua empresa. Proposta personalizada pelo WhatsApp.',
-  ogImage: 'https://avyro.com.br/favicon.png',
-  twitterImage: 'https://avyro.com.br/favicon.png',
-  twitterCard: 'summary_large_image',
-})
+useMarketingSeo('Criação de sites profissionais e landing pages', 'Criação de sites para empresas, com design sob medida, manutenção mensal opcional e possibilidade de painel administrativo. Conheça a Avyro.', '/')
+const origin = String(useRuntimeConfig().public.siteUrl).replace(/\/$/, '')
+useHead({ script: [{ type: 'application/ld+json', innerHTML: JSON.stringify({ '@context': 'https://schema.org', '@type': 'Organization', name: 'Avyro', url: origin, logo: `${origin}/favicon.png`, telephone: '+55-11-95137-2631' }) }] })
 </script>
 
 <template>

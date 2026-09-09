@@ -11,6 +11,7 @@ import { demoProjects } from '~/constants/campaign'
         <div class="mt-5 flex items-start justify-between gap-4"><div><p class="text-[10px] font-semibold tracking-[0.15em] text-slate-400">{{ project.segment }}</p><h3 class="mt-2 font-heading text-2xl font-semibold tracking-tight">{{ project.name }}</h3><p class="mt-2 max-w-md text-base leading-6 text-slate-500">{{ project.summary }}</p></div><span class="pt-1 text-xs text-slate-400">{{ project.number }}</span></div>
       </NuxtLink>
     </div>
+    <div class="mt-8"><NuxtLink to="/criacao-de-sites" class="inline-flex min-h-11 items-center text-sm font-semibold text-[#255bef]">Conheça a criação de sites para o seu segmento →</NuxtLink></div>
     <div v-if="!hideMore" class="mt-12 border-t border-slate-200 pt-6"><NuxtLink to="/modelos-site" class="text-sm font-semibold text-[#255bef]">Explore todos os modelos e segmentos <span aria-hidden="true">→</span></NuxtLink></div>
   </section>
 </template>

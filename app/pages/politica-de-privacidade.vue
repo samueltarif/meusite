@@ -183,6 +183,13 @@ useSeoMeta({
 
         <hr class="border-slate-100" />
 
+        <section class="space-y-3">
+          <h2 class="font-heading text-xl font-extrabold text-slate-900">Medição das campanhas da Avyro</h2>
+          <p>Quando a medição de anúncios estiver configurada, você poderá permitir ou recusar o uso de cookies do Google para atribuir cliques no WhatsApp aos anúncios. A tag de medição só é carregada após sua permissão; recusar não impede a navegação ou o contato.</p>
+          <p>A ação medida é o clique no botão de WhatsApp, não uma conversa ou venda confirmada. O conteúdo da mensagem não é enviado pela Avyro como parâmetro de conversão. A personalização de anúncios fica desativada nesta integração.</p>
+          <p>Sua escolha fica guardada neste navegador e pode ser alterada pelo botão “Preferências de cookies” nas páginas da campanha. A alteração interrompe novos eventos de conversão enviados pela aplicação; cookies já existentes também podem ser removidos nas configurações do navegador.</p>
+        </section>
+        <hr class="border-slate-100" />
         <!-- Section 8 -->
         <section class="space-y-3">
           <h2 class="font-heading font-extrabold text-xl text-slate-900 flex items-center gap-2">
