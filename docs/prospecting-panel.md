@@ -23,3 +23,10 @@ Use sempre o mesmo endereço (por exemplo 127.0.0.1:3000). localhost, domínio p
 Não há autenticação conforme solicitado. Uma futura versão com armazenamento compartilhado precisa definir acesso e persistência antes de receber dados em um servidor. Este painel não exporta dados para Google Ads nem envia mensagens automaticamente.
 
 Validação: testes automatizados de qualificação, datas, registros retroativos, métricas, validação de links e backups, persistência e rota. Sem teste visual ou interação automatizada no navegador.
+
+
+## Guia e preparação do Supabase — 13/09/2026
+
+A aba Guia de prospecção reúne seleção por sinais de atividade, nichos para testar, critérios de qualificação, preparação do contato, mensagens adaptáveis e leitura de resultados. Fontes: conversa fornecida e política oficial de mensagens em https://business.whatsapp.com/policy.
+
+SQL proposto: docs/sql/prospecting-schema.sql. Prompt operacional: docs/antigravity-prospecting-prompt.md. Estes arquivos não foram executados no Supabase. O painel continua local, sem alteração em tabelas ou integrações existentes. A migration prepara três tabelas com RLS e sem acesso anônimo ou de usuários autenticados do produto atual. Base de segurança: https://supabase.com/docs/guides/database/postgres/row-level-security.
