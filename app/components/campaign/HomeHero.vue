@@ -7,8 +7,8 @@ import { campaignWhatsapp } from '~/utils/campaign'
     <div class="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
       <div>
         <p class="mb-6 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><span class="h-1.5 w-1.5 rounded-full bg-[#255bef]" />Seu próximo passo começa aqui</p>
-        <h1 class="max-w-[720px] font-heading text-[clamp(2rem,9vw,42px)] font-bold leading-[1.08] tracking-[-0.055em] sm:text-[58px] lg:text-[68px]">Seu negócio merece<br class="hidden sm:block"> um site <span class="text-[#255bef]">à altura.</span></h1>
-        <p class="mt-7 max-w-[490px] text-base leading-[1.8] text-slate-500 md:text-lg">Sites sob medida para apresentar sua empresa e gerar novas oportunidades. Com manutenção mensal opcional e possibilidade de painel sob medida.</p>
+        <h1 class="max-w-[720px] font-heading text-[clamp(2rem,9vw,42px)] font-bold leading-[1.08] tracking-[-0.055em] sm:text-[58px] lg:text-[68px]">Criação de sites <span class="text-[#255bef]">à altura do seu negócio.</span></h1>
+        <p class="mt-7 max-w-[490px] text-base leading-[1.8] text-slate-500 md:text-lg">Sites profissionais e landing pages para empresas de todo o Brasil, com atendimento online. Design sob medida, manutenção mensal opcional e possibilidade de painel administrativo.</p>
         <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
           <a id="hero-whatsapp" :href="campaignWhatsapp()" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-5 rounded-lg bg-[#255bef] px-6 py-4 text-sm font-semibold text-white transition-colors hover:bg-[#1949d1]">Conversar sobre meu site <span aria-hidden="true">↗</span></a>
           <a href="#portfolio" class="inline-flex items-center justify-center gap-3 px-3 py-3 text-sm font-semibold text-[#101c35] hover:text-[#255bef]">Explorar os exemplos <span aria-hidden="true">↓</span></a>
