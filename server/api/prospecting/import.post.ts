@@ -7,7 +7,7 @@ const interactionSchema = z.object({
   lead_id: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   channel: z.enum(['WhatsApp', 'Instagram', 'E-mail', 'Telefone', 'Presencial']),
-  stage: z.enum(['Selecionado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'NÃ£o contatar']),
+  stage: z.enum(['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'NÃ£o contatar']),
   note: z.string().min(1).max(4000),
 })
 
@@ -33,7 +33,7 @@ const leadSchema = z.object({
   heat_override: z.enum(['', 'Quente', 'Morno', 'Revisar', 'Descartar']).default(''),
   opportunity: z.string().trim().max(4000).default(''),
   personalization: z.string().trim().max(2000).default(''),
-  stage: z.enum(['Selecionado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'NÃ£o contatar']).default('Selecionado'),
+  stage: z.enum(['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'NÃ£o contatar']).default('Selecionado'),
   next_action: z.string().trim().max(500).default(''),
   follow_up: z.string().nullable().default(null),
   notes: z.string().trim().max(6000).default(''),

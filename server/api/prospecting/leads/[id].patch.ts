@@ -23,7 +23,7 @@ const bodySchema = z.object({
   heat_override: z.enum(['', 'Quente', 'Morno', 'Revisar', 'Descartar']).optional(),
   opportunity: z.string().trim().max(4000).optional(),
   personalization: z.string().trim().max(2000).optional(),
-  stage: z.enum(['Selecionado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar']).optional(),
+  stage: z.enum(['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar']).optional(),
   next_action: z.string().trim().max(500).optional(),
   follow_up: z.string().nullable().optional(),
   notes: z.string().trim().max(6000).optional(),

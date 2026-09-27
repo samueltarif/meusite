@@ -13,7 +13,8 @@ export function heatReason(lead: Prospect): string {
   return { Quente: 'Negócio ativo, apresentação profissional e sem site próprio.', Morno: 'Negócio ativo com site antigo ou que precisa melhorar.', Revisar: 'Confira a presença digital e os sinais de atividade antes de priorizar.', Descartar: 'Sinais de abandono: revise antes de investir em uma abordagem.' }[heat(lead)]
 }
 export const terminalStage = (stage: ProspectStage): boolean => ['Fechado', 'Sem interesse', 'Não contatar'].includes(stage)
-export const contactCounted = (lead: Prospect): boolean => lead.history.some(item => item.stage !== 'Selecionado')
+export const contactCounted = (lead: Prospect): boolean => lead.history.some(item => !['Selecionado', 'Aprovado'].includes(item.stage))
+export const contactSummary = (lead: Prospect): string => contactCounted(lead) ? 'Contato registrado' : ['Selecionado', 'Aprovado'].includes(lead.stage) ? 'Ainda não contatado' : 'Sem contato registrado no histórico'
 export const responseCounted = (lead: Prospect): boolean => lead.history.some(item => ['Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar'].includes(item.stage))
 export const interestCounted = (lead: Prospect): boolean => lead.history.some(item => ['Interessado', 'Proposta enviada', 'Fechado'].includes(item.stage))
 export function recordActivity(lead: Prospect, activity: ProspectActivityDraft): Prospect {

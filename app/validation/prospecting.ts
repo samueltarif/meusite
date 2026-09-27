@@ -2,7 +2,7 @@ import { z } from 'zod'
 const text = (max = 200) => z.string().trim().max(max)
 export const calendarDate = z.string().refine(value => value === '' || (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T12:00:00Z`)) && new Date(`${value}T12:00:00Z`).toISOString().slice(0, 10) === value), 'Informe uma data válida.')
 const url = z.string().trim().max(2000).refine(value => { if (!value) return true; try { return ['http:', 'https:'].includes(new URL(value).protocol) } catch { return false } }, 'Use um link completo, começando com https://.')
-const stage = z.enum(['Selecionado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar'])
+const stage = z.enum(['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar'])
 const channel = z.enum(['WhatsApp', 'Instagram', 'E-mail', 'Telefone', 'Presencial'])
 const history = z.object({ id: text(100).min(1), date: calendarDate.refine(Boolean, 'Informe a data do contato.'), channel, stage, note: text(4000).min(1, 'Registre o que aconteceu.') })
 export const prospectSchema = z.object({

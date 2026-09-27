@@ -1,4 +1,4 @@
-export type ProspectStage = 'Selecionado' | 'Contatado' | 'Respondeu' | 'Interessado' | 'Proposta enviada' | 'Fechado' | 'Sem interesse' | 'Não contatar'
+export type ProspectStage = 'Selecionado' | 'Aprovado' | 'Contatado' | 'Respondeu' | 'Interessado' | 'Proposta enviada' | 'Fechado' | 'Sem interesse' | 'Não contatar'
 export type ProspectHeat = 'Quente' | 'Morno' | 'Revisar' | 'Descartar'
 export type ProspectChannel = 'WhatsApp' | 'Instagram' | 'E-mail' | 'Telefone' | 'Presencial'
 export interface ProspectInteraction { id: string; date: string; channel: ProspectChannel; stage: ProspectStage; note: string }

@@ -6,7 +6,7 @@ const bodySchema = z.object({
   lead_id: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe a data do contato.'),
   channel: z.enum(['WhatsApp', 'Instagram', 'E-mail', 'Telefone', 'Presencial']),
-  stage: z.enum(['Selecionado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar']),
+  stage: z.enum(['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar']),
   note: z.string().trim().min(1, 'Descreva o contato.').max(4000),
   // Fields to update on the lead (only if not retroactive)
   follow_up: z.string().nullable().optional(),
@@ -16,7 +16,7 @@ const bodySchema = z.object({
 })
 
 const TERMINAL_STAGES = ['Fechado', 'Sem interesse', 'Não contatar']
-const STAGE_ORDER = ['Selecionado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar']
+const STAGE_ORDER = ['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar']
 
 export default defineEventHandler(async (event) => {
   const user = await getAuthenticatedUser(event)
