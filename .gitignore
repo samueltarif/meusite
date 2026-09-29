@@ -27,3 +27,6 @@ logs
 
 # Private local business reference
 .local/dados-empresa.md
+
+.playwright-mcp/
+
