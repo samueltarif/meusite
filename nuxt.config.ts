@@ -2,6 +2,9 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  nitro: {
+    serverAssets: [{ baseName: 'photography', dir: '../public/lindner_site_preview/lindner_site', ignore: ['assets/**'] }]
+  },
   css: ['~/assets/css/main.css'],
   modules: [
     '@nuxtjs/tailwindcss',
