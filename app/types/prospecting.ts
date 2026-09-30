@@ -4,7 +4,7 @@ export type ProspectChannel = 'WhatsApp' | 'Instagram' | 'E-mail' | 'Telefone' |
 export interface ProspectInteraction { id: string; date: string; channel: ProspectChannel; stage: ProspectStage; note: string }
 export interface Prospect {
   id: string; company: string; person: string; city: string; segment: string; source: string
-  maps: string; instagram: string; website: string; phone: string; email: string
+  maps: string; instagram: string; website: string; phone: string; additionalPhones: string[]; email: string
   websiteStatus: 'Não verificado' | 'Sem site' | 'Só Instagram' | 'Site antigo ou ruim' | 'Site adequado'
   activity: 'Não verificada' | 'Ativo' | 'Aparentemente abandonado'
   goodReviews: boolean; recentPhotos: boolean; professional: boolean; rating: number | null; reviewCount: number | null

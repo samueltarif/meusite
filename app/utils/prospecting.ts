@@ -25,7 +25,7 @@ export function recordActivity(lead: Prospect, activity: ProspectActivityDraft):
 }
 export function newProspect(): Prospect {
   const now = new Date().toISOString()
-  return { id: crypto.randomUUID(), company: '', person: '', city: '', segment: '', source: 'Google Maps', maps: '', instagram: '', website: '', phone: '', email: '', websiteStatus: 'Não verificado', activity: 'Não verificada', goodReviews: false, recentPhotos: false, professional: false, rating: null, reviewCount: null, heatOverride: '', opportunity: '', personalization: '', stage: 'Selecionado', nextAction: '', followUp: '', notes: '', proposalValue: 0, monthlyValue: 0, archived: false, createdAt: now, updatedAt: now, history: [] }
+  return { id: crypto.randomUUID(), company: '', person: '', city: '', segment: '', source: 'Google Maps', maps: '', instagram: '', website: '', phone: '', additionalPhones: [], email: '', websiteStatus: 'Não verificado', activity: 'Não verificada', goodReviews: false, recentPhotos: false, professional: false, rating: null, reviewCount: null, heatOverride: '', opportunity: '', personalization: '', stage: 'Selecionado', nextAction: '', followUp: '', notes: '', proposalValue: 0, monthlyValue: 0, archived: false, createdAt: now, updatedAt: now, history: [] }
 }
 export function segmentResults(leads: Prospect[]) {
   return [...new Set(leads.map(lead => lead.segment))].map(segment => {

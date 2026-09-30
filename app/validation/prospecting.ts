@@ -7,7 +7,7 @@ const channel = z.enum(['WhatsApp', 'Instagram', 'E-mail', 'Telefone', 'Presenci
 const history = z.object({ id: text(100).min(1), date: calendarDate.refine(Boolean, 'Informe a data do contato.'), channel, stage, note: text(4000).min(1, 'Registre o que aconteceu.') })
 export const prospectSchema = z.object({
   id: text(100).min(1), company: text().min(2, 'Informe o nome da empresa.'), person: text(), city: text().min(2, 'Informe a cidade.'), segment: text().min(2, 'Informe o segmento.'), source: text(),
-  maps: url, instagram: url, website: url, phone: text(50), email: text(254).refine(value => !value || z.string().email().safeParse(value).success, 'Informe um e-mail válido.'),
+  maps: url, instagram: url, website: url, phone: text(50), additionalPhones: z.array(text(50).min(1)).max(9).default([]), email: text(254).refine(value => !value || z.string().email().safeParse(value).success, 'Informe um e-mail válido.'),
   websiteStatus: z.enum(['Não verificado', 'Sem site', 'Só Instagram', 'Site antigo ou ruim', 'Site adequado']), activity: z.enum(['Não verificada', 'Ativo', 'Aparentemente abandonado']),
   goodReviews: z.boolean(), recentPhotos: z.boolean(), professional: z.boolean(), rating: z.number().min(0).max(5).nullable(), reviewCount: z.number().int().min(0).nullable(),
   heatOverride: z.enum(['', 'Quente', 'Morno', 'Revisar', 'Descartar']), opportunity: text(4000), personalization: text(2000), stage,

@@ -3,6 +3,7 @@ import type { Prospect, ProspectData, ProspectActivityDraft, ProspectSettings } 
 import { downloadProspecting, downloadOriginalProspecting, readProspectingBackup } from '~/services/prospecting'
 import { activitySchema, prospectSchema, settingsSchema } from '~/validation/prospecting'
 import { localDay, heat, terminalStage, contactCounted, responseCounted, interestCounted, segmentResults, recordActivity } from '~/utils/prospecting'
+import { compareProspects, returnBucket } from '~/utils/prospecting-workspace'
 import { prospectStages } from '~/constants/prospecting'
 import {
   apiLoadLeads, apiCreateLead, apiUpdateLead,
@@ -22,6 +23,8 @@ export function useProspecting() {
   const stage = ref('')
   const view = ref('Contatos')
   const today = ref(localDay())
+  const sort = ref('newest')
+  const returnFilter = ref('overdue')
   let timer: ReturnType<typeof setInterval> | undefined
 
   function refresh() { today.value = localDay() }
@@ -46,6 +49,7 @@ export function useProspecting() {
   })
 
   async function save(lead: Prospect): Promise<boolean> {
+    notice.value = ''
     const parsed = prospectSchema.safeParse(lead)
     if (!parsed.success) {
       error.value = parsed.error.issues[0]?.message || 'Revise os campos.'
@@ -62,10 +66,13 @@ export function useProspecting() {
       } else {
         saved = await apiCreateLead(parsed.data)
         data.value.leads = [...data.value.leads, { ...saved, history: [] }]
+        view.value = 'Contatos'
+        clearFilters()
+        sort.value = 'newest'
       }
 
       error.value = ''
-      notice.value = 'Contato salvo e sincronizado.'
+      notice.value = existing ? 'Empresa atualizada e sincronizada.' : 'Empresa cadastrada e sincronizada.'
       return true
     } catch (err: any) {
       if (err?.status === 409) {
@@ -136,6 +143,7 @@ export function useProspecting() {
   }
 
   async function settings(value: ProspectSettings): Promise<boolean> {
+    notice.value = ''
     const parsed = settingsSchema.safeParse(value)
     if (!parsed.success) {
       error.value = 'Informe uma meta positiva e um investimento válido.'
@@ -161,7 +169,7 @@ export function useProspecting() {
     const source = view.value === 'Arquivados'
       ? data.value.leads.filter(lead => lead.archived)
       : view.value === 'Retornos'
-        ? due.value
+        ? active.value.filter(lead => returnBucket(lead, today.value) === returnFilter.value)
         : active.value
     return source.filter(lead =>
       (!query.value || normalized(`${lead.company} ${lead.person} ${lead.city} ${lead.segment}`).includes(normalized(query.value))) &&
@@ -169,10 +177,13 @@ export function useProspecting() {
       (!segment.value || lead.segment === segment.value) &&
       (!priority.value || heat(lead) === priority.value) &&
       (!stage.value || lead.stage === stage.value)
-    ).sort((a, b) => (a.followUp || '9999').localeCompare(b.followUp || '9999') || b.updatedAt.localeCompare(a.updatedAt))
+    ).sort((a, b) => compareProspects(a, b, sort.value))
   })
 
+  const returnCounts = computed(() => Object.fromEntries(['overdue', 'today', 'unscheduled', 'upcoming'].map(key => [key, active.value.filter(lead => returnBucket(lead, today.value) === key).length])))
+
   const stats = computed(() => ({
+    registered: active.value.length,
     contacted: data.value.leads.filter(contactCounted).length,
     responses: data.value.leads.filter(responseCounted).length,
     interested: data.value.leads.filter(interestCounted).length,
@@ -234,7 +245,7 @@ export function useProspecting() {
   return {
     data, ready, blocked, error, notice,
     query, city, segment, priority, stage, view,
-    today, active, due, filtered, stats, results,
+    today, active, due, filtered, stats, results, sort, returnFilter, returnCounts,
     save, log, archive, reopen, settings,
     pendingImport, prepareImport, importBackup, exportBackup,
     clearFilters,

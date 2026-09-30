@@ -13,6 +13,7 @@ const bodySchema = z.object({
   instagram: z.string().trim().max(2000).default(''),
   website: z.string().trim().max(2000).default(''),
   phone: z.string().trim().max(50).default(''),
+  additional_phones: z.array(z.string().trim().min(1).max(50)).max(9).default([]),
   email: z.string().trim().max(254).default(''),
   website_status: z.enum(['Não verificado', 'Sem site', 'Só Instagram', 'Site antigo ou ruim', 'Site adequado']).default('Não verificado'),
   activity: z.enum(['Não verificada', 'Ativo', 'Aparentemente abandonado']).default('Não verificada'),
