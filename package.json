@@ -19,6 +19,7 @@
     "@types/ws": "^8.18.1",
     "@vueuse/core": "^14.3.0",
     "@vueuse/nuxt": "^14.3.0",
+    "exceljs": "^4.4.0",
     "mercadopago": "^3.2.1",
     "nuxt": "^4.4.8",
     "pinia": "^3.0.4",

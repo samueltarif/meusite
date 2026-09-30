@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ExportData from './ExportData.vue'
 import type { Prospect } from '~/types/prospecting'
 import { prospectSegments, prospectStageLabels } from '~/constants/prospecting'
 import { heat, heatReason, contactCounted } from '~/utils/prospecting'
@@ -25,7 +26,7 @@ defineExpose({ open })
       <div class="mb-7 flex items-start justify-between gap-4"><div><p class="text-xs uppercase tracking-widest text-blue-600">Ficha de prospecção</p><h2 id="lead-editor-title" class="mt-2 text-2xl font-semibold">{{ editing ? 'Editar empresa' : 'Adicionar empresa' }}</h2></div><button type="button" class="min-h-11 rounded-lg border px-4 text-sm" @click="dialog?.close()">Fechar ✕</button></div>
       <p v-if="Object.keys(errors).length" role="alert" class="mb-6 rounded-lg bg-rose-50 p-4 text-sm text-rose-800">{{ Object.values(errors).join(' ') }}</p>
       <section v-if="['Selecionado', 'Aprovado'].includes(draft.stage) && !contactCounted(draft)" class="mb-7 rounded-xl border border-blue-100 bg-blue-50 p-4"><label class="block text-sm font-semibold">Situação da pesquisa<select v-model="draft.stage" class="mt-2 min-h-12 w-full rounded-lg border border-blue-200 bg-white px-3"><option value="Selecionado">Cadastrada — pesquisando a empresa</option><option value="Aprovado">Aprovado — pronto para entrar em contato</option></select></label><p class="mt-3 text-xs leading-6 text-blue-900">Ainda não contatado. Aprovar é uma decisão sua de abordar a empresa; não significa aprovação do cliente. O primeiro contato é registrado depois, na ficha.</p></section><p v-else class="mb-6 text-sm text-slate-600">Etapa atual: {{ prospectStageLabels[draft.stage] }}. Registre novas conversas na ficha.</p>
-      <fieldset><legend class="mb-4 text-sm font-semibold">01 / Empresa e localização</legend><div class="grid gap-4 sm:grid-cols-2">
+      <ExportData :leads="[draft]" draft :disabled="saving" class="mb-6" /><fieldset><legend class="mb-4 text-sm font-semibold">01 / Empresa e localização</legend><div class="grid gap-4 sm:grid-cols-2">
         <label class="text-sm">Empresa *<input v-model="draft.company" autofocus maxlength="200" required class="mt-2 min-h-12 w-full rounded-lg border border-slate-300 px-3" :aria-invalid="!!errors.company"></label>
         <label class="text-sm">Nome do dono / responsável (opcional)<input v-model="draft.person" maxlength="200" placeholder="Deixe vazio se ainda não souber" class="mt-2 min-h-12 w-full rounded-lg border border-slate-300 px-3"></label>
         <label class="text-sm">Cidade *<input v-model="draft.city" maxlength="200" required placeholder="Ex.: Osasco, SP" class="mt-2 min-h-12 w-full rounded-lg border border-slate-300 px-3" :aria-invalid="!!errors.city"></label>

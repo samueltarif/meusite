@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUser } from '../../../utils/auth'
+import { collectProspectingRows } from '../../../utils/prospecting-pagination'
 
 /**
  * GET /api/prospecting/leads
@@ -26,22 +27,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Acesso restrito ao CRM.' })
   }
 
-  const { data: leads, error: leadsError } = await admin
-    .from('prospecting_leads')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (leadsError) {
-    throw createError({ statusCode: 500, statusMessage: 'Erro ao carregar contatos.' })
-  }
-
-  const { data: interactions, error: interErr } = await admin
-    .from('prospecting_interactions')
-    .select('*')
-    .order('date', { ascending: false })
-
-  if (interErr) {
-    throw createError({ statusCode: 500, statusMessage: 'Erro ao carregar histórico.' })
+  let leads: any[], interactions: any[]
+  try {
+    ;[leads, interactions] = await Promise.all([
+      collectProspectingRows<any>((from, to) => admin.from('prospecting_leads').select('*').order('id').range(from, to)),
+      collectProspectingRows<any>((from, to) => admin.from('prospecting_interactions').select('*').order('id').range(from, to)),
+    ])
+  } catch {
+    throw createError({ statusCode: 500, statusMessage: 'Não foi possível carregar todos os cadastros e históricos. Tente novamente.' })
   }
 
   // Merge interactions into leads as history array
