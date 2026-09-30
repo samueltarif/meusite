@@ -186,3 +186,11 @@ export async function apiImport(data: ProspectData): Promise<{ imported_leads: n
     body: { leads: leadsPayload },
   })
 }
+
+export async function apiDeleteLead(id: string, expectedUpdatedAt: string): Promise<void> {
+  const token = await getToken()
+  await $fetch('/api/prospecting/leads/' + id, {
+    method: 'DELETE', headers: authHeaders(token),
+    body: { expected_updated_at: expectedUpdatedAt },
+  })
+}

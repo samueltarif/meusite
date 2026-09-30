@@ -81,7 +81,7 @@ async function saveSettings() {
       </div>
     </main>
     <dialog ref="scheduleDialog" aria-labelledby="schedule-title" class="m-auto w-[min(480px,94vw)] rounded-2xl p-6 backdrop:bg-slate-950/50"><form @submit.prevent="saveSchedule"><h2 id="schedule-title" class="text-xl font-semibold">Agendar retorno</h2><p class="mt-2 text-sm">{{ scheduleLead?.company }}</p><label class="mt-5 block text-sm">Data<input v-model="scheduleDate" type="date" :min="today" required class="mt-2 min-h-12 w-full rounded-lg border px-3"></label><label class="mt-4 block text-sm">Próxima ação<input v-model="scheduleAction" required maxlength="500" class="mt-2 min-h-12 w-full rounded-lg border px-3"></label><p class="mt-3 text-xs text-slate-500">Agendar não registra um contato realizado.</p><p v-if="scheduleError" role="alert" class="mt-3 text-sm text-rose-700">{{ scheduleError }}</p><div class="mt-5 flex gap-3"><button :disabled="scheduleSaving" class="min-h-11 rounded-lg bg-blue-600 px-4 text-white disabled:opacity-50">{{ scheduleSaving ? 'Salvando…' : 'Salvar retorno' }}</button><button type="button" :disabled="scheduleSaving" class="min-h-11 px-4" @click="scheduleDialog?.close()">Cancelar</button></div></form></dialog>
-    <LeadEditor ref="editor" :save="store.save" /><LeadDetail ref="detail" :lead="selected" :log="store.log" @edit="editor?.open($event)" @archive="store.archive" @reopen="store.reopen" />
+    <LeadEditor ref="editor" :save="store.save" /><LeadDetail ref="detail" :lead="selected" :log="store.log" :remove="store.remove" @edit="editor?.open($event)" @archive="store.archive" @reopen="store.reopen" />
   </div>
 </template>
 

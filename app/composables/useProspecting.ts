@@ -6,7 +6,7 @@ import { localDay, heat, terminalStage, contactCounted, responseCounted, interes
 import { compareProspects, returnBucket } from '~/utils/prospecting-workspace'
 import { prospectStages } from '~/constants/prospecting'
 import {
-  apiLoadLeads, apiCreateLead, apiUpdateLead,
+  apiLoadLeads, apiCreateLead, apiUpdateLead, apiDeleteLead,
   apiLogInteraction, apiLoadSettings, apiSaveSettings,
 } from '~/services/prospecting-api'
 
@@ -132,6 +132,20 @@ export function useProspecting() {
     }
   }
 
+  async function remove(id: string, expectedUpdatedAt: string): Promise<boolean> {
+    notice.value = ''
+    try {
+      await apiDeleteLead(id, expectedUpdatedAt)
+      data.value.leads = data.value.leads.filter(lead => lead.id !== id)
+      error.value = ''
+      notice.value = 'Empresa e histórico excluídos definitivamente.'
+      return true
+    } catch (err: any) {
+      error.value = err?.data?.statusMessage || err?.message || 'Não foi possível excluir a empresa.'
+      return false
+    }
+  }
+
   async function archive(id: string) {
     const lead = data.value.leads.find(item => item.id === id)
     if (lead) await save({ ...lead, archived: !lead.archived })
@@ -246,7 +260,7 @@ export function useProspecting() {
     data, ready, blocked, error, notice,
     query, city, segment, priority, stage, view,
     today, active, due, filtered, stats, results, sort, returnFilter, returnCounts,
-    save, log, archive, reopen, settings,
+    save, log, archive, reopen, settings, remove,
     pendingImport, prepareImport, importBackup, exportBackup,
     clearFilters,
   }
