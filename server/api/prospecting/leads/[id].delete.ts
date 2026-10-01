@@ -2,7 +2,12 @@ import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUser } from '../../../utils/auth'
 
-const bodySchema = z.object({ expected_updated_at: z.string().datetime({ offset: true }) })
+const bodySchema = z.object({
+  expected_updated_at: z.preprocess(
+    val => typeof val === 'string' && val.includes(' ') && !val.includes('T') ? val.replace(' ', 'T') : val,
+    z.string().datetime({ offset: true }),
+  ),
+})
 
 export default defineEventHandler(async (event) => {
   const user = await getAuthenticatedUser(event)

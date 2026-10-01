@@ -1,8 +1,8 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import type { Prospect, ProspectData, ProspectActivityDraft, ProspectSettings } from '~/types/prospecting'
+import type { Prospect, ProspectData, ProspectActivityDraft, ProspectSettings, ProspectContactStatus, ProspectChannel, ProspectStage } from '~/types/prospecting'
 import { downloadProspecting, downloadOriginalProspecting, readProspectingBackup } from '~/services/prospecting'
 import { activitySchema, prospectSchema, settingsSchema } from '~/validation/prospecting'
-import { localDay, heat, terminalStage, contactCounted, responseCounted, interestCounted, segmentResults, recordActivity } from '~/utils/prospecting'
+import { localDay, heat, terminalStage, contactCounted, responseCounted, interestCounted, segmentResults, recordActivity, formatInteractionNote } from '~/utils/prospecting'
 import { compareProspects, returnBucket } from '~/utils/prospecting-workspace'
 import { prospectStages } from '~/constants/prospecting'
 import {
@@ -130,6 +130,76 @@ export function useProspecting() {
       error.value = err?.data?.statusMessage || err?.message || 'Erro ao registrar interação.'
       return false
     }
+  }
+
+  async function updateContactStatus(params: {
+    leadId: string
+    status: ProspectContactStatus
+    time: string
+    channel?: ProspectChannel
+    note?: string
+    date?: string
+  }): Promise<boolean> {
+    notice.value = ''
+    const { leadId, status, time, channel = 'WhatsApp', note = '', date = today.value } = params
+    const trimmedTime = (time || '').trim()
+    if (!trimmedTime) {
+      error.value = 'O horário é obrigatório para registrar a alteração de status.'
+      return false
+    }
+
+    const lead = data.value.leads.find(item => item.id === leadId)
+    if (!lead) {
+      error.value = 'Empresa não encontrada.'
+      return false
+    }
+
+    if (lead.stage === 'Não contatar') {
+      error.value = 'Este contato está marcado como Não contatar. Reabra o acompanhamento antes de atualizar o status.'
+      return false
+    }
+
+    let targetStage: ProspectStage = lead.stage
+    if (status === 'Nenhum contato') {
+      targetStage = 'Selecionado'
+    } else if (['Selecionado', 'Aprovado'].includes(lead.stage)) {
+      targetStage = 'Contatado'
+    }
+
+    const noteText = formatInteractionNote(status, trimmedTime, note)
+
+    if (status === 'Nenhum contato') {
+      const ok = await save({
+        ...lead,
+        stage: targetStage,
+        contactStatus: status,
+        contactTime: trimmedTime,
+      })
+      if (ok) {
+        notice.value = `Status atualizado para ${status} às ${trimmedTime}.`
+      }
+      return ok
+    }
+
+    const activityDraft: ProspectActivityDraft = {
+      date,
+      channel,
+      stage: targetStage,
+      note: noteText,
+      followUp: lead.followUp,
+      nextAction: lead.nextAction,
+    }
+
+    const ok = await log(leadId, activityDraft)
+    if (ok) {
+      data.value.leads = data.value.leads.map(item =>
+        item.id === leadId
+          ? { ...item, contactStatus: status, contactTime: trimmedTime }
+          : item
+      )
+      notice.value = `Status atualizado para ${status} às ${trimmedTime}.`
+    }
+    return ok
   }
 
   async function remove(id: string, expectedUpdatedAt: string): Promise<boolean> {
@@ -260,7 +330,7 @@ export function useProspecting() {
     data, ready, blocked, error, notice,
     query, city, segment, priority, stage, view,
     today, active, due, filtered, stats, results, sort, returnFilter, returnCounts,
-    save, log, archive, reopen, settings, remove,
+    save, log, updateContactStatus, archive, reopen, settings, remove,
     pendingImport, prepareImport, importBackup, exportBackup,
     clearFilters,
   }

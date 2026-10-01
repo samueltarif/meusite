@@ -1,6 +1,54 @@
-import type { Prospect, ProspectHeat, ProspectStage, ProspectActivityDraft } from '~/types/prospecting'
+import type { Prospect, ProspectHeat, ProspectStage, ProspectActivityDraft, ProspectContactStatus } from '~/types/prospecting'
 export function localDay(date = new Date()): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` }
 export function addDays(day: string, count: number): string { const date = new Date(`${day}T12:00:00`); date.setDate(date.getDate() + count); return localDay(date) }
+export function parseInteractionStatus(note?: string): { status?: ProspectContactStatus; time?: string } | null {
+  const match = (note || '').match(/^\[Status:\s*([^|\]]+)(?:\s*\|\s*Horário:\s*([^\]]+))?\]/i)
+  if (!match) return null
+  return { status: match[1]?.trim() as ProspectContactStatus, time: match[2]?.trim() }
+}
+export function formatInteractionNote(status: ProspectContactStatus, time: string, note = ''): string {
+  const prefix = `[Status: ${status} | Horário: ${time}]`
+  return note.trim() ? `${prefix} ${note.trim()}` : prefix
+}
+export function getLeadContactStatus(lead: Prospect): ProspectContactStatus {
+  if (lead.contactStatus) return lead.contactStatus
+  if (!lead.history || lead.history.length === 0) return 'Nenhum contato'
+  const latest = [...lead.history].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''))[0]
+  if (!latest) return 'Nenhum contato'
+  const parsed = parseInteractionStatus(latest.note)
+  if (parsed?.status) return parsed.status
+  if (['Selecionado', 'Aprovado'].includes(latest.stage)) return 'Nenhum contato'
+  const lower = (latest.note || '').toLowerCase()
+  if (lower.includes('não atendeu') || lower.includes('nao atendeu')) return 'Não atendeu'
+  if (lower.includes('não respondeu') || lower.includes('nao respondeu')) return 'Não respondeu'
+  return 'Contato realizado'
+}
+export function getLeadContactTime(lead: Prospect): string {
+  if (lead.contactTime) return lead.contactTime
+  if (!lead.history || lead.history.length === 0) return ''
+  const latest = [...lead.history].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''))[0]
+  if (!latest) return ''
+  const parsed = parseInteractionStatus(latest.note)
+  if (parsed?.time) return parsed.time
+  if (latest.createdAt) {
+    try {
+      const d = new Date(latest.createdAt)
+      if (!Number.isNaN(d.getTime())) return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    } catch {}
+  }
+  return ''
+}
+export function formatContactTimeDisplay(lead: Prospect, today = localDay()): string {
+  const status = getLeadContactStatus(lead)
+  if (status === 'Nenhum contato') return 'Sem contato registrado'
+  const time = getLeadContactTime(lead)
+  if (!time) return 'Horário não informado'
+  const latest = lead.history && lead.history.length ? [...lead.history].sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0] : null
+  if (!latest || !latest.date) return `às ${time}`
+  if (latest.date === today) return `Hoje às ${time}`
+  if (latest.date === addDays(today, -1)) return `Ontem às ${time}`
+  return `${latest.date.split('-').reverse().slice(0, 2).join('/')} às ${time}`
+}
 export function heat(lead: Prospect): ProspectHeat {
   if (lead.heatOverride) return lead.heatOverride
   if (lead.activity === 'Aparentemente abandonado') return 'Descartar'

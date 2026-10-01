@@ -7,7 +7,15 @@ export function useProspectEditor() {
   const errors = ref<Record<string, string>>({})
   function start(lead?: Prospect) { draft.value = lead ? JSON.parse(JSON.stringify(lead)) as Prospect : newProspect(); if (draft.value) draft.value.additionalPhones ??= []; errors.value = {} }
   function validate(): Prospect | null {
-    const value = { ...draft.value, additionalPhones: (draft.value?.additionalPhones || []).map(phone => phone.trim()).filter(Boolean), rating: draft.value?.rating === null || String(draft.value?.rating) === '' ? null : Number(draft.value?.rating), reviewCount: draft.value?.reviewCount === null || String(draft.value?.reviewCount) === '' ? null : Number(draft.value?.reviewCount) }
+    const now = new Date().toISOString()
+    const value = {
+      ...draft.value,
+      createdAt: draft.value?.createdAt || now,
+      updatedAt: draft.value?.updatedAt || now,
+      additionalPhones: (draft.value?.additionalPhones || []).map(phone => phone.trim()).filter(Boolean),
+      rating: draft.value?.rating === null || String(draft.value?.rating) === '' ? null : Number(draft.value?.rating),
+      reviewCount: draft.value?.reviewCount === null || String(draft.value?.reviewCount) === '' ? null : Number(draft.value?.reviewCount),
+    }
     const parsed = prospectSchema.safeParse(value)
     errors.value = {}
     if (!parsed.success) { for (const issue of parsed.error.issues) errors.value[String(issue.path[0])] = issue.message; return null }

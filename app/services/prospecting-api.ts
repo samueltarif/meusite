@@ -1,5 +1,6 @@
 import { supabase } from '~/composables/useSupabase'
 import type { Prospect, ProspectData, ProspectSettings } from '~/types/prospecting'
+import { getLeadContactStatus, getLeadContactTime } from '~/utils/prospecting'
 
 /**
  * Retrieves the access token from the current Supabase session.
@@ -15,9 +16,16 @@ function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` }
 }
 
+function normalizeIso(value: any): string {
+  if (!value) return new Date().toISOString()
+  if (value instanceof Date) return value.toISOString()
+  const s = String(value).trim()
+  return s.includes(' ') && !s.includes('T') ? s.replace(' ', 'T') : s
+}
+
 /** Converts a snake_case lead row from the DB to the camelCase Prospect type. */
 export function dbRowToProspect(row: any, interactions: any[] = []): Prospect {
-  return {
+  const lead: Prospect = {
     id: row.id,
     company: row.company,
     person: row.person ?? '',
@@ -47,16 +55,20 @@ export function dbRowToProspect(row: any, interactions: any[] = []): Prospect {
     proposalValue: Number(row.proposal_value ?? 0),
     monthlyValue: Number(row.monthly_value ?? 0),
     archived: row.archived ?? false,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: normalizeIso(row.created_at),
+    updatedAt: normalizeIso(row.updated_at),
     history: (interactions).map(i => ({
       id: i.id,
-      date: i.date,
+      date: i.date || i.interaction_date,
       channel: i.channel,
       stage: i.stage,
       note: i.note,
+      createdAt: i.created_at,
     })),
   }
+  lead.contactStatus = getLeadContactStatus(lead)
+  lead.contactTime = getLeadContactTime(lead)
+  return lead
 }
 
 /** Converts a camelCase Prospect to snake_case for the API. */
