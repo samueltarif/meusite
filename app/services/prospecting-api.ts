@@ -57,6 +57,8 @@ export function dbRowToProspect(row: any, interactions: any[] = []): Prospect {
     archived: row.archived ?? false,
     createdAt: normalizeIso(row.created_at),
     updatedAt: normalizeIso(row.updated_at),
+    contactStatus: (row.contact_status as ProspectContactStatus) || undefined,
+    contactTime: row.contact_time || undefined,
     history: (interactions).map(i => ({
       id: i.id,
       date: i.date || i.interaction_date,
@@ -66,8 +68,8 @@ export function dbRowToProspect(row: any, interactions: any[] = []): Prospect {
       createdAt: i.created_at,
     })),
   }
-  lead.contactStatus = getLeadContactStatus(lead)
-  lead.contactTime = getLeadContactTime(lead)
+  lead.contactStatus = (row.contact_status as ProspectContactStatus) || getLeadContactStatus(lead)
+  lead.contactTime = row.contact_time || getLeadContactTime(lead)
   return lead
 }
 
@@ -103,6 +105,8 @@ export function prospectToDbRow(lead: Prospect): Record<string, any> {
     proposal_value: lead.proposalValue,
     monthly_value: lead.monthlyValue,
     archived: lead.archived,
+    contact_status: lead.contactStatus || 'Nenhum contato',
+    contact_time: lead.contactTime || '',
   }
 }
 
@@ -150,15 +154,17 @@ export async function apiLogInteraction(params: {
   note: string
   follow_up?: string | null
   next_action?: string
+  contact_status?: ProspectContactStatus
+  contact_time?: string
   idempotency_key?: string
-}): Promise<{ lead: Prospect }> {
+}): Promise<{ lead: Prospect; interaction?: any }> {
   const token = await getToken()
-  const { lead } = await $fetch<{ lead: any }>('/api/prospecting/interactions', {
+  const { lead, interaction } = await $fetch<{ lead: any; interaction?: any }>('/api/prospecting/interactions', {
     method: 'POST',
     headers: authHeaders(token),
     body: params,
   })
-  return { lead: dbRowToProspect(lead) }
+  return { lead: dbRowToProspect(lead, interaction ? [interaction] : []), interaction }
 }
 
 export async function apiLoadSettings(): Promise<ProspectSettings> {

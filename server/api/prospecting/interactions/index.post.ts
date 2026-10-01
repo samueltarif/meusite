@@ -11,6 +11,8 @@ const bodySchema = z.object({
   // Fields to update on the lead (only if not retroactive)
   follow_up: z.string().nullable().optional(),
   next_action: z.string().trim().max(500).optional(),
+  contact_status: z.enum(['Nenhum contato', 'Contato realizado', 'Não atendeu', 'Não respondeu']).optional(),
+  contact_time: z.string().trim().max(50).optional(),
   // Idempotency key: client-generated UUID for this interaction
   idempotency_key: z.string().uuid().optional(),
 })
@@ -39,7 +41,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: parsed.error.issues[0]?.message || 'Dados inválidos.' })
   }
 
-  const { lead_id, date, channel, stage, note, follow_up, next_action, idempotency_key } = parsed.data
+  const { lead_id, date, channel, stage, note, follow_up, next_action, contact_status, contact_time, idempotency_key } = parsed.data
 
   // Idempotency: check if this exact interaction was already recorded
   if (idempotency_key) {
@@ -95,6 +97,18 @@ export default defineEventHandler(async (event) => {
       if (follow_up !== undefined) leadUpdate.follow_up = follow_up || null
       if (next_action !== undefined) leadUpdate.next_action = next_action
     }
+
+    let resolvedStatus = contact_status
+    let resolvedTime = contact_time
+    if (!resolvedStatus) {
+      const match = (note || '').match(/^\[Status:\s*([^|\]]+)(?:\s*\|\s*Horário:\s*([^\]]+))?\]/i)
+      if (match) {
+        resolvedStatus = match[1]?.trim() as any
+        resolvedTime = match[2]?.trim()
+      }
+    }
+    if (resolvedStatus) leadUpdate.contact_status = resolvedStatus
+    if (resolvedTime !== undefined) leadUpdate.contact_time = resolvedTime
   }
 
   // Insert interaction + update lead in sequence (atomic as possible within Postgres)
@@ -110,15 +124,31 @@ export default defineEventHandler(async (event) => {
 
   let updatedLead = lead
   if (Object.keys(leadUpdate).length > 0) {
-    const { data: newLead, error: updateErr } = await admin
+    let { data: newLead, error: updateErr } = await admin
       .from('prospecting_leads')
       .update(leadUpdate)
       .eq('id', lead_id)
       .select()
       .single()
 
+    if (updateErr && (updateErr.code === '42703' || updateErr.message?.includes('contact_status') || updateErr.message?.includes('contact_time'))) {
+      const { contact_status, contact_time, ...fallbackUpdate } = leadUpdate
+      if (Object.keys(fallbackUpdate).length > 0) {
+        const res = await admin
+          .from('prospecting_leads')
+          .update(fallbackUpdate)
+          .eq('id', lead_id)
+          .select()
+          .single()
+        newLead = res.data
+        updateErr = res.error
+      } else {
+        updateErr = null
+      }
+    }
+
     if (updateErr) throw createError({ statusCode: 500, statusMessage: 'Erro ao atualizar etapa do contato.' })
-    updatedLead = newLead
+    if (newLead) updatedLead = newLead
   }
 
   return { interaction, lead: updatedLead }

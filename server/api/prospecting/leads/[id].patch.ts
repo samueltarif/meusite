@@ -31,6 +31,8 @@ const bodySchema = z.object({
   proposal_value: z.number().min(0).max(100000000).optional(),
   monthly_value: z.number().min(0).max(100000000).optional(),
   archived: z.boolean().optional(),
+  contact_status: z.enum(['Nenhum contato', 'Contato realizado', 'Não atendeu', 'Não respondeu']).optional(),
+  contact_time: z.string().trim().max(50).optional(),
   // Concurrency guard: client sends the updated_at it last saw
   expected_updated_at: z.string().optional(),
 })
@@ -87,12 +89,24 @@ export default defineEventHandler(async (event) => {
   const updateData: Record<string, any> = { ...fields }
   if (updateData.follow_up === '') updateData.follow_up = null
 
-  const { data, error } = await admin
+  let { data, error } = await admin
     .from('prospecting_leads')
     .update(updateData)
     .eq('id', id)
     .select()
     .single()
+
+  if (error && (error.code === '42703' || error.message?.includes('contact_status') || error.message?.includes('contact_time'))) {
+    const { contact_status, contact_time, ...fallbackData } = updateData
+    const res = await admin
+      .from('prospecting_leads')
+      .update(fallbackData)
+      .eq('id', id)
+      .select()
+      .single()
+    data = res.data
+    error = res.error
+  }
 
   if (error) throw createError({ statusCode: 500, statusMessage: 'Erro ao atualizar contato.' })
 

@@ -18,7 +18,11 @@ import {
   formatContactTimeDisplay,
 } from '~/utils/prospecting'
 
-const props = defineProps<{ lead: Prospect; today: string }>()
+const props = defineProps<{
+  lead: Prospect
+  today: string
+  onUpdateStatus?: (params: { leadId: string; status: ProspectContactStatus; time: string; channel?: ProspectChannel; note?: string }) => Promise<boolean>
+}>()
 const emit = defineEmits<{
   open: [lead: Prospect]
   log: [lead: Prospect]
@@ -73,14 +77,31 @@ async function submitStatusChange() {
   saving.value = true
   timeError.value = ''
   try {
-    emit('updateStatus', {
-      leadId: props.lead.id,
-      status: selectedStatus.value,
-      time,
-      channel: selectedChannel.value,
-      note: selectedNote.value.trim(),
-    })
-    showSelector.value = false
+    let ok = true
+    if (props.onUpdateStatus) {
+      ok = await props.onUpdateStatus({
+        leadId: props.lead.id,
+        status: selectedStatus.value,
+        time,
+        channel: selectedChannel.value,
+        note: selectedNote.value.trim(),
+      })
+    } else {
+      emit('updateStatus', {
+        leadId: props.lead.id,
+        status: selectedStatus.value,
+        time,
+        channel: selectedChannel.value,
+        note: selectedNote.value.trim(),
+      })
+    }
+    if (ok) {
+      showSelector.value = false
+    } else {
+      timeError.value = 'Não foi possível salvar o status. Tente novamente.'
+    }
+  } catch (err: any) {
+    timeError.value = err?.message || 'Erro ao salvar status.'
   } finally {
     saving.value = false
   }

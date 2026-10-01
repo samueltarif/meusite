@@ -32,6 +32,8 @@ const bodySchema = z.object({
   proposal_value: z.number().min(0).max(100000000).default(0),
   monthly_value: z.number().min(0).max(100000000).default(0),
   archived: z.boolean().default(false),
+  contact_status: z.enum(['Nenhum contato', 'Contato realizado', 'Não atendeu', 'Não respondeu']).default('Nenhum contato'),
+  contact_time: z.string().trim().max(50).default(''),
 })
 
 export default defineEventHandler(async (event) => {
@@ -66,11 +68,22 @@ export default defineEventHandler(async (event) => {
   // Normalize empty date to null
   if (row.follow_up === '') row.follow_up = null
 
-  const { data, error } = await admin
+  let { data, error } = await admin
     .from('prospecting_leads')
     .insert(row)
     .select()
     .single()
+
+  if (error && (error.code === '42703' || error.message?.includes('contact_status') || error.message?.includes('contact_time'))) {
+    const { contact_status, contact_time, ...fallbackRow } = row
+    const res = await admin
+      .from('prospecting_leads')
+      .insert(fallbackRow)
+      .select()
+      .single()
+    data = res.data
+    error = res.error
+  }
 
   if (error) {
     throw createError({ statusCode: 500, statusMessage: 'Erro ao salvar contato.' })

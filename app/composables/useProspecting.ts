@@ -104,6 +104,7 @@ export function useProspecting() {
     const idempotency_key = crypto.randomUUID()
 
     try {
+      const parsedStatus = parseInteractionStatus(parsed.data.note)
       const { lead: updatedLead } = await apiLogInteraction({
         lead_id: id,
         date: parsed.data.date,
@@ -112,6 +113,8 @@ export function useProspecting() {
         note: parsed.data.note,
         follow_up: terminalStage(parsed.data.stage) ? null : (parsed.data.followUp || null),
         next_action: terminalStage(parsed.data.stage) ? '' : parsed.data.nextAction,
+        contact_status: parsedStatus?.status || lead.contactStatus,
+        contact_time: parsedStatus?.time || lead.contactTime,
         idempotency_key,
       })
 
@@ -119,7 +122,13 @@ export function useProspecting() {
       const localRecord = recordActivity(lead, activity)
       data.value.leads = data.value.leads.map(item =>
         item.id === id
-          ? { ...updatedLead, history: localRecord.history }
+          ? {
+              ...item,
+              ...updatedLead,
+              history: localRecord.history,
+              contactStatus: parsedStatus?.status || updatedLead.contactStatus || item.contactStatus || 'Contato realizado',
+              contactTime: parsedStatus?.time || updatedLead.contactTime || item.contactTime || '',
+            }
           : item
       )
 
@@ -168,38 +177,43 @@ export function useProspecting() {
 
     const noteText = formatInteractionNote(status, trimmedTime, note)
 
-    if (status === 'Nenhum contato') {
-      const ok = await save({
-        ...lead,
-        stage: targetStage,
-        contactStatus: status,
-        contactTime: trimmedTime,
-      })
-      if (ok) {
-        notice.value = `Status atualizado para ${status} às ${trimmedTime}.`
-      }
-      return ok
-    }
-
-    const activityDraft: ProspectActivityDraft = {
-      date,
-      channel,
+    // 1. Persist directly to prospecting_leads table
+    const ok = await save({
+      ...lead,
       stage: targetStage,
-      note: noteText,
-      followUp: lead.followUp,
-      nextAction: lead.nextAction,
+      contactStatus: status,
+      contactTime: trimmedTime,
+    })
+
+    if (!ok) {
+      return false
     }
 
-    const ok = await log(leadId, activityDraft)
-    if (ok) {
-      data.value.leads = data.value.leads.map(item =>
-        item.id === leadId
-          ? { ...item, contactStatus: status, contactTime: trimmedTime }
-          : item
-      )
-      notice.value = `Status atualizado para ${status} às ${trimmedTime}.`
+    // 2. If an actual contact or attempt happened, log it in prospecting_interactions
+    if (status !== 'Nenhum contato') {
+      const validFollowUp = lead.followUp && lead.followUp >= date ? lead.followUp : ''
+      const activityDraft: ProspectActivityDraft = {
+        date,
+        channel,
+        stage: targetStage,
+        note: noteText,
+        followUp: validFollowUp,
+        nextAction: lead.nextAction,
+      }
+      try {
+        await log(leadId, activityDraft)
+      } catch {}
     }
-    return ok
+
+    // 3. Keep local state explicitly updated
+    data.value.leads = data.value.leads.map(item =>
+      item.id === leadId
+        ? { ...item, stage: targetStage, contactStatus: status, contactTime: trimmedTime }
+        : item
+    )
+
+    notice.value = `Status atualizado para ${status} às ${trimmedTime}.`
+    return true
   }
 
   async function remove(id: string, expectedUpdatedAt: string): Promise<boolean> {

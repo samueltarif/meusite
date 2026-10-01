@@ -21,7 +21,7 @@ const {
 } = await jiti.import('../app/constants/prospecting.ts')
 
 const { prospectSchema } = await jiti.import('../app/validation/prospecting.ts')
-const { dbRowToProspect } = await jiti.import('../app/services/prospecting-api.ts')
+const { dbRowToProspect, prospectToDbRow } = await jiti.import('../app/services/prospecting-api.ts')
 
 // 1. Verify constant options match user requirements exactly:
 // "nenhum contato, e contato realizado, nao atendeu, nao responndeu"
@@ -239,5 +239,20 @@ assert.equal(prospect.contactTime, '14:35')
 assert.equal(getLeadContactStatus(prospect), 'Contato realizado')
 assert.equal(getLeadContactTime(prospect), '14:35')
 assert.equal(formatContactTimeDisplay(prospect, today), 'Hoje às 14:35')
+
+// 12. Verify prospectToDbRow exports contact_status and contact_time
+const serialized = prospectToDbRow({ ...prospect, contactStatus: 'Não atendeu', contactTime: '17:15' })
+assert.equal(serialized.contact_status, 'Não atendeu')
+assert.equal(serialized.contact_time, '17:15')
+
+// 13. Verify dbRowToProspect directly reads Supabase columns added by migration
+const dbRowWithMigratedColumns = {
+  ...dbRow,
+  contact_status: 'Não respondeu',
+  contact_time: '18:00',
+}
+const prospectMigrated = dbRowToProspect(dbRowWithMigratedColumns, dbInteractions)
+assert.equal(prospectMigrated.contactStatus, 'Não respondeu')
+assert.equal(prospectMigrated.contactTime, '18:00')
 
 console.log('OK: status de contato (Nenhum contato, Contato realizado, Não atendeu, Não respondeu), horário obrigatório, exibição externa e persistência verificados com sucesso!')
