@@ -216,19 +216,19 @@ const dbRow = {
   proposal_value: 1200,
   monthly_value: 150,
   archived: false,
-  created_at: '2026-09-30T10:00:00.000+00:00',
-  updated_at: '2026-09-30T14:35:00.000+00:00',
+  created_at: `${today}T10:00:00.000+00:00`,
+  updated_at: `${today}T14:35:00.000+00:00`,
 }
 
 const dbInteractions = [
   {
     id: 'int-1',
     lead_id: 'lead-123',
-    interaction_date: '2026-09-30',
+    interaction_date: today,
     channel: 'WhatsApp',
     stage: 'Contatado',
     note: '[Status: Contato realizado | Horário: 14:35] Mensagem inicial enviada com proposta',
-    created_at: '2026-09-30T14:35:00.000+00:00',
+    created_at: `${today}T14:35:00.000+00:00`,
   },
 ]
 

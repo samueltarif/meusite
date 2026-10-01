@@ -63,7 +63,7 @@ export function heatReason(lead: Prospect): string {
 export const terminalStage = (stage: ProspectStage): boolean => ['Fechado', 'Sem interesse', 'Não contatar'].includes(stage)
 export const contactCounted = (lead: Prospect): boolean => lead.history.some(item => !['Selecionado', 'Aprovado'].includes(item.stage))
 export const contactSummary = (lead: Prospect): string => contactCounted(lead) ? 'Contato registrado' : ['Selecionado', 'Aprovado'].includes(lead.stage) ? 'Ainda não contatado' : 'Sem contato registrado no histórico'
-export const responseCounted = (lead: Prospect): boolean => lead.history.some(item => ['Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar'].includes(item.stage))
+export const responseCounted = (lead: Prospect): boolean => lead.history.some(item => ['Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse'].includes(item.stage))
 export const interestCounted = (lead: Prospect): boolean => lead.history.some(item => ['Interessado', 'Proposta enviada', 'Fechado'].includes(item.stage))
 export function recordActivity(lead: Prospect, activity: ProspectActivityDraft): Prospect {
   const latestDate = lead.history.reduce((latest, item) => item.date > latest ? item.date : latest, '')
