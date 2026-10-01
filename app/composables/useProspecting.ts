@@ -4,6 +4,7 @@ import { downloadProspecting, downloadOriginalProspecting, readProspectingBackup
 import { activitySchema, prospectSchema, settingsSchema } from '~/validation/prospecting'
 import { localDay, heat, terminalStage, contactCounted, responseCounted, interestCounted, segmentResults, recordActivity, formatInteractionNote } from '~/utils/prospecting'
 import { compareProspects, returnBucket } from '~/utils/prospecting-workspace'
+import { outreachSummary } from '~/utils/prospecting-summary'
 import { prospectStages } from '~/constants/prospecting'
 import {
   apiLoadLeads, apiCreateLead, apiUpdateLead, apiDeleteLead,
@@ -282,8 +283,8 @@ export function useProspecting() {
 
   const stats = computed(() => ({
     registered: active.value.length,
-    contacted: data.value.leads.filter(contactCounted).length,
-    responses: data.value.leads.filter(responseCounted).length,
+    contacted: outreachSummary(data.value.leads, data.value.settings.target).contacted,
+    responses: outreachSummary(data.value.leads, data.value.settings.target).responses,
     interested: data.value.leads.filter(interestCounted).length,
     won: data.value.leads.filter(lead => lead.stage === 'Fechado').length,
     revenue: data.value.leads.filter(lead => lead.stage === 'Fechado').reduce((sum, lead) => sum + lead.proposalValue, 0),
