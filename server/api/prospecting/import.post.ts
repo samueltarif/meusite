@@ -1,122 +1,40 @@
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUser } from '../../utils/auth'
+import { prospectSchema } from '../../../app/validation/prospecting'
+import { prospectToDbRow } from '../../../app/utils/prospecting-row'
 
-const interactionSchema = z.object({
-  id: z.string().uuid(),
-  lead_id: z.string().uuid(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  channel: z.enum(['WhatsApp', 'Instagram', 'E-mail', 'Telefone', 'Presencial']),
-  stage: z.enum(['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar']),
-  note: z.string().min(1).max(4000),
-})
-
-const leadSchema = z.object({
-  id: z.string().uuid(),
-  company: z.string().trim().min(2).max(200),
-  person: z.string().trim().max(200).default(''),
-  city: z.string().trim().min(2).max(200),
-  segment: z.string().trim().min(2).max(200),
-  source: z.string().trim().max(200).default('Google Maps'),
-  maps: z.string().trim().max(2000).default(''),
-  instagram: z.string().trim().max(2000).default(''),
-  website: z.string().trim().max(2000).default(''),
-  phone: z.string().trim().max(50).default(''),
-  additional_phones: z.array(z.string().trim().min(1).max(50)).max(9).default([]),
-  email: z.string().trim().max(254).default(''),
-  website_status: z.enum(['Não verificado', 'Sem site', 'Só Instagram', 'Site antigo ou ruim', 'Site adequado']).default('Não verificado'),
-  activity: z.enum(['Não verificada', 'Ativo', 'Aparentemente abandonado']).default('Não verificada'),
-  good_reviews: z.boolean().default(false),
-  recent_photos: z.boolean().default(false),
-  professional: z.boolean().default(false),
-  rating: z.number().min(0).max(5).nullable().default(null),
-  review_count: z.number().int().min(0).nullable().default(null),
-  heat_override: z.enum(['', 'Quente', 'Morno', 'Revisar', 'Descartar']).default(''),
-  opportunity: z.string().trim().max(4000).default(''),
-  personalization: z.string().trim().max(2000).default(''),
-  stage: z.enum(['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar']).default('Selecionado'),
-  next_action: z.string().trim().max(500).default(''),
-  follow_up: z.string().nullable().default(null),
-  notes: z.string().trim().max(6000).default(''),
-  proposal_value: z.number().min(0).max(100000000).default(0),
-  monthly_value: z.number().min(0).max(100000000).default(0),
-  archived: z.boolean().default(false),
-  interactions: z.array(interactionSchema).default([]),
-})
-
-const bodySchema = z.object({
-  leads: z.array(leadSchema).max(5000),
-})
-
+const leadSchema = prospectSchema.extend({ id: z.string().uuid() })
+const bodySchema = z.object({ leads: z.array(leadSchema).min(1).max(5000) })
 export default defineEventHandler(async (event) => {
   const user = await getAuthenticatedUser(event)
-
-  const supabaseUrl = process.env.SUPABASE_URL || 'https://mwrtluebbiyrmjrqwhut.supabase.co'
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  const admin = createClient(supabaseUrl, supabaseKey)
-
-  const { data: member } = await admin
-    .from('prospecting_members')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
+  const admin = createClient(process.env.SUPABASE_URL || 'https://mwrtluebbiyrmjrqwhut.supabase.co', process.env.SUPABASE_SERVICE_ROLE_KEY || '')
+  const { data: member, error: memberError } = await admin.from('prospecting_members').select('user_id').eq('user_id', user.id).maybeSingle()
+  if (memberError) throw createError({ statusCode: 500, statusMessage: 'Não foi possível verificar seu acesso.' })
   if (!member) throw createError({ statusCode: 403, statusMessage: 'Acesso restrito ao CRM.' })
-
-  const body = await readBody(event)
-  const parsed = bodySchema.safeParse(body)
-  if (!parsed.success) {
-    throw createError({ statusCode: 400, statusMessage: parsed.error.issues[0]?.message || 'Dados de importaÃ§Ã£o invÃ¡lidos.' })
+  const raw = await readBody(event)
+  if (JSON.stringify(raw).length > 10_000_000) throw createError({ statusCode: 413, statusMessage: 'Importação acima de 10 MB.' })
+  const parsed = bodySchema.safeParse(raw)
+  if (!parsed.success) throw createError({ statusCode: 400, statusMessage: `Dados inválidos: ${parsed.error.issues[0]?.path.join('.')}: ${parsed.error.issues[0]?.message}` })
+  const ids = new Set<string>(), interactionIds = new Set<string>()
+  for (const lead of parsed.data.leads) {
+    if (ids.has(lead.id)) throw createError({ statusCode: 400, statusMessage: 'Identificador de empresa duplicado no arquivo.' })
+    ids.add(lead.id)
+    for (const item of lead.history) {
+      if (!z.string().uuid().safeParse(item.id).success || interactionIds.has(item.id)) throw createError({ statusCode: 400, statusMessage: 'Identificador de histórico inválido ou duplicado.' })
+      interactionIds.add(item.id)
+    }
   }
-
-  const { leads } = parsed.data
-
-  // Idempotent upsert: ON CONFLICT DO NOTHING preserves existing records
-  const leadRows = leads.map(({ interactions: _interactions, ...lead }) => ({
-    ...lead,
-    follow_up: lead.follow_up || null,
+  const rows = parsed.data.leads.map(lead => ({
+    ...prospectToDbRow(lead), created_at: lead.createdAt, updated_at: lead.updatedAt,
+    interactions: lead.history.map(item => ({ id: item.id, lead_id: lead.id, date: item.date, channel: item.channel, stage: item.stage, note: item.note,
+      created_at: item.createdAt || lead.createdAt, contact_time: item.time || null, contact_status: item.status || null })),
   }))
-
-  let importedLeads = 0
-  let importedInteractions = 0
-
-  if (leadRows.length > 0) {
-    const { error: leadErr, count } = await admin
-      .from('prospecting_leads')
-      .upsert(leadRows, { onConflict: 'id', ignoreDuplicates: true })
-      .select()
-
-    if (leadErr) throw createError({ statusCode: 500, statusMessage: 'Erro ao importar contatos.' })
-    importedLeads = count ?? 0
+  const { data, error } = await admin.rpc('prospecting_import_leads', { p_leads: rows })
+  if (error) {
+    if (error.code === '23505') throw createError({ statusCode: 409, statusMessage: error.message?.startsWith('Importação bloqueada:') ? error.message : 'Importação bloqueada: identificador já cadastrado. Nenhum cadastro do arquivo foi importado.' })
+    if (['PGRST202', '42883', '42703'].includes(error.code)) throw createError({ statusCode: 503, statusMessage: 'Execute o script prospecting-import.sql no Supabase antes de importar.' })
+    throw createError({ statusCode: 500, statusMessage: 'Não foi possível importar. Nenhum cadastro foi alterado. Verifique os IDs e os dados do arquivo.' })
   }
-
-  // Flatten all interactions
-  const allInteractions = leads.flatMap(lead =>
-    (lead.interactions || []).map(i => ({
-      id: i.id,
-      lead_id: lead.id,
-      date: i.date,
-      channel: i.channel,
-      stage: i.stage,
-      note: i.note,
-    }))
-  )
-
-  if (allInteractions.length > 0) {
-    const { error: intErr, count } = await admin
-      .from('prospecting_interactions')
-      .upsert(allInteractions, { onConflict: 'id', ignoreDuplicates: true })
-      .select()
-
-    if (intErr) throw createError({ statusCode: 500, statusMessage: 'Erro ao importar histÃ³rico.' })
-    importedInteractions = count ?? 0
-  }
-
-  return {
-    imported_leads: importedLeads,
-    imported_interactions: importedInteractions,
-    total_leads: leads.length,
-    total_interactions: allInteractions.length,
-  }
+  return data
 })
-

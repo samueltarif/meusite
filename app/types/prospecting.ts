@@ -13,6 +13,7 @@ export interface Prospect {
   nextAction: string; followUp: string; notes: string; proposalValue: number; monthlyValue: number
   archived: boolean; createdAt: string; updatedAt: string; history: ProspectInteraction[]
   contactStatus?: ProspectContactStatus
+  importedAt?: string
   contactTime?: string
 }
 export interface ProspectSettings { target: number; budget: number }

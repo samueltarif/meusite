@@ -1,5 +1,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import type { Prospect, ProspectData, ProspectActivityDraft, ProspectSettings, ProspectContactStatus, ProspectChannel, ProspectStage } from '~/types/prospecting'
+import { assertNoImportDuplicates } from '~/utils/prospecting-duplicates'
+import { readProspectImport } from '~/services/prospecting-import'
 import { downloadProspecting, downloadOriginalProspecting, readProspectingBackup } from '~/services/prospecting'
 import { activitySchema, prospectSchema, settingsSchema } from '~/validation/prospecting'
 import { localDay, heat, terminalStage, contactCounted, responseCounted, interestCounted, segmentResults, recordActivity, formatInteractionNote } from '~/utils/prospecting'
@@ -295,29 +297,41 @@ export function useProspecting() {
 
   const pendingImport = ref<ProspectData | null>(null)
 
+  const importing = ref(false)
+  const preparingImport = ref(false)
   async function prepareImport(file: File) {
+    if (importing.value || preparingImport.value) return
+    preparingImport.value = true
+    pendingImport.value = null
+    notice.value = ''
     try {
-      pendingImport.value = await readProspectingBackup(file)
+      const candidate = await readProspectImport(file)
+      const existing = await apiLoadLeads()
+      assertNoImportDuplicates(candidate.leads, existing)
+      pendingImport.value = candidate
       error.value = ''
-    } catch {
-      error.value = 'Backup inválido. Use um arquivo JSON exportado por este painel, de até 10 MB.'
-    }
+    } catch (err: any) {
+      error.value = err?.message || 'Arquivo inválido. Use JSON ou Excel .xlsx de até 10 MB.'
+    } finally { preparingImport.value = false }
   }
-
   async function importBackup(): Promise<boolean> {
-    if (!pendingImport.value) return false
+    if (!pendingImport.value || importing.value) return false
+    importing.value = true
+    let committed = false
     try {
+      assertNoImportDuplicates(pendingImport.value.leads, await apiLoadLeads())
       const result = await (await import('~/services/prospecting-api')).apiImport(pendingImport.value)
-      notice.value = `${result.imported_leads} contatos e ${result.imported_interactions} interações importados para o banco. Registros existentes foram preservados.`
+      notice.value = result.imported_leads + ' empresas e ' + result.imported_interactions + ' interações importadas. Todos os novos cadastros foram marcados como Importado.'
       pendingImport.value = null
-      // Reload fresh from server
+      committed = true
       const [leads, serverSettings] = await Promise.all([apiLoadLeads(), apiLoadSettings()])
       data.value = { version: 1, leads, settings: serverSettings }
+      error.value = ''
       return true
     } catch (err: any) {
-      error.value = err?.data?.statusMessage || err?.message || 'Erro ao importar. Seus dados locais foram preservados.'
+      error.value = committed ? 'Importação concluída no banco. Recarregue o painel para atualizar a lista.' : err?.data?.statusMessage || err?.message || 'Não foi possível confirmar a importação. Confira a lista antes de tentar novamente.'
       return false
-    }
+    } finally { importing.value = false }
   }
 
   function exportBackup() {
@@ -346,7 +360,7 @@ export function useProspecting() {
     query, city, segment, priority, stage, view,
     today, active, due, filtered, stats, results, sort, returnFilter, returnCounts,
     save, log, updateContactStatus, archive, reopen, settings, remove,
-    pendingImport, prepareImport, importBackup, exportBackup,
+    pendingImport, preparingImport, importing, prepareImport, importBackup, exportBackup,
     clearFilters,
   }
 }

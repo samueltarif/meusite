@@ -119,6 +119,7 @@ async function submitStatusChange() {
       </span>
     </div>
 
+    <span v-if="lead.importedAt" class="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-800" :title="'Importado em ' + new Date(lead.importedAt).toLocaleString('pt-BR')">Importado</span>
     <!-- Company name and City -->
     <div class="min-w-0">
       <h3 class="break-words text-xl font-semibold leading-snug">

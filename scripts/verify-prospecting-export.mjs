@@ -5,7 +5,7 @@ const jiti = createJiti(import.meta.url, { alias: { '~': `${process.cwd()}/app` 
 const { newProspect } = await jiti.import('../app/utils/prospecting.ts')
 const { buildProspectExport, createProspectWorkbook, prospectFieldLabels } = await jiti.import('../app/services/prospecting-export.ts')
 const { collectProspectingRows } = await jiti.import('../server/utils/prospecting-pagination.ts')
-const company = {...newProspect(), company: '=EMPRESA teste', city: 'Santo André', segment: 'Vidros', person: 'João', phone: '+55 38 9192-1122', additionalPhones: ['+55 11 99999-1234', '00351212345678'], notes: 'Observação completa\ncom acentos e emoji 🪟', rating: null, reviewCount: 0, archived: true, proposalValue: 1234.56, monthlyValue: 90, history: [{id:'interaction-1',date:'2026-09-30',channel:'WhatsApp',stage:'Respondeu',note:'=texto literal\nSegunda linha'}]}
+const company = {...newProspect(), company: '=EMPRESA teste', contactStatus: 'Não atendeu', contactTime: '09:30', importedAt: '2026-10-02T12:00:00.000Z', city: 'Santo André', segment: 'Vidros', person: 'João', phone: '+55 38 9192-1122', additionalPhones: ['+55 11 99999-1234', '00351212345678'], notes: 'Observação completa\ncom acentos e emoji 🪟', rating: null, reviewCount: 0, archived: true, proposalValue: 1234.56, monthlyValue: 90, history: [{id:'interaction-1',date:'2026-09-30',channel:'WhatsApp',stage:'Respondeu',note:'=texto literal\nSegunda linha'}]}
 const input={leads:[company],settings:{target:30,budget:200},scope:'all'}
 const json=buildProspectExport(input)
 assert.deepEqual(JSON.parse(JSON.stringify(json)).leads, input.leads)
@@ -22,7 +22,7 @@ for(const [key,value] of Object.entries(json.leads[0])) {
   if(['history','additionalPhones'].includes(key))continue
   assert.deepEqual(keyValues[key], value, key)
 }
-assert.equal(main.getRow(2).getCell(2).type,ExcelJS.ValueType.String)
+assert.equal(main.getRow(2).getCell(main.getRow(1).values.findIndex(value => String(value).endsWith('[company]'))).type,ExcelJS.ValueType.String)
 const phones=read.getWorksheet('Telefones')
 assert.equal(phones.rowCount,4)
 assert.equal(phones.getRow(4).getCell(5).value,'00351212345678')

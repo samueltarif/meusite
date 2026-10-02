@@ -3,6 +3,8 @@ import { heat } from '~/utils/prospecting'
 import { prospectStageLabels } from '~/constants/prospecting'
 
 export const prospectFieldLabels: Record<keyof Prospect, string> = {
+  importedAt: 'Importado em (ISO)',
+  contactStatus: 'Status do contato', contactTime: 'Horário do contato',
   id: 'ID da empresa', company: 'Empresa', person: 'Dono / responsável', city: 'Cidade', segment: 'Segmento', source: 'Onde encontrou',
   maps: 'Google Maps', instagram: 'Instagram', website: 'Site atual', phone: 'Telefone principal', additionalPhones: 'Telefones adicionais', email: 'E-mail',
   websiteStatus: 'Situação do site', activity: 'Atividade do negócio', goodReviews: 'Boas avaliações', recentPhotos: 'Fotos recentes', professional: 'Apresentação profissional',
@@ -79,6 +81,7 @@ export async function createProspectWorkbook(data: ProspectExport) {
     { key: 'leadId', header: 'ID da empresa [leadId]' }, { key: 'company', header: 'Empresa' }, { key: 'position', header: 'Posição no histórico' },
     { key: 'id', header: 'ID da interação [id]' }, { key: 'date', header: 'Data [date]' }, { key: 'channel', header: 'Canal [channel]' },
     { key: 'stage', header: 'Etapa [stage]' }, { key: 'note', header: 'O que aconteceu [note]' },
+    { key: 'time', header: 'Horário [time]' }, { key: 'status', header: 'Status do contato [status]' }, { key: 'createdAt', header: 'Criado em [createdAt]' },
   ], data.leads.flatMap(lead => lead.history.map((item, index) => ({ ...item, leadId: lead.id, company: lead.company, position: index + 1 }))))
   sheet('Configuracoes', [{ key: 'key', header: 'Campo' }, { key: 'value', header: 'Valor' }], data.settings ? Object.entries(data.settings).map(([key, value]) => ({ key, value })) : [])
   sheet('Classificacao', [{ key: 'id', header: 'ID da empresa' }, { key: 'stageLabel', header: 'Etapa exibida' }, { key: 'suggestedPriority', header: 'Prioridade aplicada' }], data.derived)

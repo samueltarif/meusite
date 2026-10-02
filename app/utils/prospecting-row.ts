@@ -1,0 +1,37 @@
+import type { Prospect } from '~/types/prospecting'
+export function prospectToDbRow(lead: Prospect): Record<string, any> {
+  return {
+    id: lead.id,
+    company: lead.company,
+    person: lead.person,
+    city: lead.city,
+    segment: lead.segment,
+    source: lead.source,
+    maps: lead.maps,
+    instagram: lead.instagram,
+    website: lead.website,
+    phone: lead.phone,
+    additional_phones: lead.additionalPhones ?? [],
+    email: lead.email,
+    website_status: lead.websiteStatus,
+    activity: lead.activity,
+    good_reviews: lead.goodReviews,
+    recent_photos: lead.recentPhotos,
+    professional: lead.professional,
+    rating: lead.rating,
+    review_count: lead.reviewCount,
+    heat_override: lead.heatOverride,
+    opportunity: lead.opportunity,
+    personalization: lead.personalization,
+    stage: lead.stage,
+    next_action: lead.nextAction,
+    follow_up: lead.followUp || null,
+    notes: lead.notes,
+    proposal_value: lead.proposalValue,
+    monthly_value: lead.monthlyValue,
+    archived: lead.archived,
+    contact_status: lead.contactStatus || 'Nenhum contato',
+    contact_time: lead.contactTime || '',
+  }
+}
+

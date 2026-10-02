@@ -8,7 +8,7 @@ export const isoDateTime = z.preprocess(
 const url = z.string().trim().max(2000).refine(value => { if (!value) return true; try { return ['http:', 'https:'].includes(new URL(value).protocol) } catch { return false } }, 'Use um link completo, começando com https://.')
 const stage = z.enum(['Selecionado', 'Aprovado', 'Contatado', 'Respondeu', 'Interessado', 'Proposta enviada', 'Fechado', 'Sem interesse', 'Não contatar'])
 const channel = z.enum(['WhatsApp', 'Instagram', 'E-mail', 'Telefone', 'Presencial'])
-const history = z.object({ id: text(100).min(1), date: calendarDate.refine(Boolean, 'Informe a data do contato.'), channel, stage, note: text(4000).min(1, 'Registre o que aconteceu.') })
+const history = z.object({ id: text(100).min(1), date: calendarDate.refine(Boolean, 'Informe a data do contato.'), channel, stage, note: text(4000).min(1, 'Registre o que aconteceu.'), time: text(50).optional(), status: z.enum(['Nenhum contato', 'Contato realizado', 'Não atendeu', 'Não respondeu']).optional(), createdAt: isoDateTime.optional() })
 const contactStatus = z.enum(['Nenhum contato', 'Contato realizado', 'Não atendeu', 'Não respondeu']).optional()
 export const prospectSchema = z.object({
   id: text(100).min(1), company: text().min(2, 'Informe o nome da empresa.'), person: text(), city: text().min(2, 'Informe a cidade.'), segment: text().min(2, 'Informe o segmento.'), source: text(),
@@ -18,6 +18,7 @@ export const prospectSchema = z.object({
   heatOverride: z.enum(['', 'Quente', 'Morno', 'Revisar', 'Descartar']), opportunity: text(4000), personalization: text(2000), stage,
   nextAction: text(500), followUp: calendarDate, notes: text(6000), proposalValue: z.number().min(0).max(100000000), monthlyValue: z.number().min(0).max(100000000),
   archived: z.boolean(), createdAt: isoDateTime, updatedAt: isoDateTime, history: z.array(history).max(500),
+  importedAt: isoDateTime.optional(),
   contactStatus, contactTime: text(50).optional(),
 })
 export const settingsSchema = z.object({ target: z.number().int().min(1).max(100000), budget: z.number().min(0).max(10000000) })

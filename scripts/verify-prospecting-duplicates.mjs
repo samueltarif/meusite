@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict'
+import {createJiti} from 'jiti'
+const j=createJiti(import.meta.url,{alias:{'~':`${process.cwd()}/app`}})
+const {newProspect}=await j.import('../app/utils/prospecting.ts')
+const {assertNoImportDuplicates}=await j.import('../app/utils/prospecting-duplicates.ts')
+const make=(values={})=>({...newProspect(),company:crypto.randomUUID(),city:'São Paulo',segment:'Vidros',...values})
+const existing=make({company:'São Vidros Ltda.',phone:'(11) 99999-1234',email:'CLIENTE@EXEMPLO.COM',archived:true})
+assert.throws(()=>assertNoImportDuplicates([make({company:'SAO VIDROS LTDA'})],[existing]),/nome da empresa/)
+assert.throws(()=>assertNoImportDuplicates([make({additionalPhones:['+55 11 99999-1234']})],[existing]),/telefone/)
+assert.throws(()=>assertNoImportDuplicates([make({email:'cliente@exemplo.com'})],[existing]),/e-mail/)
+assert.throws(()=>assertNoImportDuplicates([make({id:existing.id})],[existing]),/identificador/)
+assert.throws(()=>assertNoImportDuplicates([make({person:'João Silva'})],[make({person:'JOAO SILVA'})]),/responsável/)
+for(const key of ['website','instagram','maps']) assert.throws(()=>assertNoImportDuplicates([make({[key]:'https://www.exemplo.com/perfil/'})],[make({[key]:'http://exemplo.com/perfil'})]))
+assert.doesNotThrow(()=>assertNoImportDuplicates([make(),make()],[existing]))
+const first=make({phone:'11988881234'})
+assert.throws(()=>assertNoImportDuplicates([first,make({phone:'+55 (11) 98888-1234'})],[]),/Nenhum cadastro/)
+assert.doesNotThrow(()=>assertNoImportDuplicates([make({phone:'11912345678',additionalPhones:['11912345678']})],[]))
+console.log('OK: nomes, acentos, telefones adicionais/DDI, e-mail, links, responsáveis, IDs, arquivados, conflitos internos e campos comuns.')

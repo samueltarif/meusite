@@ -1,5 +1,7 @@
 import { supabase } from '~/composables/useSupabase'
-import type { Prospect, ProspectData, ProspectSettings } from '~/types/prospecting'
+import { prospectToDbRow } from '~/utils/prospecting-row'
+export { prospectToDbRow } from '~/utils/prospecting-row'
+import type { ProspectContactStatus, Prospect, ProspectData, ProspectSettings } from '~/types/prospecting'
 import { getLeadContactStatus, getLeadContactTime } from '~/utils/prospecting'
 
 /**
@@ -59,6 +61,7 @@ export function dbRowToProspect(row: any, interactions: any[] = []): Prospect {
     updatedAt: normalizeIso(row.updated_at),
     contactStatus: (row.contact_status as ProspectContactStatus) || undefined,
     contactTime: row.contact_time || undefined,
+    ...(row.imported_at ? { importedAt: normalizeIso(row.imported_at) } : {}),
     history: (interactions).map(i => ({
       id: i.id,
       date: i.date || i.interaction_date,
@@ -66,6 +69,8 @@ export function dbRowToProspect(row: any, interactions: any[] = []): Prospect {
       stage: i.stage,
       note: i.note,
       createdAt: i.created_at,
+      ...(i.contact_status ? { status: i.contact_status } : {}),
+      ...(i.contact_time ? { time: i.contact_time } : {}),
     })),
   }
   lead.contactStatus = (row.contact_status as ProspectContactStatus) || getLeadContactStatus(lead)
@@ -74,41 +79,6 @@ export function dbRowToProspect(row: any, interactions: any[] = []): Prospect {
 }
 
 /** Converts a camelCase Prospect to snake_case for the API. */
-export function prospectToDbRow(lead: Prospect): Record<string, any> {
-  return {
-    id: lead.id,
-    company: lead.company,
-    person: lead.person,
-    city: lead.city,
-    segment: lead.segment,
-    source: lead.source,
-    maps: lead.maps,
-    instagram: lead.instagram,
-    website: lead.website,
-    phone: lead.phone,
-    additional_phones: lead.additionalPhones ?? [],
-    email: lead.email,
-    website_status: lead.websiteStatus,
-    activity: lead.activity,
-    good_reviews: lead.goodReviews,
-    recent_photos: lead.recentPhotos,
-    professional: lead.professional,
-    rating: lead.rating,
-    review_count: lead.reviewCount,
-    heat_override: lead.heatOverride,
-    opportunity: lead.opportunity,
-    personalization: lead.personalization,
-    stage: lead.stage,
-    next_action: lead.nextAction,
-    follow_up: lead.followUp || null,
-    notes: lead.notes,
-    proposal_value: lead.proposalValue,
-    monthly_value: lead.monthlyValue,
-    archived: lead.archived,
-    contact_status: lead.contactStatus || 'Nenhum contato',
-    contact_time: lead.contactTime || '',
-  }
-}
 
 export async function apiCheckMember(): Promise<boolean> {
   const token = await getToken()
@@ -187,21 +157,10 @@ export async function apiSaveSettings(settings: ProspectSettings): Promise<Prosp
 
 export async function apiImport(data: ProspectData): Promise<{ imported_leads: number; imported_interactions: number }> {
   const token = await getToken()
-  const leadsPayload = data.leads.map(lead => ({
-    ...prospectToDbRow(lead),
-    interactions: lead.history.map(h => ({
-      id: h.id,
-      lead_id: lead.id,
-      date: h.date,
-      channel: h.channel,
-      stage: h.stage,
-      note: h.note,
-    })),
-  }))
   return $fetch('/api/prospecting/import', {
     method: 'POST',
     headers: authHeaders(token),
-    body: { leads: leadsPayload },
+    body: { leads: data.leads },
   })
 }
 
