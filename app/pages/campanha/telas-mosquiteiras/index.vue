@@ -880,6 +880,15 @@ onBeforeUnmount(() => {
       <img :src="LOGO" alt="GMK" width="320" height="267" loading="lazy" class="mx-auto h-14 w-auto">
       <p class="mt-3 font-semibold text-white">GMK · Telas Mosquiteiras em Alumínio Sob Medida</p>
       <p class="mt-1">© {{ new Date().getFullYear() }} GMK. Todos os direitos reservados.</p>
+      <div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/60">
+        <NuxtLink to="/campanha/telas-mosquiteiras/politica-de-privacidade" class="underline underline-offset-4 hover:text-white transition-colors">
+          Política de Privacidade
+        </NuxtLink>
+        <span aria-hidden="true">•</span>
+        <NuxtLink to="/campanha/telas-mosquiteiras/termos-de-servico" class="underline underline-offset-4 hover:text-white transition-colors">
+          Termos de Serviço
+        </NuxtLink>
+      </div>
     </footer>
 
     <!-- WHATSAPP FLUTUANTE -->
