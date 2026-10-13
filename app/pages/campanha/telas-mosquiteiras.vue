@@ -103,12 +103,13 @@ const defaultWhatsappUrl = whatsappUrl(CONFIG.whatsappMessage)
  * ========================================================================== */
 const IMG = '/imagens campanha gmk/otimizadas/'
 const LOGO = encodeURI(`${IMG}logo-gmk.webp`)
+const IMG2 = '/images/campanha-gmk/'
 
 const TIPOS: { value: LeadTipo; label: string; hint: string; src: string }[] = [
-  { value: 'janela', label: 'Janela', hint: 'Correr, basculante e outras', src: encodeURI(`${IMG}janela.webp`) },
-  { value: 'porta-giro', label: 'Porta de Giro', hint: 'Porta de abrir', src: encodeURI(`${IMG}porta-giro.webp`) },
-  { value: 'porta-balcao', label: 'Porta-Balcão / Sacada', hint: 'Porta de correr', src: encodeURI(`${IMG}porta-balcao.webp`) },
-  { value: 'casa-inteira', label: 'Casa Inteira', hint: 'Todas as aberturas', src: encodeURI(`${IMG}casa-inteira.webp`) }
+  { value: 'janela', label: 'Janela', hint: 'Correr, basculante e outras', src: `${IMG2}tipo-janela.webp` },
+  { value: 'porta-giro', label: 'Porta de Giro', hint: 'Porta de abrir', src: `${IMG2}tipo-porta-giro.webp` },
+  { value: 'porta-balcao', label: 'Porta-Balcão / Sacada', hint: 'Porta de correr', src: `${IMG2}tipo-porta-balcao.webp` },
+  { value: 'casa-inteira', label: 'Casa Inteira', hint: 'Todas as aberturas', src: `${IMG2}tipo-casa-inteira.webp` }
 ]
 
 const QUANTIDADES: { value: LeadQuantidade; label: string; hint?: string; icon: string }[] = [
@@ -297,18 +298,153 @@ function scrollToQuiz() {
   document.getElementById('orcamento')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+const TRUST = [
+  { icon: 'event_available', label: 'Visita técnica grátis' },
+  { icon: 'verified_user', label: '2 anos de garantia' }
+]
+
 const BENEFITS = [
-  { icon: 'straighten', title: 'Sob medida', text: 'Cada tela é feita para o vão da sua janela ou porta.' },
-  { icon: 'hardware', title: 'Alumínio', text: 'Estrutura leve, resistente e com acabamento que combina com sua esquadria.' },
-  { icon: 'build', title: 'Instalação profissional', text: 'Você recebe a tela pronta no lugar, sem dor de cabeça.' },
-  { icon: 'chat', title: 'Orçamento pelo WhatsApp', text: 'Atendimento direto, rápido e sem compromisso.' }
+  { icon: 'verified_user', title: '2 anos de garantia', text: 'Tranquilidade depois da instalação.' },
+  { icon: 'event_available', title: 'Visita técnica gratuita', text: 'Medimos no local, sem compromisso.' },
+  { icon: 'straighten', title: 'Sob medida em alumínio', text: 'Feita para o vão da sua janela ou porta.' },
+  { icon: 'build', title: 'Instalação profissional', text: 'Equipe pontual e atenciosa.' }
 ]
 
 const HOW = [
   { n: '1', title: 'Responda o quiz', text: 'São só 4 perguntas rápidas sobre o que você precisa.' },
-  { n: '2', title: 'Receba o orçamento', text: 'Nossa equipe te chama no WhatsApp em até 15 min.' },
-  { n: '3', title: 'Agende a instalação', text: 'Confirmamos as medidas e combinamos o melhor dia.' }
+  { n: '2', title: 'Receba o orçamento', text: 'Nossa equipe te chama no WhatsApp em até 15 min e agenda a visita técnica gratuita.' },
+  { n: '3', title: 'Instalação com garantia', text: 'Instalamos no dia combinado, com 2 anos de garantia.' }
 ]
+
+/* Avaliações reais de clientes (fotos publicadas com autorização).
+ * TODO: troque "Cliente GMK" pelo primeiro nome de cada cliente. */
+const TESTIMONIALS = [
+  {
+    nome: 'Cliente GMK',
+    foto: `${IMG2}depoimento-1.webp`,
+    texto: `Excelente atendimento, conseguiram atender todas as minhas necessidades e com preço adequado, serviço de qualidade com todas as instalações muito bem montadas, pontualidade e muito profissionalismo, recomendo!`
+  },
+  {
+    nome: 'Cliente GMK',
+    foto: `${IMG2}depoimento-2.webp`,
+    texto: `Excelente atendimento, o Márcio conversava comigo em qualquer dia da semana, sempre disposta a ajudar, me passando informações completas, revisando orçamento com muita agilidade a cada modificação que eu fazia. Os rapazes da instalação são extremamente rápidos e atenciosos, montaram as redes do jeitinho que eu pedi, explicando com bastante detalhe todo o manuseio. A agilidade na entrega superou minhas expectativas. Adorei o resultado, estou muito satisfeita e certamente recomendo!`
+  },
+  {
+    nome: 'Cliente GMK',
+    foto: `${IMG2}depoimento-3.webp`,
+    texto: `Excelente serviço. Muito bem feito. Recomendo!!`
+  },
+  {
+    nome: 'Cliente GMK',
+    foto: `${IMG2}depoimento-4.webp`,
+    texto: `A instalação ficou perfeita, atendimento também. Recomendo o serviço, foram super pontuais e profissionais.`
+  }
+]
+
+const BEFORE_AFTER = [
+  { key: 'janela', label: 'Janela', antes: `${IMG2}janela-antes.webp`, depois: `${IMG2}janela-depois.webp` },
+  { key: 'correr', label: 'Tela de correr', antes: `${IMG2}correr-antes.webp`, depois: `${IMG2}correr-depois.webp` },
+  { key: 'porta', label: 'Porta', antes: `${IMG2}porta-antes.webp`, depois: `${IMG2}porta-depois.webp` }
+]
+
+const FAQ = [
+  { q: 'A visita técnica tem custo?', a: 'Não. O orçamento com visita técnica é gratuito e sem compromisso.' },
+  { q: 'Qual é a garantia?', a: 'O nosso serviço tem 2 anos de garantia.' },
+  { q: 'Como recebo meu orçamento?', a: 'Depois de responder as 4 perguntas do quiz, nossa equipe te chama no WhatsApp em até 15 min.' },
+  { q: 'As telas são feitas sob medida?', a: 'Sim. Cada tela é de alumínio e feita para o vão da sua janela, porta ou sacada.' },
+  { q: 'Vocês fazem a instalação?', a: 'Sim. Nossa equipe instala e explica como usar a tela.' },
+  { q: 'Quais aberturas vocês atendem?', a: 'Janelas, portas de giro, portas-balcão e sacadas, ou a casa inteira.' }
+]
+
+/* ---------- Depoimentos: carrossel com snap (sem biblioteca) ---------- */
+const carousel = ref<HTMLElement | null>(null)
+const activeIdx = ref(0)
+const expanded = ref<number[]>([])
+let carouselRaf = 0
+
+const isLong = (t: { texto: string }) => t.texto.length > 230
+function toggleExpanded(i: number) {
+  expanded.value = expanded.value.includes(i) ? expanded.value.filter(n => n !== i) : [...expanded.value, i]
+}
+function onCarouselScroll() {
+  if (carouselRaf) return
+  carouselRaf = requestAnimationFrame(() => {
+    carouselRaf = 0
+    const el = carousel.value
+    if (!el) return
+    const center = el.scrollLeft + el.clientWidth / 2
+    let best = 0
+    let bestDist = Infinity
+    ;(Array.from(el.children) as HTMLElement[]).forEach((c, i) => {
+      const dist = Math.abs(c.offsetLeft + c.offsetWidth / 2 - center)
+      if (dist < bestDist) { bestDist = dist; best = i }
+    })
+    activeIdx.value = best
+  })
+}
+function goTo(i: number) {
+  const el = carousel.value
+  const card = el?.children[i] as HTMLElement | undefined
+  if (!el || !card) return
+  el.scrollTo({ left: card.offsetLeft - (el.clientWidth - card.offsetWidth) / 2, behavior: 'smooth' })
+}
+
+/* ---------- Antes e depois: slider por toque/mouse + teclado ---------- */
+const baIdx = ref(0)
+const baPos = ref(50)
+const curBa = computed(() => BEFORE_AFTER[baIdx.value]!)
+let baDragging = false
+
+function selectBa(i: number) {
+  baIdx.value = i
+  baPos.value = 50
+}
+function baSetFromEvent(e: PointerEvent) {
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  baPos.value = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100))
+}
+function baDown(e: PointerEvent) {
+  baDragging = true
+  ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
+  // No toque, só move depois de arrastar (não atrapalha a rolagem vertical da página).
+  if (e.pointerType === 'mouse') baSetFromEvent(e)
+}
+function baMove(e: PointerEvent) {
+  if (baDragging) baSetFromEvent(e)
+}
+function baUp() {
+  baDragging = false
+}
+
+/* ---------- Barra fixa de WhatsApp (só no celular) ---------- */
+const quizOut = ref(false)
+const kbOpen = ref(false)
+const barVisible = computed(() => quizOut.value && !kbOpen.value && !wa.open)
+
+let quizObserver: IntersectionObserver | null = null
+const onFocusIn = (e: FocusEvent) => {
+  const el = e.target as HTMLInputElement | null
+  kbOpen.value = !!el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.type !== 'range'
+}
+const onFocusOut = () => { kbOpen.value = false }
+
+onMounted(() => {
+  const quiz = document.getElementById('orcamento')
+  if (quiz && 'IntersectionObserver' in window) {
+    quizObserver = new IntersectionObserver(([entry]) => { quizOut.value = !entry!.isIntersecting }, { threshold: 0 })
+    quizObserver.observe(quiz)
+  }
+  document.addEventListener('focusin', onFocusIn)
+  document.addEventListener('focusout', onFocusOut)
+})
+onBeforeUnmount(() => {
+  quizObserver?.disconnect()
+  if (import.meta.client) {
+    document.removeEventListener('focusin', onFocusIn)
+    document.removeEventListener('focusout', onFocusOut)
+    cancelAnimationFrame(carouselRaf)
+  }
+})
 </script>
 
 <template>
@@ -326,7 +462,8 @@ const HOW = [
           :href="defaultWhatsappUrl"
           target="_blank"
           rel="noopener"
-          class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#1fb957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+          :class="barVisible ? 'hidden' : 'inline-flex'"
+          class="h-10 shrink-0 items-center gap-2 rounded-full bg-[#25D366] px-4 lg:inline-flex text-sm font-bold text-white shadow-sm transition hover:bg-[#1fb957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
           @click.prevent="openWhatsApp('header')"
         >
           <CampanhaWhatsappIcon :size="18" />
@@ -340,15 +477,17 @@ const HOW = [
       <section class="gmk-hero relative overflow-hidden text-white">
         <div class="relative z-10 mx-auto grid max-w-6xl gap-6 px-4 pb-10 pt-6 lg:grid-cols-[1fr_minmax(0,34rem)] lg:items-center lg:gap-14 lg:py-16">
           <div>
-            <p class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-[#c5e7ff]">
-              <CampanhaIcon name="bolt" :size="14" fill /> Orçamento rápido pelo WhatsApp
-            </p>
-            <h1 class="mt-3 font-heading text-[26px] font-extrabold leading-[1.15] sm:text-4xl lg:text-5xl">
+            <h1 class="font-heading text-[26px] font-extrabold leading-[1.15] sm:text-4xl lg:text-5xl">
               Proteja sua casa de <span class="text-secondary-container">mosquitos e insetos</span> sem perder a ventilação
             </h1>
             <p class="mt-3 max-w-xl text-sm leading-relaxed text-white/80 sm:text-base">
-              Responda 4 perguntas rápidas e receba seu orçamento de tela mosquiteira em alumínio, feita sob medida.
+              Responda 4 perguntas e receba seu orçamento pelo WhatsApp em até 15 min.
             </p>
+            <ul class="mt-3 flex flex-wrap gap-1.5" aria-label="Diferenciais">
+              <li v-for="c in TRUST" :key="c.label" class="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-[#c5e7ff]">
+                <CampanhaIcon :name="c.icon" :size="14" fill /> {{ c.label }}
+              </li>
+            </ul>
             <ul class="mt-6 hidden space-y-3 lg:block">
               <li v-for="b in BENEFITS.slice(0, 3)" :key="b.title" class="flex items-center gap-3 text-white/90">
                 <span class="grid h-9 w-9 place-items-center rounded-lg bg-white/10 text-secondary-container"><CampanhaIcon :name="b.icon" :size="20" /></span>
@@ -413,7 +552,7 @@ const HOW = [
                     @click="pickTipo(t.value)"
                   >
                     <span class="relative block aspect-[4/3] overflow-hidden lg:aspect-[16/10] bg-[#eeedf5]">
-                      <img :src="t.src" :alt="t.label" width="720" height="540" decoding="async" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                      <img :src="t.src" :alt="t.label" width="400" height="300" decoding="async" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
                       <span v-if="answers.tipo === t.value" class="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-secondary text-white shadow">
                         <CampanhaIcon name="check" :size="16" />
                       </span>
@@ -558,34 +697,181 @@ const HOW = [
         </div>
       </section>
 
+      <!-- DEPOIMENTOS -->
+      <section class="bg-white" aria-labelledby="gmk-dep-title">
+        <div class="mx-auto max-w-6xl px-4 py-10 lg:py-14">
+          <div class="text-center">
+            <div class="flex justify-center gap-0.5 text-amber-400" aria-hidden="true">
+              <CampanhaIcon v-for="n in 5" :key="n" name="star" :size="20" fill />
+            </div>
+            <h2 id="gmk-dep-title" class="mt-2 font-heading text-2xl font-extrabold sm:text-3xl">O que nossos clientes dizem</h2>
+            <p class="mx-auto mt-1 max-w-md text-sm text-slate-500">Avaliações de clientes atendidos pela GMK. Fotos publicadas com autorização.</p>
+          </div>
+
+          <div
+            ref="carousel"
+            class="gmk-snap relative -mx-4 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2"
+            role="region"
+            aria-label="Avaliações de clientes"
+            tabindex="0"
+            @scroll.passive="onCarouselScroll"
+          >
+            <article
+              v-for="(t, i) in TESTIMONIALS"
+              :key="i"
+              class="flex w-[85%] shrink-0 snap-center flex-col rounded-2xl border border-[#d7dce4] bg-[#faf8ff] p-4 sm:w-[22rem]"
+            >
+              <header class="flex items-center gap-3">
+                <img :src="t.foto" :alt="`Foto de ${t.nome}`" width="128" height="128" loading="lazy" decoding="async" class="h-12 w-12 shrink-0 rounded-full object-cover">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-extrabold">{{ t.nome }}</p>
+                  <div class="flex text-amber-400" role="img" aria-label="5 de 5 estrelas">
+                    <CampanhaIcon v-for="n in 5" :key="n" name="star" :size="16" fill />
+                  </div>
+                </div>
+              </header>
+              <blockquote class="mt-3 text-sm leading-relaxed text-slate-700">
+                <p :class="isLong(t) && !expanded.includes(i) ? 'line-clamp-5' : ''">“{{ t.texto }}”</p>
+              </blockquote>
+              <button
+                v-if="isLong(t)"
+                type="button"
+                class="mt-2 min-h-[44px] self-start text-sm font-bold text-secondary underline-offset-2 hover:underline"
+                :aria-expanded="expanded.includes(i)"
+                @click="toggleExpanded(i)"
+              >
+                {{ expanded.includes(i) ? 'Ler menos' : 'Ler mais' }}
+              </button>
+            </article>
+          </div>
+
+          <div class="mt-2 flex items-center justify-center gap-1">
+            <button
+              v-for="(t, i) in TESTIMONIALS"
+              :key="i"
+              type="button"
+              class="grid h-8 w-6 place-items-center"
+              :aria-label="`Ver avaliação ${i + 1}`"
+              :aria-current="activeIdx === i"
+              @click="goTo(i)"
+            >
+              <span class="h-2 rounded-full transition-all" :class="activeIdx === i ? 'w-5 bg-secondary' : 'w-2 bg-[#c7c5d0]'" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANTES E DEPOIS -->
+      <section class="mx-auto max-w-6xl px-4 py-10 lg:py-14" aria-labelledby="gmk-ba-title">
+        <div class="text-center">
+          <h2 id="gmk-ba-title" class="font-heading text-2xl font-extrabold sm:text-3xl">Veja o antes e depois</h2>
+          <p class="mt-1 text-sm text-slate-500">Instalações reais da GMK. Arraste para comparar.</p>
+        </div>
+
+        <div class="mt-5 flex flex-wrap justify-center gap-2" role="tablist" aria-label="Tipo de instalação">
+          <button
+            v-for="(p, i) in BEFORE_AFTER"
+            :key="p.key"
+            type="button"
+            role="tab"
+            :aria-selected="baIdx === i"
+            class="min-h-[44px] rounded-full border-2 px-4 text-sm font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+            :class="baIdx === i ? 'border-secondary bg-secondary text-white' : 'border-[#d7dce4] bg-white text-primary'"
+            @click="selectBa(i)"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+
+        <div
+          class="relative mx-auto mt-4 aspect-[3/4] w-full max-w-sm touch-pan-y select-none overflow-hidden rounded-2xl bg-slate-200 shadow-lg"
+          @pointerdown="baDown"
+          @pointermove="baMove"
+          @pointerup="baUp"
+          @pointercancel="baUp"
+        >
+          <img :src="curBa.depois" :alt="`${curBa.label}: depois da instalação da tela mosquiteira`" width="720" height="960" loading="lazy" decoding="async" draggable="false" class="absolute inset-0 h-full w-full object-cover">
+          <img
+            :src="curBa.antes"
+            :alt="`${curBa.label}: antes da instalação`"
+            width="720"
+            height="960"
+            loading="lazy"
+            decoding="async"
+            draggable="false"
+            class="absolute inset-0 h-full w-full object-cover"
+            :style="{ clipPath: `inset(0 ${100 - baPos}% 0 0)` }"
+          >
+          <span class="pointer-events-none absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-extrabold tracking-wide text-white">ANTES</span>
+          <span class="pointer-events-none absolute right-3 top-3 rounded-full bg-secondary px-2.5 py-1 text-xs font-extrabold tracking-wide text-white">DEPOIS</span>
+          <div class="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow" :style="{ left: baPos + '%' }">
+            <span class="absolute left-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white text-primary shadow-lg">
+              <CampanhaIcon name="swap_horiz" :size="24" />
+            </span>
+          </div>
+          <input v-model.number="baPos" type="range" min="0" max="100" step="1" class="sr-only" aria-label="Comparar antes e depois">
+        </div>
+
+        <div class="mt-6 text-center">
+          <a href="#orcamento" class="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-secondary px-8 text-base font-extrabold text-white shadow-lg shadow-secondary/25 transition hover:bg-[#004f80]" @click.prevent="scrollToQuiz">
+            Quero o meu também <CampanhaIcon name="arrow_upward" :size="20" />
+          </a>
+        </div>
+      </section>
+
       <!-- COMO FUNCIONA -->
-      <section class="mx-auto max-w-6xl px-4 py-12 lg:py-16">
-        <h2 class="text-center font-heading text-2xl font-extrabold sm:text-3xl">Como funciona</h2>
-        <ol class="mt-8 grid gap-4 sm:grid-cols-3">
-          <li v-for="h in HOW" :key="h.n" class="rounded-2xl border border-[#d7dce4] bg-white p-5">
-            <span class="grid h-10 w-10 place-items-center rounded-full bg-primary font-heading text-lg font-extrabold text-white">{{ h.n }}</span>
-            <h3 class="mt-3 font-heading text-lg font-bold">{{ h.title }}</h3>
-            <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ h.text }}</p>
-          </li>
-        </ol>
+      <section class="bg-white" aria-labelledby="gmk-how-title">
+        <div class="mx-auto max-w-6xl px-4 py-10 lg:py-14">
+          <h2 id="gmk-how-title" class="text-center font-heading text-2xl font-extrabold sm:text-3xl">Como funciona</h2>
+          <ol class="mx-auto mt-6 max-w-md sm:grid sm:max-w-none sm:grid-cols-3 sm:gap-6">
+            <li v-for="(h, i) in HOW" :key="h.n" class="relative flex gap-4 pb-6 last:pb-0 sm:flex-col sm:gap-3 sm:pb-0">
+              <span v-if="i < HOW.length - 1" class="absolute bottom-1 left-5 top-11 w-px -translate-x-1/2 bg-[#c7c5d0] sm:hidden" aria-hidden="true" />
+              <span class="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary font-heading text-lg font-extrabold text-white">{{ h.n }}</span>
+              <div>
+                <h3 class="font-heading text-base font-bold sm:text-lg">{{ h.title }}</h3>
+                <p class="mt-0.5 text-sm leading-relaxed text-slate-600">{{ h.text }}</p>
+              </div>
+            </li>
+          </ol>
+        </div>
       </section>
 
       <!-- POR QUE A GMK -->
-      <section class="bg-white">
-        <div class="mx-auto max-w-6xl px-4 py-12 lg:py-16">
-          <h2 class="text-center font-heading text-2xl font-extrabold sm:text-3xl">Por que escolher a GMK</h2>
-          <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div v-for="b in BENEFITS" :key="b.title" class="rounded-2xl border border-[#d7dce4] bg-[#faf8ff] p-5">
-              <span class="grid h-11 w-11 place-items-center rounded-xl bg-primary text-secondary-container"><CampanhaIcon :name="b.icon" :size="24" /></span>
-              <h3 class="mt-3 font-heading text-lg font-bold">{{ b.title }}</h3>
-              <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ b.text }}</p>
-            </div>
+      <section class="mx-auto max-w-6xl px-4 py-10 lg:py-14" aria-labelledby="gmk-why-title">
+        <h2 id="gmk-why-title" class="text-center font-heading text-2xl font-extrabold sm:text-3xl">Por que escolher a GMK</h2>
+        <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          <div v-for="b in BENEFITS" :key="b.title" class="rounded-2xl border border-[#d7dce4] bg-white p-3.5 lg:p-5">
+            <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary text-secondary-container"><CampanhaIcon :name="b.icon" :size="22" /></span>
+            <h3 class="mt-2.5 font-heading text-[15px] font-bold leading-tight lg:text-lg">{{ b.title }}</h3>
+            <p class="mt-1 text-[13px] leading-snug text-slate-600 lg:text-sm">{{ b.text }}</p>
           </div>
-          <div class="mt-10 text-center">
-            <a href="#orcamento" class="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-secondary px-8 text-base font-extrabold text-white shadow-lg shadow-secondary/25 transition hover:bg-[#004f80]" @click.prevent="scrollToQuiz">
-              Quero meu orçamento <CampanhaIcon name="arrow_upward" :size="20" />
-            </a>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="bg-white" aria-labelledby="gmk-faq-title">
+        <div class="mx-auto max-w-2xl px-4 py-10 lg:py-14">
+          <h2 id="gmk-faq-title" class="text-center font-heading text-2xl font-extrabold sm:text-3xl">Perguntas frequentes</h2>
+          <div class="mt-6 space-y-2.5">
+            <details v-for="f in FAQ" :key="f.q" name="gmk-faq" class="group rounded-2xl border border-[#d7dce4] bg-[#faf8ff] open:bg-white open:shadow-sm">
+              <summary class="flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left text-[15px] font-bold [&::-webkit-details-marker]:hidden">
+                {{ f.q }}
+                <CampanhaIcon name="expand_more" :size="24" class="transition-transform group-open:rotate-180" />
+              </summary>
+              <p class="px-4 pb-4 text-sm leading-relaxed text-slate-600">{{ f.a }}</p>
+            </details>
           </div>
+        </div>
+      </section>
+
+      <!-- CTA FINAL -->
+      <section class="gmk-hero relative overflow-hidden text-white">
+        <div class="relative z-10 mx-auto max-w-2xl px-4 py-12 text-center">
+          <h2 class="font-heading text-2xl font-extrabold sm:text-3xl">Pronto para proteger sua casa?</h2>
+          <p class="mx-auto mt-2 max-w-md text-sm text-white/80 sm:text-base">Peça seu orçamento com visita técnica gratuita e 2 anos de garantia.</p>
+          <a href="#orcamento" class="mt-6 inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-white px-8 text-base font-extrabold text-primary shadow-lg transition hover:bg-[#f4f9ff]" @click.prevent="scrollToQuiz">
+            Quero meu orçamento <CampanhaIcon name="arrow_upward" :size="20" />
+          </a>
         </div>
       </section>
     </main>
@@ -602,11 +888,29 @@ const HOW = [
       target="_blank"
       rel="noopener"
       aria-label="Falar com a GMK no WhatsApp"
-      class="gmk-wa-float fixed right-4 z-50 grid h-14 w-14 place-items-center rounded-full bg-[#25D366] text-white shadow-xl shadow-black/25 transition hover:bg-[#1fb957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+      class="gmk-wa-float fixed right-4 z-50 hidden h-14 w-14 place-items-center rounded-full lg:grid bg-[#25D366] text-white shadow-xl shadow-black/25 transition hover:bg-[#1fb957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
       @click.prevent="openWhatsApp('flutuante')"
     >
       <CampanhaWhatsappIcon :size="30" />
     </a>
+
+    <!-- BARRA FIXA DE WHATSAPP (celular) -->
+    <Transition name="gmk-bar">
+      <div
+        v-if="barVisible"
+        class="gmk-bar fixed inset-x-0 bottom-0 z-50 border-t border-[#d7dce4] bg-white/95 px-4 pt-2 backdrop-blur lg:hidden"
+      >
+        <a
+          :href="defaultWhatsappUrl"
+          target="_blank"
+          rel="noopener"
+          class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-[15px] font-extrabold text-white shadow-md shadow-[#25D366]/30 transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+          @click.prevent="openWhatsApp('barra-fixa')"
+        >
+          <CampanhaWhatsappIcon :size="22" /> Falar no WhatsApp · Visita grátis
+        </a>
+      </div>
+    </Transition>
 
     <!-- MODAL: ATENDIMENTO WHATSAPP -->
     <Transition name="gmk-modal">
@@ -742,5 +1046,17 @@ const HOW = [
 @media (prefers-reduced-motion: reduce) {
   .gmk-wa-float::before { animation: none; opacity: 0; }
   .gmk-step-enter-active, .gmk-step-leave-active { transition: none; }
+}
+.gmk-snap { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.gmk-snap::-webkit-scrollbar { display: none; }
+
+.gmk-bar { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+.gmk-bar-enter-active,
+.gmk-bar-leave-active { transition: transform 0.22s ease, opacity 0.22s ease; }
+.gmk-bar-enter-from,
+.gmk-bar-leave-to { transform: translateY(100%); opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gmk-bar-enter-active, .gmk-bar-leave-active { transition: none; }
 }
 </style>
