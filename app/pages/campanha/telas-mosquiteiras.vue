@@ -1,0 +1,746 @@
+<script setup lang="ts">
+import { QUANTIDADE_LABEL, TIPO_LABEL } from '~/constants/campanha'
+import type { LeadQuantidade, LeadTipo, LeadTracking } from '~/constants/campanha'
+
+definePageMeta({ layout: false })
+
+useSeoMeta({
+  title: 'Telas Mosquiteiras em Alumínio Sob Medida | GMK',
+  description: 'Peça seu orçamento de tela mosquiteira em alumínio sob medida para janelas, portas e sacadas. Responda 4 perguntas e receba pelo WhatsApp.',
+  ogTitle: 'Telas Mosquiteiras em Alumínio Sob Medida | GMK',
+  ogDescription: 'Orçamento rápido pelo WhatsApp. Telas mosquiteiras em alumínio feitas sob medida.',
+  themeColor: '#010133'
+})
+
+/* ==========================================================================
+ * CONFIGURAÇÃO DA CAMPANHA  →  EDITE AQUI antes de publicar
+ * ========================================================================== */
+const CONFIG = {
+  /** WhatsApp da GMK: DDI + DDD + número, só dígitos. Ex.: 5511999998888 */
+  whatsappNumber: '55XXXXXXXXXXX',
+  /** Mensagem padrão dos botões de WhatsApp (header e flutuante). */
+  whatsappMessage: 'Olá! Vim pelo site da GMK e gostaria de um orçamento de telas mosquiteiras.',
+  /** ID da conta Google Ads. Ex.: AW-123456789 */
+  googleAdsId: 'AW-XXXXXXXXX',
+  /** Rótulo da conversão "Clique no WhatsApp" (Google Ads > Metas > Conversões). */
+  conversionLabelWhatsapp: 'XXXXXXXXXXXXXXXXXXX',
+  /** Rótulo da conversão "Lead enviado" (quiz concluído). */
+  conversionLabelLead: 'XXXXXXXXXXXXXXXXXXX'
+}
+
+const adsConfigured = /^AW-\d+$/.test(CONFIG.googleAdsId)
+
+/* ==========================================================================
+ * RASTREAMENTO GOOGLE ADS
+ * ========================================================================== */
+function fireConversion(label: string, params: Record<string, unknown> = {}) {
+  if (import.meta.server) return
+  const payload = { send_to: `${CONFIG.googleAdsId}/${label}`, transport_type: 'beacon', ...params }
+  if (!adsConfigured) {
+    // Modo teste: enquanto o ID não for configurado, apenas registra no console.
+    console.info('[GMK tracking] conversão (Google Ads ainda não configurado):', payload)
+    return
+  }
+  try { window.gtag?.('event', 'conversion', payload) } catch { /* nunca quebrar a página por causa de tracking */ }
+}
+
+/** Dispare em todo clique que leva ao WhatsApp. `origem`: header | flutuante | obrigado | rodape ... */
+function trackWhatsAppClick(origem: string) {
+  fireConversion(CONFIG.conversionLabelWhatsapp, { event_label: origem })
+}
+
+/** Dispare quando o lead for salvo com sucesso (fim do quiz). */
+function trackFormSubmit(lead: { id?: string; tipo: string; quantidade: string; local: string }) {
+  fireConversion(CONFIG.conversionLabelLead, {
+    event_label: `${lead.tipo}|${lead.quantidade}`,
+    transaction_id: lead.id
+  })
+}
+
+function loadGtag() {
+  if (!adsConfigured || ['localhost', '127.0.0.1'].includes(location.hostname)) return
+  window.dataLayer ||= []
+  window.gtag ||= function () { window.dataLayer!.push(arguments) }
+  window.gtag('js', new Date())
+  window.gtag('config', CONFIG.googleAdsId)
+  if (!document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) {
+    const script = document.createElement('script')
+    script.async = true
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${CONFIG.googleAdsId}`
+    document.head.appendChild(script)
+  }
+}
+
+/* ==========================================================================
+ * UTMs / GCLID  (guardados com o lead para medir o que vem do Google Ads)
+ * ========================================================================== */
+const route = useRoute()
+const tracking = ref<LeadTracking>({})
+const TRACK_KEYS = ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const
+
+onMounted(() => {
+  let stored: LeadTracking = {}
+  try { stored = JSON.parse(sessionStorage.getItem('gmk-tracking') || '{}') } catch { /* ignore */ }
+  const fromUrl: LeadTracking = {}
+  for (const key of TRACK_KEYS) {
+    const raw = route.query[key]
+    const value = Array.isArray(raw) ? raw[0] : raw
+    if (value) fromUrl[key] = String(value).slice(0, 300)
+  }
+  tracking.value = { ...stored, ...fromUrl, landing: location.pathname }
+  try { sessionStorage.setItem('gmk-tracking', JSON.stringify(tracking.value)) } catch { /* ignore */ }
+  loadGtag()
+})
+
+/* ==========================================================================
+ * WHATSAPP
+ * ========================================================================== */
+const whatsappUrl = (text: string) => `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(text)}`
+const defaultWhatsappUrl = whatsappUrl(CONFIG.whatsappMessage)
+
+/* ==========================================================================
+ * QUIZ
+ * ========================================================================== */
+const IMG = '/imagens campanha gmk/otimizadas/'
+const LOGO = encodeURI(`${IMG}logo-gmk.webp`)
+
+const TIPOS: { value: LeadTipo; label: string; hint: string; src: string }[] = [
+  { value: 'janela', label: 'Janela', hint: 'Correr, basculante e outras', src: encodeURI(`${IMG}janela.webp`) },
+  { value: 'porta-giro', label: 'Porta de Giro', hint: 'Porta de abrir', src: encodeURI(`${IMG}porta-giro.webp`) },
+  { value: 'porta-balcao', label: 'Porta-Balcão / Sacada', hint: 'Porta de correr', src: encodeURI(`${IMG}porta-balcao.webp`) },
+  { value: 'casa-inteira', label: 'Casa Inteira', hint: 'Todas as aberturas', src: encodeURI(`${IMG}casa-inteira.webp`) }
+]
+
+const QUANTIDADES: { value: LeadQuantidade; label: string; hint?: string; icon: string }[] = [
+  { value: '1-2', label: '1 a 2 unidades', icon: 'looks_two' },
+  { value: '3-5', label: '3 a 5 unidades', icon: 'looks_4' },
+  { value: 'mais-5', label: 'Mais de 5 unidades', icon: 'filter_9_plus' },
+  { value: 'visita', label: 'Quero visita para medição', hint: 'Vamos até você tirar as medidas', icon: 'straighten' }
+]
+
+const step = ref(1)
+const done = ref(false)
+const submitting = ref(false)
+const submitError = ref('')
+const attempted = ref(false)
+const localTouched = ref(false)
+
+const answers = reactive({
+  tipo: '' as LeadTipo | '',
+  quantidade: '' as LeadQuantidade | '',
+  local: '',
+  name: '',
+  phone: '',
+  website: '' // honeypot
+})
+
+const localInput = ref<HTMLInputElement | null>(null)
+const nameInput = ref<HTMLInputElement | null>(null)
+
+const localValid = computed(() => answers.local.trim().length >= 3)
+const nameValid = computed(() => answers.name.trim().length >= 3)
+const phoneValid = computed(() => campanhaPhoneIsValid(answers.phone))
+const firstName = computed(() => answers.name.trim().split(/\s+/)[0] || '')
+
+function pickTipo(value: LeadTipo) {
+  answers.tipo = value
+  setTimeout(() => { step.value = 2 }, 220)
+}
+
+function pickQuantidade(value: LeadQuantidade) {
+  answers.quantidade = value
+  setTimeout(() => { step.value = 3 }, 220)
+}
+
+function nextFromLocal() {
+  localTouched.value = true
+  if (!localValid.value) return
+  step.value = 4
+}
+
+function back() {
+  if (step.value > 1) step.value -= 1
+}
+
+function onPhoneInput(event: Event) {
+  const input = event.target as HTMLInputElement
+  answers.phone = campanhaMaskPhone(input.value)
+  input.value = answers.phone
+}
+
+function onStepEntered() {
+  if (step.value === 3) localInput.value?.focus()
+  if (step.value === 4) nameInput.value?.focus()
+}
+
+async function submit() {
+  attempted.value = true
+  if (submitting.value || !nameValid.value || !phoneValid.value || !answers.tipo || !answers.quantidade || !localValid.value) return
+  submitting.value = true
+  submitError.value = ''
+  try {
+    const res = await $fetch<{ ok: boolean; id?: string }>('/api/campanha/leads', {
+      method: 'POST',
+      body: {
+        name: answers.name.trim(),
+        phone: answers.phone,
+        tipo: answers.tipo,
+        quantidade: answers.quantidade,
+        local: answers.local.trim(),
+        origem: 'landing-quiz',
+        tracking: tracking.value,
+        website: answers.website
+      }
+    })
+    trackFormSubmit({ id: res.id, tipo: answers.tipo, quantidade: answers.quantidade, local: answers.local.trim() })
+    markCaptured()
+    done.value = true
+  } catch {
+    submitError.value = 'Não conseguimos enviar agora. Tente de novo ou chame direto no WhatsApp.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+const summaryText = computed(() => {
+  const tipo = answers.tipo ? TIPO_LABEL[answers.tipo] : ''
+  const qtd = answers.quantidade ? QUANTIDADE_LABEL[answers.quantidade] : ''
+  return { tipo, qtd }
+})
+
+const thankYouUrl = computed(() => whatsappUrl(
+  `Olá! Sou ${answers.name.trim()}. Acabei de pedir um orçamento no site da GMK:\n`
+  + `• Tipo: ${summaryText.value.tipo}\n`
+  + `• Quantidade: ${summaryText.value.qtd}\n`
+  + `• Local: ${answers.local.trim()}\n`
+  + 'Pode me atender?'
+))
+
+/* ==========================================================================
+ * MODAL "ATENDIMENTO WHATSAPP": pede nome + WhatsApp, grava o lead e abre a conversa
+ * ========================================================================== */
+const leadCaptured = ref(false)
+const wa = reactive({ open: false, origem: '', name: '', phone: '', hp: '', attempted: false, submitting: false })
+const waNameInput = ref<HTMLInputElement | null>(null)
+const waNameValid = computed(() => wa.name.trim().length >= 3)
+const waPhoneValid = computed(() => campanhaPhoneIsValid(wa.phone))
+
+onMounted(() => {
+  try { leadCaptured.value = sessionStorage.getItem('gmk-lead-sent') === '1' } catch { /* ignore */ }
+})
+
+function markCaptured() {
+  leadCaptured.value = true
+  try { sessionStorage.setItem('gmk-lead-sent', '1') } catch { /* ignore */ }
+}
+
+/** Todo botão de WhatsApp da página chama esta função. */
+function openWhatsApp(origem: string) {
+  if (leadCaptured.value) {
+    // Este visitante já virou lead: vai direto para o WhatsApp.
+    trackWhatsAppClick(origem)
+    window.open(defaultWhatsappUrl, '_blank')
+    return
+  }
+  wa.origem = origem
+  wa.attempted = false
+  wa.open = true
+  nextTick(() => waNameInput.value?.focus())
+}
+
+function closeWa() {
+  if (!wa.submitting) wa.open = false
+}
+
+function onWaPhoneInput(event: Event) {
+  const input = event.target as HTMLInputElement
+  wa.phone = campanhaMaskPhone(input.value)
+  input.value = wa.phone
+}
+
+async function submitWa() {
+  wa.attempted = true
+  if (wa.submitting || !waNameValid.value || !waPhoneValid.value) return
+  wa.submitting = true
+  // Abre a aba agora (dentro do toque do usuário) para o navegador não bloquear o pop-up.
+  const popup = window.open('', '_blank')
+  const url = whatsappUrl(`Olá! Sou ${wa.name.trim()}. Vim pelo site da GMK e gostaria de um orçamento de telas mosquiteiras.`)
+  try {
+    const res = await $fetch<{ ok: boolean; id?: string }>('/api/campanha/leads', {
+      method: 'POST',
+      body: {
+        name: wa.name.trim(),
+        phone: wa.phone,
+        origem: `whatsapp-${wa.origem}`,
+        tracking: tracking.value,
+        website: wa.hp
+      }
+    })
+    trackFormSubmit({ id: res.id, tipo: 'whatsapp', quantidade: wa.origem, local: '' })
+    markCaptured()
+  } catch {
+    // Mesmo se o envio falhar, nunca impede o cliente de chegar ao WhatsApp.
+  }
+  trackWhatsAppClick(wa.origem)
+  if (popup) popup.location.href = url
+  else window.location.href = url
+  wa.submitting = false
+  wa.open = false
+}
+
+watch(() => wa.open, (open) => {
+  if (import.meta.client) document.body.style.overflow = open ? 'hidden' : ''
+})
+onBeforeUnmount(() => { if (import.meta.client) document.body.style.overflow = '' })
+
+function scrollToQuiz() {
+  document.getElementById('orcamento')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const BENEFITS = [
+  { icon: 'straighten', title: 'Sob medida', text: 'Cada tela é feita para o vão da sua janela ou porta.' },
+  { icon: 'hardware', title: 'Alumínio', text: 'Estrutura leve, resistente e com acabamento que combina com sua esquadria.' },
+  { icon: 'build', title: 'Instalação profissional', text: 'Você recebe a tela pronta no lugar, sem dor de cabeça.' },
+  { icon: 'chat', title: 'Orçamento pelo WhatsApp', text: 'Atendimento direto, rápido e sem compromisso.' }
+]
+
+const HOW = [
+  { n: '1', title: 'Responda o quiz', text: 'São só 4 perguntas rápidas sobre o que você precisa.' },
+  { n: '2', title: 'Receba o orçamento', text: 'Nossa equipe te chama no WhatsApp em até 15 min.' },
+  { n: '3', title: 'Agende a instalação', text: 'Confirmamos as medidas e combinamos o melhor dia.' }
+]
+</script>
+
+<template>
+  <div class="gmk-page min-h-screen bg-[#faf8ff] pb-24 font-body text-primary antialiased">
+    <!-- HEADER -->
+    <header class="sticky top-0 z-40 border-b border-[#d7dce4] bg-white/95 backdrop-blur">
+      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
+        <div class="flex min-w-0 items-center gap-2.5">
+          <img :src="LOGO" alt="GMK" width="320" height="267" class="h-12 w-auto shrink-0" fetchpriority="high">
+          <p class="max-w-[130px] text-[11px] font-bold leading-tight text-secondary sm:max-w-none sm:text-sm">
+            Telas Mosquiteiras em Alumínio Sob Medida
+          </p>
+        </div>
+        <a
+          :href="defaultWhatsappUrl"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#1fb957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+          @click.prevent="openWhatsApp('header')"
+        >
+          <CampanhaWhatsappIcon :size="18" />
+          <span>WhatsApp</span>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <!-- HERO + QUIZ -->
+      <section class="gmk-hero relative overflow-hidden text-white">
+        <div class="relative z-10 mx-auto grid max-w-6xl gap-6 px-4 pb-10 pt-6 lg:grid-cols-[1fr_minmax(0,34rem)] lg:items-center lg:gap-14 lg:py-16">
+          <div>
+            <p class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-[#c5e7ff]">
+              <CampanhaIcon name="bolt" :size="14" fill /> Orçamento rápido pelo WhatsApp
+            </p>
+            <h1 class="mt-3 font-heading text-[26px] font-extrabold leading-[1.15] sm:text-4xl lg:text-5xl">
+              Proteja sua casa de <span class="text-secondary-container">mosquitos e insetos</span> sem perder a ventilação
+            </h1>
+            <p class="mt-3 max-w-xl text-sm leading-relaxed text-white/80 sm:text-base">
+              Responda 4 perguntas rápidas e receba seu orçamento de tela mosquiteira em alumínio, feita sob medida.
+            </p>
+            <ul class="mt-6 hidden space-y-3 lg:block">
+              <li v-for="b in BENEFITS.slice(0, 3)" :key="b.title" class="flex items-center gap-3 text-white/90">
+                <span class="grid h-9 w-9 place-items-center rounded-lg bg-white/10 text-secondary-container"><CampanhaIcon :name="b.icon" :size="20" /></span>
+                <span class="font-semibold">{{ b.title }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- QUIZ -->
+          <div id="orcamento" class="scroll-mt-20 rounded-3xl bg-white p-4 text-primary shadow-2xl shadow-black/30 sm:p-6" role="group" aria-label="Pedido de orçamento">
+            <div v-if="!done" class="mb-5">
+              <div class="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500">
+                <button v-if="step > 1" type="button" class="inline-flex items-center gap-1 rounded text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary" @click="back">
+                  <CampanhaIcon name="arrow_back" :size="16" /> Voltar
+                </button>
+                <span v-else>Orçamento sem compromisso</span>
+                <span>Passo {{ step }} de 4</span>
+              </div>
+              <div class="h-2 overflow-hidden rounded-full bg-[#e3e1e9]" role="progressbar" aria-label="Progresso do orçamento" aria-valuemin="1" aria-valuemax="4" :aria-valuenow="step">
+                <div class="h-full rounded-full bg-gradient-to-r from-secondary to-secondary-container transition-all duration-500 ease-out" :style="{ width: step * 25 + '%' }" />
+              </div>
+            </div>
+
+            <Transition name="gmk-step" mode="out-in" @after-enter="onStepEntered">
+              <!-- OBRIGADO -->
+              <div v-if="done" key="done" class="py-2 text-center" aria-live="polite">
+                <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#e7f9ee] text-[#16a34a]">
+                  <CampanhaIcon name="check_circle" :size="40" fill />
+                </div>
+                <h2 class="mt-4 font-heading text-2xl font-extrabold">Pedido recebido, {{ firstName }}!</h2>
+                <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-600">
+                  Nossa equipe vai te chamar no WhatsApp. Para adiantar o atendimento, toque no botão abaixo e fale com a gente agora.
+                </p>
+                <a
+                  :href="thankYouUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="mt-5 flex min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-5 text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1fb957] active:scale-[0.99]"
+                  @click="trackWhatsAppClick('obrigado')"
+                >
+                  <CampanhaWhatsappIcon :size="24" /> Adiantar meu atendimento no WhatsApp
+                </a>
+                <dl class="mt-5 grid gap-2 rounded-2xl bg-[#f4f3fb] p-4 text-left text-sm">
+                  <div class="flex justify-between gap-4"><dt class="text-slate-500">Tela</dt><dd class="text-right font-semibold">{{ summaryText.tipo }}</dd></div>
+                  <div class="flex justify-between gap-4"><dt class="text-slate-500">Quantidade</dt><dd class="text-right font-semibold">{{ summaryText.qtd }}</dd></div>
+                  <div class="flex justify-between gap-4"><dt class="text-slate-500">Local</dt><dd class="text-right font-semibold">{{ answers.local }}</dd></div>
+                </dl>
+              </div>
+
+              <!-- PASSO 1 -->
+              <div v-else-if="step === 1" key="s1">
+                <h2 class="font-heading text-xl font-extrabold leading-snug sm:text-2xl">Qual tipo de tela mosquiteira você precisa?</h2>
+                <p class="mt-1 text-sm text-slate-500">Toque na opção que mais combina com você.</p>
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                  <button
+                    v-for="t in TIPOS"
+                    :key="t.value"
+                    type="button"
+                    :aria-pressed="answers.tipo === t.value"
+                    class="group overflow-hidden rounded-2xl border-2 bg-white text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+                    :class="answers.tipo === t.value ? 'border-secondary ring-4 ring-secondary-container/40' : 'border-[#d7dce4]'"
+                    @click="pickTipo(t.value)"
+                  >
+                    <span class="relative block aspect-[4/3] overflow-hidden lg:aspect-[16/10] bg-[#eeedf5]">
+                      <img :src="t.src" :alt="t.label" width="720" height="540" decoding="async" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                      <span v-if="answers.tipo === t.value" class="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-secondary text-white shadow">
+                        <CampanhaIcon name="check" :size="16" />
+                      </span>
+                    </span>
+                    <span class="block px-2.5 py-2.5">
+                      <span class="block text-[13px] font-extrabold leading-tight sm:text-sm">{{ t.label }}</span>
+                      <span class="mt-0.5 block text-[11px] leading-tight text-slate-500">{{ t.hint }}</span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- PASSO 2 -->
+              <div v-else-if="step === 2" key="s2">
+                <h2 class="font-heading text-xl font-extrabold leading-snug sm:text-2xl">Quantas unidades aproximadamente?</h2>
+                <p class="mt-1 text-sm text-slate-500">Pode ser uma estimativa, a gente confirma depois.</p>
+                <div class="mt-4 grid gap-3">
+                  <button
+                    v-for="q in QUANTIDADES"
+                    :key="q.value"
+                    type="button"
+                    :aria-pressed="answers.quantidade === q.value"
+                    class="flex min-h-[64px] items-center gap-3 rounded-2xl border-2 bg-white px-4 py-3 text-left transition hover:border-secondary-container hover:bg-[#f4f9ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+                    :class="answers.quantidade === q.value ? 'border-secondary bg-[#f4f9ff] ring-4 ring-secondary-container/30' : 'border-[#d7dce4]'"
+                    @click="pickQuantidade(q.value)"
+                  >
+                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#e6f2ff] text-secondary"><CampanhaIcon :name="q.icon" :size="24" /></span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block text-[15px] font-bold leading-tight">{{ q.label }}</span>
+                      <span v-if="q.hint" class="mt-0.5 block text-xs text-slate-500">{{ q.hint }}</span>
+                    </span>
+                    <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full border-2" :class="answers.quantidade === q.value ? 'border-secondary bg-secondary text-white' : 'border-[#c7c5d0]'">
+                      <CampanhaIcon v-if="answers.quantidade === q.value" name="check" :size="14" />
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- PASSO 3 -->
+              <form v-else-if="step === 3" key="s3" novalidate @submit.prevent="nextFromLocal">
+                <h2 class="font-heading text-xl font-extrabold leading-snug sm:text-2xl">Qual seu Bairro e Cidade?</h2>
+                <p class="mt-1 text-sm text-slate-500">Assim confirmamos o atendimento na sua região.</p>
+                <label for="gmk-local" class="sr-only">Bairro e cidade</label>
+                <div class="relative mt-4">
+                  <CampanhaIcon name="location_on" :size="22" class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-secondary" />
+                  <input
+                    id="gmk-local"
+                    ref="localInput"
+                    v-model="answers.local"
+                    type="text"
+                    name="local"
+                    maxlength="120"
+                    autocomplete="address-level2"
+                    enterkeyhint="next"
+                    placeholder="Ex.: Jardim das Flores, Campinas"
+                    class="h-14 w-full rounded-2xl border-2 bg-white pl-12 pr-4 text-base outline-none transition placeholder:text-slate-400 focus:border-secondary focus:ring-4 focus:ring-secondary-container/30"
+                    :class="localTouched && !localValid ? 'border-red-400' : 'border-[#d7dce4]'"
+                  >
+                </div>
+                <p v-if="localTouched && !localValid" class="mt-2 text-sm font-medium text-red-600" role="alert">Informe seu bairro e cidade.</p>
+                <button type="submit" class="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-secondary text-base font-extrabold text-white shadow-lg shadow-secondary/25 transition hover:bg-[#004f80] active:scale-[0.99]">
+                  Continuar <CampanhaIcon name="arrow_forward" :size="20" />
+                </button>
+              </form>
+
+              <!-- PASSO 4 -->
+              <form v-else key="s4" novalidate @submit.prevent="submit">
+                <h2 class="font-heading text-xl font-extrabold leading-snug sm:text-2xl">Onde você deseja receber o orçamento em até 15 min?</h2>
+                <p class="mt-1 text-sm text-slate-500">Enviamos pelo WhatsApp. Sem spam.</p>
+
+                <div class="mt-3 flex flex-wrap gap-1.5 text-xs font-semibold text-secondary">
+                  <span class="rounded-full bg-[#e6f2ff] px-2.5 py-1">{{ summaryText.tipo }}</span>
+                  <span class="rounded-full bg-[#e6f2ff] px-2.5 py-1">{{ summaryText.qtd }}</span>
+                  <span class="max-w-full truncate rounded-full bg-[#e6f2ff] px-2.5 py-1">{{ answers.local }}</span>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                  <div>
+                    <label for="gmk-name" class="mb-1 block text-sm font-bold">Nome completo</label>
+                    <input
+                      id="gmk-name"
+                      ref="nameInput"
+                      v-model="answers.name"
+                      type="text"
+                      name="name"
+                      maxlength="100"
+                      autocomplete="name"
+                      autocapitalize="words"
+                      enterkeyhint="next"
+                      placeholder="Seu nome"
+                      class="h-14 w-full rounded-2xl border-2 bg-white px-4 text-base outline-none transition placeholder:text-slate-400 focus:border-secondary focus:ring-4 focus:ring-secondary-container/30"
+                      :class="attempted && !nameValid ? 'border-red-400' : 'border-[#d7dce4]'"
+                    >
+                    <p v-if="attempted && !nameValid" class="mt-1 text-sm font-medium text-red-600" role="alert">Informe seu nome.</p>
+                  </div>
+                  <div>
+                    <label for="gmk-phone" class="mb-1 block text-sm font-bold">WhatsApp</label>
+                    <input
+                      id="gmk-phone"
+                      :value="answers.phone"
+                      type="tel"
+                      name="phone"
+                      inputmode="tel"
+                      maxlength="15"
+                      autocomplete="tel"
+                      enterkeyhint="send"
+                      placeholder="(11) 99999-9999"
+                      class="h-14 w-full rounded-2xl border-2 bg-white px-4 text-base outline-none transition placeholder:text-slate-400 focus:border-secondary focus:ring-4 focus:ring-secondary-container/30"
+                      :class="attempted && !phoneValid ? 'border-red-400' : 'border-[#d7dce4]'"
+                      @input="onPhoneInput"
+                    >
+                    <p v-if="attempted && !phoneValid" class="mt-1 text-sm font-medium text-red-600" role="alert">Informe DDD + número do WhatsApp.</p>
+                  </div>
+                  <!-- honeypot anti-robô -->
+                  <input v-model="answers.website" type="text" name="company-site" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute -left-[9999px] h-0 w-0 opacity-0">
+                </div>
+
+                <div v-if="submitError" class="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">
+                  {{ submitError }}
+                  <a :href="defaultWhatsappUrl" target="_blank" rel="noopener" class="font-bold underline" @click.prevent="openWhatsApp('erro-envio')">Chamar no WhatsApp</a>
+                </div>
+
+                <button
+                  type="submit"
+                  :disabled="submitting"
+                  class="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1fb957] active:scale-[0.99] disabled:opacity-70"
+                >
+                  <template v-if="submitting">
+                    <span class="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" /> Enviando...
+                  </template>
+                  <template v-else>
+                    <CampanhaWhatsappIcon :size="22" /> Receber meu orçamento
+                  </template>
+                </button>
+                <p class="mt-3 flex items-start gap-1.5 text-[11px] leading-snug text-slate-500">
+                  <CampanhaIcon name="lock" :size="14" class="mt-px" />
+                  Seus dados são usados apenas para enviar o seu orçamento pelo WhatsApp.
+                </p>
+              </form>
+            </Transition>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMO FUNCIONA -->
+      <section class="mx-auto max-w-6xl px-4 py-12 lg:py-16">
+        <h2 class="text-center font-heading text-2xl font-extrabold sm:text-3xl">Como funciona</h2>
+        <ol class="mt-8 grid gap-4 sm:grid-cols-3">
+          <li v-for="h in HOW" :key="h.n" class="rounded-2xl border border-[#d7dce4] bg-white p-5">
+            <span class="grid h-10 w-10 place-items-center rounded-full bg-primary font-heading text-lg font-extrabold text-white">{{ h.n }}</span>
+            <h3 class="mt-3 font-heading text-lg font-bold">{{ h.title }}</h3>
+            <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ h.text }}</p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- POR QUE A GMK -->
+      <section class="bg-white">
+        <div class="mx-auto max-w-6xl px-4 py-12 lg:py-16">
+          <h2 class="text-center font-heading text-2xl font-extrabold sm:text-3xl">Por que escolher a GMK</h2>
+          <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div v-for="b in BENEFITS" :key="b.title" class="rounded-2xl border border-[#d7dce4] bg-[#faf8ff] p-5">
+              <span class="grid h-11 w-11 place-items-center rounded-xl bg-primary text-secondary-container"><CampanhaIcon :name="b.icon" :size="24" /></span>
+              <h3 class="mt-3 font-heading text-lg font-bold">{{ b.title }}</h3>
+              <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ b.text }}</p>
+            </div>
+          </div>
+          <div class="mt-10 text-center">
+            <a href="#orcamento" class="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-secondary px-8 text-base font-extrabold text-white shadow-lg shadow-secondary/25 transition hover:bg-[#004f80]" @click.prevent="scrollToQuiz">
+              Quero meu orçamento <CampanhaIcon name="arrow_upward" :size="20" />
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bg-primary px-4 py-8 text-center text-sm text-white/70">
+      <img :src="LOGO" alt="GMK" width="320" height="267" loading="lazy" class="mx-auto h-14 w-auto">
+      <p class="mt-3 font-semibold text-white">GMK · Telas Mosquiteiras em Alumínio Sob Medida</p>
+      <p class="mt-1">© {{ new Date().getFullYear() }} GMK. Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- WHATSAPP FLUTUANTE -->
+    <a
+      :href="defaultWhatsappUrl"
+      target="_blank"
+      rel="noopener"
+      aria-label="Falar com a GMK no WhatsApp"
+      class="gmk-wa-float fixed right-4 z-50 grid h-14 w-14 place-items-center rounded-full bg-[#25D366] text-white shadow-xl shadow-black/25 transition hover:bg-[#1fb957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+      @click.prevent="openWhatsApp('flutuante')"
+    >
+      <CampanhaWhatsappIcon :size="30" />
+    </a>
+
+    <!-- MODAL: ATENDIMENTO WHATSAPP -->
+    <Transition name="gmk-modal">
+      <div
+        v-if="wa.open"
+        class="fixed inset-0 z-[60] grid place-items-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
+        @click.self="closeWa"
+        @keydown.esc="closeWa"
+      >
+        <div role="dialog" aria-modal="true" aria-labelledby="gmk-wa-title" class="gmk-modal-card w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div class="flex items-center gap-3 bg-[#22346b] px-5 py-5 text-white">
+            <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#25D366]/20 text-[#25D366]"><CampanhaWhatsappIcon :size="28" /></span>
+            <div class="min-w-0 flex-1">
+              <h2 id="gmk-wa-title" class="font-heading text-lg font-extrabold leading-tight">Atendimento WhatsApp</h2>
+              <p class="text-sm leading-tight text-white/75">Inicie sua conversa com nossa equipe técnica</p>
+            </div>
+            <button type="button" class="grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-white/10" aria-label="Fechar" @click="closeWa">
+              <CampanhaIcon name="close" :size="24" />
+            </button>
+          </div>
+
+          <form class="space-y-4 p-5" novalidate @submit.prevent="submitWa">
+            <div>
+              <label for="gmk-wa-name" class="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-slate-700">Seu nome <span class="text-red-500">*</span></label>
+              <input
+                id="gmk-wa-name"
+                ref="waNameInput"
+                v-model="wa.name"
+                type="text"
+                maxlength="100"
+                autocomplete="name"
+                autocapitalize="words"
+                enterkeyhint="next"
+                placeholder="Como podemos te chamar?"
+                class="h-14 w-full rounded-2xl border-2 bg-white px-4 text-base outline-none transition placeholder:text-slate-400 focus:border-[#22346b] focus:ring-4 focus:ring-[#22346b]/15"
+                :class="wa.attempted && !waNameValid ? 'border-red-400' : 'border-[#d7dce4]'"
+              >
+              <p v-if="wa.attempted && !waNameValid" class="mt-1 text-sm font-medium text-red-600" role="alert">Informe seu nome.</p>
+            </div>
+            <div>
+              <label for="gmk-wa-phone" class="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-slate-700">Seu WhatsApp <span class="text-red-500">*</span></label>
+              <input
+                id="gmk-wa-phone"
+                :value="wa.phone"
+                type="tel"
+                inputmode="tel"
+                maxlength="15"
+                autocomplete="tel"
+                enterkeyhint="send"
+                placeholder="(11) 99999-9999"
+                class="h-14 w-full rounded-2xl border-2 bg-white px-4 text-base outline-none transition placeholder:text-slate-400 focus:border-[#22346b] focus:ring-4 focus:ring-[#22346b]/15"
+                :class="wa.attempted && !waPhoneValid ? 'border-red-400' : 'border-[#d7dce4]'"
+                @input="onWaPhoneInput"
+              >
+              <p v-if="wa.attempted && !waPhoneValid" class="mt-1 text-sm font-medium text-red-600" role="alert">Informe DDD + número do WhatsApp.</p>
+            </div>
+            <input v-model="wa.hp" type="text" name="company-site-wa" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute -left-[9999px] h-0 w-0 opacity-0">
+
+            <button
+              type="submit"
+              :disabled="wa.submitting"
+              class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1fb957] active:scale-[0.99] disabled:opacity-70"
+            >
+              <template v-if="wa.submitting">
+                <span class="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" /> Abrindo WhatsApp...
+              </template>
+              <template v-else>
+                Continuar no WhatsApp <CampanhaIcon name="arrow_forward" :size="22" />
+              </template>
+            </button>
+            <p class="text-center text-xs leading-snug text-slate-500">Seus dados serão utilizados apenas para atendimento do seu orçamento.</p>
+          </form>
+        </div>
+      </div>
+    </Transition>
+  </div>
+</template>
+
+<style scoped>
+.gmk-hero {
+  background-color: #010133;
+  background-image:
+    radial-gradient(900px 420px at 90% -10%, rgba(69, 169, 253, 0.32), transparent 62%),
+    linear-gradient(180deg, #010133 0%, #0b0e45 100%);
+}
+/* trama de tela mosquiteira (losangos metálicos) */
+.gmk-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.09;
+  background-image:
+    linear-gradient(45deg, #c9ced6 1px, transparent 1px),
+    linear-gradient(-45deg, #c9ced6 1px, transparent 1px);
+  background-size: 16px 16px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+}
+
+.gmk-step-enter-active,
+.gmk-step-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.gmk-step-enter-from { opacity: 0; transform: translateX(18px); }
+.gmk-step-leave-to { opacity: 0; transform: translateX(-18px); }
+
+.gmk-modal-enter-active,
+.gmk-modal-leave-active { transition: opacity 0.2s ease; }
+.gmk-modal-enter-active .gmk-modal-card,
+.gmk-modal-leave-active .gmk-modal-card { transition: transform 0.2s ease; }
+.gmk-modal-enter-from,
+.gmk-modal-leave-to { opacity: 0; }
+.gmk-modal-enter-from .gmk-modal-card { transform: translateY(16px) scale(0.98); }
+
+.gmk-wa-float {
+  bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.gmk-wa-float::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 9999px;
+  background: #25d366;
+  animation: gmk-pulse 2.6s ease-out infinite;
+}
+@keyframes gmk-pulse {
+  0% { transform: scale(1); opacity: 0.45; }
+  70%, 100% { transform: scale(1.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gmk-wa-float::before { animation: none; opacity: 0; }
+  .gmk-step-enter-active, .gmk-step-leave-active { transition: none; }
+}
+</style>
