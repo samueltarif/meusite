@@ -76,9 +76,10 @@ const trackingKey = z.string().trim().max(300).optional()
 export const createLeadSchema = z.object({
   name: z.string().trim().min(3).max(100),
   phone: z.string().max(30),
-  tipo: z.enum(LEAD_TIPOS),
-  quantidade: z.enum(LEAD_QUANTIDADES),
-  local: z.string().trim().min(3).max(120),
+  // O pop-up do WhatsApp manda só nome + telefone: o resto vira "nao-informado".
+  tipo: z.enum(LEAD_TIPOS).default('nao-informado'),
+  quantidade: z.enum(LEAD_QUANTIDADES).default('nao-informado'),
+  local: z.string().trim().max(120).default(''),
   origem: z.string().trim().max(60).optional(),
   tracking: z.object({
     gclid: trackingKey,
