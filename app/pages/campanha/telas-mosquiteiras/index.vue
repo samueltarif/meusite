@@ -17,15 +17,15 @@ useSeoMeta({
  * ========================================================================== */
 const CONFIG = {
   /** WhatsApp da GMK: DDI + DDD + número, só dígitos. Ex.: 5511999998888 */
-  whatsappNumber: '55XXXXXXXXXXX',
+  whatsappNumber: '5511945697592',
   /** Mensagem padrão dos botões de WhatsApp (header e flutuante). */
   whatsappMessage: 'Olá! Vim pelo site da GMK e gostaria de um orçamento de telas mosquiteiras.',
   /** ID da conta Google Ads. Ex.: AW-123456789 */
-  googleAdsId: 'AW-XXXXXXXXX',
+  googleAdsId: 'AW-18161119290',
   /** Rótulo da conversão "Clique no WhatsApp" (Google Ads > Metas > Conversões). */
-  conversionLabelWhatsapp: 'XXXXXXXXXXXXXXXXXXX',
+  conversionLabelWhatsapp: '3ARcCJOM6JwdELrg8tND',
   /** Rótulo da conversão "Lead enviado" (quiz concluído). */
-  conversionLabelLead: 'XXXXXXXXXXXXXXXXXXX'
+  conversionLabelLead: '0PVGCPKo5pwdELrg8tND'
 }
 
 const adsConfigured = /^AW-\d+$/.test(CONFIG.googleAdsId)
@@ -289,12 +289,7 @@ function markCaptured() {
 
 /** Todo botão de WhatsApp da página chama esta função. */
 function openWhatsApp(origem: string) {
-  if (leadCaptured.value) {
-    // Este visitante já virou lead: vai direto para o WhatsApp.
-    trackWhatsAppClick(origem)
-    window.open(defaultWhatsappUrl, '_blank')
-    return
-  }
+  // Sempre abre o pop-up (nome + WhatsApp) para registrar o lead no painel antes de ir ao WhatsApp.
   wa.origem = origem
   wa.attempted = false
   wa.open = true
