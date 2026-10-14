@@ -105,10 +105,20 @@ const IMG = '/imagens campanha gmk/otimizadas/'
 const LOGO = encodeURI(`${IMG}logo-gmk.webp`)
 const IMG2 = '/images/campanha-gmk/'
 
+const JANELA_CAROUSEL_IMAGES = [
+  `${IMG2}tipo-janela.webp`,
+  `${IMG2}tela_janela.png`,
+  `${IMG2}tela_para_janela.png`,
+  `${IMG2}janela-depois.webp`,
+  `${IMG2}tela_em_portas_e_janelas.png`
+]
+const currentJanelaImgIdx = ref(0)
+let janelaTimer: ReturnType<typeof setInterval> | null = null
+
 const TIPOS: { value: LeadTipo; label: string; hint: string; src: string }[] = [
   { value: 'janela', label: 'Janela', hint: 'Correr, basculante e outras', src: `${IMG2}tipo-janela.webp` },
-  { value: 'porta-giro', label: 'Porta de Giro', hint: 'Porta de abrir', src: `${IMG2}tipo-porta-giro.webp` },
-  { value: 'porta-balcao', label: 'Porta-Balcão / Sacada', hint: 'Porta de correr', src: `${IMG2}tipo-porta-balcao.webp` },
+  { value: 'porta-giro', label: 'Porta de Correr', hint: 'Porta de correr sob medida', src: `${IMG2}tipo-porta-balcao.webp` },
+  { value: 'porta-balcao', label: 'Telas para Portas', hint: 'Giro, abrir e outros modelos', src: `${IMG2}tipo-porta-giro.webp` },
   { value: 'casa-inteira', label: 'Casa Inteira', hint: 'Todas as aberturas', src: `${IMG2}tipo-casa-inteira.webp` }
 ]
 
@@ -304,20 +314,16 @@ function scrollToVideos() {
 
 const VIDEOS = [
   {
-    id: 'porta-correr',
-    title: 'Tela Mosquiteira para Porta de Correr',
-    tipo: 'Porta-balcão e sacadas',
-    desc: 'Deslize ultra-suave com perfil de alumínio sob medida. Protege contra pernilongos e mosquitos sem interferir no design ou na circulação de ar.',
+    id: 'porta-correr-1',
+    title: 'Tela para Porta de Correr',
     src: '/videos/videos%20gmk/tela-para-porta-de-correr.mp4',
     badge: 'Porta de Correr'
   },
   {
-    id: 'porta-giro',
-    title: 'Tela Mosquiteira para Porta de Giro',
-    tipo: 'Portas de entrada e cozinha',
-    desc: 'Estrutura resistente com fechamento preciso e vedação total. Mantém a casa fresca e arejada com proteção permanente.',
+    id: 'porta-correr-2',
+    title: 'Tela para Porta de Correr',
     src: '/videos/videos%20gmk/tela-para-porta.mp4',
-    badge: 'Porta de Giro'
+    badge: 'Porta de Correr'
   }
 ]
 
@@ -501,9 +507,14 @@ onMounted(() => {
   }
   document.addEventListener('focusin', onFocusIn)
   document.addEventListener('focusout', onFocusOut)
+
+  janelaTimer = setInterval(() => {
+    currentJanelaImgIdx.value = (currentJanelaImgIdx.value + 1) % JANELA_CAROUSEL_IMAGES.length
+  }, 2000)
 })
 onBeforeUnmount(() => {
   quizObserver?.disconnect()
+  if (janelaTimer) clearInterval(janelaTimer)
   if (import.meta.client) {
     document.removeEventListener('focusin', onFocusIn)
     document.removeEventListener('focusout', onFocusOut)
@@ -540,7 +551,7 @@ onBeforeUnmount(() => {
     <main>
       <!-- HERO + QUIZ -->
       <section class="gmk-hero relative overflow-hidden text-white">
-        <div class="relative z-10 mx-auto grid max-w-6xl gap-6 px-4 pb-10 pt-6 lg:grid-cols-[1fr_minmax(0,34rem)] lg:items-center lg:gap-14 lg:py-16">
+        <div class="relative z-10 mx-auto grid max-w-6xl gap-6 px-2 sm:px-4 pb-10 pt-6 lg:grid-cols-[1fr_minmax(0,34rem)] lg:items-center lg:gap-14 lg:py-16">
           <div>
             <h1 class="font-heading text-[26px] font-extrabold leading-[1.15] sm:text-4xl lg:text-5xl">
               Proteja sua casa de <span class="text-secondary-container">mosquitos e insetos</span> sem perder a ventilação
@@ -562,7 +573,7 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- QUIZ -->
-          <div id="orcamento" class="scroll-mt-20 rounded-3xl bg-white p-4 text-primary shadow-2xl shadow-black/30 sm:p-6" role="group" aria-label="Pedido de orçamento">
+          <div id="orcamento" class="scroll-mt-20 rounded-2xl sm:rounded-3xl bg-white p-2.5 sm:p-6 text-primary shadow-2xl shadow-black/30" role="group" aria-label="Pedido de orçamento">
             <div v-if="!done" class="mb-5">
               <div class="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500">
                 <button v-if="step > 1" type="button" class="inline-flex items-center gap-1 rounded text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary" @click="back">
@@ -606,7 +617,7 @@ onBeforeUnmount(() => {
               <div v-else-if="step === 1" key="s1">
                 <h2 class="font-heading text-xl font-extrabold leading-snug sm:text-2xl">Qual tipo de tela mosquiteira você precisa?</h2>
                 <p class="mt-1 text-sm text-slate-500">Toque na opção que mais combina com você.</p>
-                <div class="mt-4 grid grid-cols-2 gap-3">
+                <div class="mt-3.5 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-3">
                   <button
                     v-for="t in TIPOS"
                     :key="t.value"
@@ -616,15 +627,43 @@ onBeforeUnmount(() => {
                     :class="answers.tipo === t.value ? 'border-secondary ring-4 ring-secondary-container/40' : 'border-[#d7dce4]'"
                     @click="pickTipo(t.value)"
                   >
-                    <span class="relative block aspect-[4/3] overflow-hidden lg:aspect-[16/10] bg-[#eeedf5]">
-                      <img :src="t.src" :alt="t.label" width="400" height="300" decoding="async" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
-                      <span v-if="answers.tipo === t.value" class="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-secondary text-white shadow">
+                    <span class="relative block aspect-square sm:aspect-[4/3] lg:aspect-[16/10] overflow-hidden bg-[#eeedf5]">
+                      <!-- Carrossel automático no card de Janela a cada 2s -->
+                      <template v-if="t.value === 'janela'">
+                        <div class="relative h-full w-full">
+                          <img
+                            v-for="(imgSrc, imgIdx) in JANELA_CAROUSEL_IMAGES"
+                            :key="imgSrc"
+                            :src="imgSrc"
+                            :alt="t.label"
+                            width="400"
+                            height="400"
+                            class="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out group-hover:scale-105"
+                            :class="currentJanelaImgIdx === imgIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
+                            :loading="imgIdx === 0 ? 'eager' : 'lazy'"
+                          />
+                          <!-- Indicador discreto das fotos -->
+                          <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-20 flex gap-1">
+                            <span
+                              v-for="(_, dotIdx) in JANELA_CAROUSEL_IMAGES"
+                              :key="dotIdx"
+                              class="h-1 rounded-full transition-all duration-300"
+                              :class="currentJanelaImgIdx === dotIdx ? 'w-3 bg-white shadow' : 'w-1 bg-white/60'"
+                            />
+                          </div>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <img :src="t.src" :alt="t.label" width="400" height="400" decoding="async" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                      </template>
+
+                      <span v-if="answers.tipo === t.value" class="absolute right-2 top-2 z-20 grid h-6 w-6 place-items-center rounded-full bg-secondary text-white shadow">
                         <CampanhaIcon name="check" :size="16" />
                       </span>
                     </span>
-                    <span class="block px-2.5 py-2.5">
-                      <span class="block text-[13px] font-extrabold leading-tight sm:text-sm">{{ t.label }}</span>
-                      <span class="mt-0.5 block text-[11px] leading-tight text-slate-500">{{ t.hint }}</span>
+                    <span class="block px-2 py-2 sm:px-2.5 sm:py-2.5">
+                      <span class="block text-xs sm:text-sm font-extrabold leading-tight">{{ t.label }}</span>
+                      <span class="mt-0.5 block text-[10px] sm:text-[11px] leading-tight text-slate-500">{{ t.hint }}</span>
                     </span>
                   </button>
                 </div>
@@ -983,9 +1022,6 @@ onBeforeUnmount(() => {
                     <h3 class="font-heading text-lg font-bold text-primary sm:text-xl">
                       {{ vid.title }}
                     </h3>
-                    <p class="mt-1 text-sm text-slate-600 leading-relaxed">
-                      {{ vid.desc }}
-                    </p>
                   </div>
                   <a
                     href="#orcamento"

@@ -11,8 +11,8 @@ export type LeadQuantidade = (typeof LEAD_QUANTIDADES)[number]
 
 export const TIPO_LABEL: Record<LeadTipo, string> = {
   'janela': 'Janela',
-  'porta-giro': 'Porta de Giro',
-  'porta-balcao': 'Porta-Balcão / Sacada',
+  'porta-giro': 'Porta de Correr',
+  'porta-balcao': 'Telas para Portas',
   'casa-inteira': 'Casa Inteira',
   'nao-informado': 'Não informado'
 }
