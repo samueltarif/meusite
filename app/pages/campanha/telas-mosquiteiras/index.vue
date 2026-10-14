@@ -298,6 +298,71 @@ function scrollToQuiz() {
   document.getElementById('orcamento')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+function scrollToVideos() {
+  document.getElementById('videos-instalacao')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const VIDEOS = [
+  {
+    id: 'porta-correr',
+    title: 'Tela Mosquiteira para Porta de Correr',
+    tipo: 'Porta-balcão e sacadas',
+    desc: 'Deslize ultra-suave com perfil de alumínio sob medida. Protege contra pernilongos e mosquitos sem interferir no design ou na circulação de ar.',
+    src: '/videos/videos%20gmk/tela-para-porta-de-correr.mp4',
+    badge: 'Porta de Correr'
+  },
+  {
+    id: 'porta-giro',
+    title: 'Tela Mosquiteira para Porta de Giro',
+    tipo: 'Portas de entrada e cozinha',
+    desc: 'Estrutura resistente com fechamento preciso e vedação total. Mantém a casa fresca e arejada com proteção permanente.',
+    src: '/videos/videos%20gmk/tela-para-porta.mp4',
+    badge: 'Porta de Giro'
+  }
+]
+
+const activeVideoIndex = ref(0)
+const videoCarouselRef = ref<HTMLElement | null>(null)
+
+function scrollVideoCarousel(direction: 'prev' | 'next') {
+  if (!videoCarouselRef.value) return
+  const targetIndex = direction === 'next'
+    ? Math.min(activeVideoIndex.value + 1, VIDEOS.length - 1)
+    : Math.max(activeVideoIndex.value - 1, 0)
+  goToVideo(targetIndex)
+}
+
+function goToVideo(index: number) {
+  if (!videoCarouselRef.value) return
+  activeVideoIndex.value = index
+  const children = videoCarouselRef.value.children
+  if (children[index]) {
+    (children[index] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }
+}
+
+function onVideoCarouselScroll() {
+  if (!videoCarouselRef.value) return
+  const container = videoCarouselRef.value
+  const scrollLeft = container.scrollLeft
+  const cardWidth = container.clientWidth
+  if (cardWidth <= 0) return
+  const newIndex = Math.round(scrollLeft / cardWidth)
+  if (newIndex >= 0 && newIndex < VIDEOS.length) {
+    activeVideoIndex.value = newIndex
+  }
+}
+
+function pauseOtherVideos(currentVideoEl: HTMLVideoElement) {
+  if (!import.meta.client) return
+  const allVideos = document.querySelectorAll<HTMLVideoElement>('#videos-instalacao video')
+  allVideos.forEach((v) => {
+    if (v !== currentVideoEl && !v.paused) {
+      v.pause()
+    }
+  })
+}
+
 const TRUST = [
   { icon: 'event_available', label: 'Visita técnica grátis' },
   { icon: 'verified_user', label: '2 anos de garantia' }
@@ -812,9 +877,13 @@ onBeforeUnmount(() => {
           <input v-model.number="baPos" type="range" min="0" max="100" step="1" class="sr-only" aria-label="Comparar antes e depois">
         </div>
 
-        <div class="mt-6 text-center">
+        <div class="mt-6 flex flex-col items-center justify-center gap-3">
           <a href="#orcamento" class="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-secondary px-8 text-base font-extrabold text-white shadow-lg shadow-secondary/25 transition hover:bg-[#004f80]" @click.prevent="scrollToQuiz">
             Quero o meu também <CampanhaIcon name="arrow_upward" :size="20" />
+          </a>
+          <a href="#videos-instalacao" class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border-2 border-primary/15 bg-white/90 px-6 text-sm font-extrabold text-primary shadow-sm backdrop-blur transition hover:border-secondary hover:bg-white hover:text-secondary hover:shadow" @click.prevent="scrollToVideos">
+            <CampanhaIcon name="play_circle" :size="20" class="text-secondary" />
+            Ver vídeos de instalação
           </a>
         </div>
       </section>
@@ -833,6 +902,143 @@ onBeforeUnmount(() => {
               </div>
             </li>
           </ol>
+        </div>
+      </section>
+
+      <!-- VÍDEOS DE INSTALAÇÃO -->
+      <section id="videos-instalacao" class="bg-[#faf8ff] border-y border-[#e3e1e9]/60 py-12 lg:py-16 scroll-mt-6" aria-labelledby="gmk-videos-title">
+        <div class="mx-auto max-w-4xl px-4">
+          <div class="text-center">
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-secondary/10 px-3.5 py-1 text-xs font-extrabold tracking-wide uppercase text-secondary">
+              <CampanhaIcon name="videocam" :size="16" />
+              Instalações Reais GMK
+            </span>
+            <h2 id="gmk-videos-title" class="mt-2.5 font-heading text-2xl font-extrabold sm:text-3xl text-primary">
+              Veja nossas telas instaladas em clientes
+            </h2>
+            <p class="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Deslize para o lado para ver o acabamento sob medida, suavidade de abertura e qualidade de vedação.
+            </p>
+          </div>
+
+          <!-- CARROSSEL DE VÍDEOS -->
+          <div class="relative mt-8">
+            <!-- BOTÕES DE NAVEGAÇÃO DESKTOP / TABLET (LATERAIS) -->
+            <button
+              type="button"
+              class="hidden sm:grid absolute -left-5 top-1/2 -translate-y-1/2 z-10 h-12 w-12 place-items-center rounded-full bg-white text-primary shadow-xl border border-slate-200 transition active:scale-95 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none"
+              :disabled="activeVideoIndex === 0"
+              aria-label="Vídeo anterior"
+              @click="scrollVideoCarousel('prev')"
+            >
+              <CampanhaIcon name="chevron_left" :size="28" />
+            </button>
+            <button
+              type="button"
+              class="hidden sm:grid absolute -right-5 top-1/2 -translate-y-1/2 z-10 h-12 w-12 place-items-center rounded-full bg-white text-primary shadow-xl border border-slate-200 transition active:scale-95 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none"
+              :disabled="activeVideoIndex === VIDEOS.length - 1"
+              aria-label="Próximo vídeo"
+              @click="scrollVideoCarousel('next')"
+            >
+              <CampanhaIcon name="chevron_right" :size="28" />
+            </button>
+
+            <!-- TRACK DE VÍDEOS -->
+            <div
+              ref="videoCarouselRef"
+              class="gmk-snap flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-2 px-1"
+              @scroll.passive="onVideoCarouselScroll"
+            >
+              <div
+                v-for="(vid, idx) in VIDEOS"
+                :key="vid.id"
+                class="w-full shrink-0 snap-center rounded-3xl border border-[#d7dce4] bg-white p-3.5 sm:p-5 shadow-xl shadow-slate-200/60"
+              >
+                <!-- CABEÇALHO DO CARD -->
+                <div class="mb-3 flex items-center justify-between gap-2 px-1">
+                  <span class="inline-flex items-center gap-1.5 rounded-lg bg-primary/5 px-2.5 py-1 text-xs font-bold text-primary">
+                    <CampanhaIcon name="verified" :size="14" class="text-secondary" />
+                    {{ vid.badge }}
+                  </span>
+                  <span class="text-xs font-semibold text-slate-500">
+                    {{ idx + 1 }} de {{ VIDEOS.length }}
+                  </span>
+                </div>
+
+                <!-- PLAYER DE VÍDEO -->
+                <div class="relative overflow-hidden rounded-2xl bg-black flex items-center justify-center">
+                  <video
+                    :src="vid.src"
+                    controls
+                    playsinline
+                    preload="metadata"
+                    class="max-h-[520px] w-full rounded-2xl object-contain bg-black shadow-inner"
+                    @play="pauseOtherVideos($event.target as HTMLVideoElement)"
+                  />
+                </div>
+
+                <!-- RODAPÉ DO CARD -->
+                <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-1">
+                  <div>
+                    <h3 class="font-heading text-lg font-bold text-primary sm:text-xl">
+                      {{ vid.title }}
+                    </h3>
+                    <p class="mt-1 text-sm text-slate-600 leading-relaxed">
+                      {{ vid.desc }}
+                    </p>
+                  </div>
+                  <a
+                    href="#orcamento"
+                    class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-secondary px-5 py-3 text-sm font-extrabold text-white shadow-md shadow-secondary/20 transition hover:bg-[#004f80]"
+                    @click.prevent="scrollToQuiz"
+                  >
+                    Quero orçamento <CampanhaIcon name="arrow_upward" :size="16" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTROLES MOBILE / INDICADORES -->
+            <div class="mt-4 flex items-center justify-between sm:justify-center sm:gap-6 px-2">
+              <button
+                type="button"
+                class="grid sm:hidden h-10 w-10 place-items-center rounded-full bg-white text-primary shadow-md border border-slate-200 transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                :disabled="activeVideoIndex === 0"
+                aria-label="Vídeo anterior"
+                @click="scrollVideoCarousel('prev')"
+              >
+                <CampanhaIcon name="chevron_left" :size="24" />
+              </button>
+
+              <!-- DOTS -->
+              <div class="flex items-center gap-2">
+                <button
+                  v-for="(_, idx) in VIDEOS"
+                  :key="idx"
+                  type="button"
+                  class="h-2.5 rounded-full transition-all duration-300"
+                  :class="activeVideoIndex === idx ? 'w-8 bg-secondary' : 'w-2.5 bg-slate-300 hover:bg-slate-400'"
+                  :aria-label="`Ir para o vídeo ${idx + 1}`"
+                  @click="goToVideo(idx)"
+                />
+              </div>
+
+              <button
+                type="button"
+                class="grid sm:hidden h-10 w-10 place-items-center rounded-full bg-white text-primary shadow-md border border-slate-200 transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                :disabled="activeVideoIndex === VIDEOS.length - 1"
+                aria-label="Próximo vídeo"
+                @click="scrollVideoCarousel('next')"
+              >
+                <CampanhaIcon name="chevron_right" :size="24" />
+              </button>
+            </div>
+
+            <p class="mt-2 text-center text-xs text-slate-500 flex items-center justify-center gap-1">
+              <CampanhaIcon name="swap_horiz" :size="16" class="text-secondary" />
+              Passe para o lado para ver mais instalações
+            </p>
+          </div>
         </div>
       </section>
 
