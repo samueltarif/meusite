@@ -105,21 +105,63 @@ const IMG = '/imagens campanha gmk/otimizadas/'
 const LOGO = encodeURI(`${IMG}logo-gmk.webp`)
 const IMG2 = '/images/campanha-gmk/'
 
-const JANELA_CAROUSEL_IMAGES = [
-  `${IMG2}tipo-janela.webp`,
-  `${IMG2}tela_janela.png`,
-  `${IMG2}tela_para_janela.png`,
-  `${IMG2}janela-depois.webp`,
-  `${IMG2}tela_em_portas_e_janelas.png`
-]
-const currentJanelaImgIdx = ref(0)
-let janelaTimer: ReturnType<typeof setInterval> | null = null
+const carouselIndex = ref(0)
+let cardsTimer: ReturnType<typeof setInterval> | null = null
 
-const TIPOS: { value: LeadTipo; label: string; hint: string; src: string }[] = [
-  { value: 'janela', label: 'Janela', hint: 'Correr, basculante e outras', src: `${IMG2}tipo-janela.webp` },
-  { value: 'porta-giro', label: 'Porta de Correr', hint: 'Porta de correr sob medida', src: `${IMG2}tipo-porta-balcao.webp` },
-  { value: 'porta-balcao', label: 'Telas para Portas', hint: 'Giro, abrir e outros modelos', src: `${IMG2}tipo-porta-giro.webp` },
-  { value: 'casa-inteira', label: 'Casa Inteira', hint: 'Todas as aberturas', src: `${IMG2}tipo-casa-inteira.webp` }
+const TIPOS: { value: LeadTipo; label: string; hint: string; src: string; images: string[] }[] = [
+  {
+    value: 'janela',
+    label: 'Janela',
+    hint: 'Correr, basculante e outras',
+    src: `${IMG2}tipo-janela.webp`,
+    images: [
+      `${IMG2}tipo-janela.webp`,
+      `${IMG2}tela_janela.png`,
+      `${IMG2}tela_para_janela.png`,
+      `${IMG2}janela-depois.webp`,
+      `${IMG2}tela_em_portas_e_janelas.png`
+    ]
+  },
+  {
+    value: 'porta-giro',
+    label: 'Porta de Correr',
+    hint: 'Porta de correr sob medida',
+    src: `${IMG2}tipo-porta-balcao.webp`,
+    images: [
+      `${IMG2}tipo-porta-balcao.webp`,
+      `${IMG2}tela_porta_correr.png`,
+      `${IMG2}tela-mosquiteira-de-correr-depois.2.jpeg`,
+      `${IMG2}correr-depois.webp`,
+      `${IMG2}tela_porta_balcao.png`
+    ]
+  },
+  {
+    value: 'porta-balcao',
+    label: 'Telas para Portas',
+    hint: 'Giro, abrir e outros modelos',
+    src: `${IMG2}tipo-porta-giro.webp`,
+    images: [
+      `${IMG2}tipo-porta-giro.webp`,
+      `${IMG2}tela_para_porta.png`,
+      `${IMG2}porta-depois.webp`,
+      `${IMG2}Tela-mosquiteira-para-porta-depois.2.jpeg`,
+      `${IMG2}tela-mosquiteira-depois.2.jpeg`,
+      `${IMG2}tela_pota.png`
+    ]
+  },
+  {
+    value: 'casa-inteira',
+    label: 'Casa Inteira',
+    hint: 'Todas as aberturas',
+    src: `${IMG2}tipo-casa-inteira.webp`,
+    images: [
+      `${IMG2}tipo-casa-inteira.webp`,
+      `${IMG2}telas_casa_toda.png`,
+      `${IMG2}tela_em_portas_e_janelas.png`,
+      `${IMG2}correr-depois.webp`,
+      `${IMG2}janela-depois.webp`
+    ]
+  }
 ]
 
 const QUANTIDADES: { value: LeadQuantidade; label: string; hint?: string; icon: string }[] = [
@@ -508,13 +550,13 @@ onMounted(() => {
   document.addEventListener('focusin', onFocusIn)
   document.addEventListener('focusout', onFocusOut)
 
-  janelaTimer = setInterval(() => {
-    currentJanelaImgIdx.value = (currentJanelaImgIdx.value + 1) % JANELA_CAROUSEL_IMAGES.length
+  cardsTimer = setInterval(() => {
+    carouselIndex.value++
   }, 2000)
 })
 onBeforeUnmount(() => {
   quizObserver?.disconnect()
-  if (janelaTimer) clearInterval(janelaTimer)
+  if (cardsTimer) clearInterval(cardsTimer)
   if (import.meta.client) {
     document.removeEventListener('focusin', onFocusIn)
     document.removeEventListener('focusout', onFocusOut)
@@ -628,34 +670,29 @@ onBeforeUnmount(() => {
                     @click="pickTipo(t.value)"
                   >
                     <span class="relative block aspect-square sm:aspect-[4/3] lg:aspect-[16/10] overflow-hidden bg-[#eeedf5]">
-                      <!-- Carrossel automático no card de Janela a cada 2s -->
-                      <template v-if="t.value === 'janela'">
-                        <div class="relative h-full w-full">
-                          <img
-                            v-for="(imgSrc, imgIdx) in JANELA_CAROUSEL_IMAGES"
-                            :key="imgSrc"
-                            :src="imgSrc"
-                            :alt="t.label"
-                            width="400"
-                            height="400"
-                            class="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out group-hover:scale-105"
-                            :class="currentJanelaImgIdx === imgIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
-                            :loading="imgIdx === 0 ? 'eager' : 'lazy'"
+                      <!-- Carrossel automático de fotos a cada 2s em todos os 4 cards -->
+                      <div class="relative h-full w-full">
+                        <img
+                          v-for="(imgSrc, imgIdx) in t.images"
+                          :key="imgSrc"
+                          :src="imgSrc"
+                          :alt="t.label"
+                          width="400"
+                          height="400"
+                          class="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out group-hover:scale-105"
+                          :class="(carouselIndex % t.images.length) === imgIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
+                          :loading="imgIdx === 0 ? 'eager' : 'lazy'"
+                        />
+                        <!-- Indicador discreto das fotos -->
+                        <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-20 flex gap-1">
+                          <span
+                            v-for="(_, dotIdx) in t.images"
+                            :key="dotIdx"
+                            class="h-1 rounded-full transition-all duration-300"
+                            :class="(carouselIndex % t.images.length) === dotIdx ? 'w-3 bg-white shadow' : 'w-1 bg-white/60'"
                           />
-                          <!-- Indicador discreto das fotos -->
-                          <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-20 flex gap-1">
-                            <span
-                              v-for="(_, dotIdx) in JANELA_CAROUSEL_IMAGES"
-                              :key="dotIdx"
-                              class="h-1 rounded-full transition-all duration-300"
-                              :class="currentJanelaImgIdx === dotIdx ? 'w-3 bg-white shadow' : 'w-1 bg-white/60'"
-                            />
-                          </div>
                         </div>
-                      </template>
-                      <template v-else>
-                        <img :src="t.src" :alt="t.label" width="400" height="400" decoding="async" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
-                      </template>
+                      </div>
 
                       <span v-if="answers.tipo === t.value" class="absolute right-2 top-2 z-20 grid h-6 w-6 place-items-center rounded-full bg-secondary text-white shadow">
                         <CampanhaIcon name="check" :size="16" />
