@@ -90,7 +90,8 @@ export const createLeadSchema = z.object({
     utm_campaign: trackingKey,
     utm_term: trackingKey,
     utm_content: trackingKey,
-    landing: trackingKey
+    landing: trackingKey,
+    ref: z.string().trim().regex(/^[23456789ABCDEFGHJKMNPQRSTVWXYZ]{8}$/).optional()
   }).optional(),
   // honeypot: humanos não preenchem
   website: z.string().optional()
@@ -117,7 +118,14 @@ export function normalizeBrPhone(input: string): string | null {
 // ---------- controle de acesso e anti-spam ----------
 export function assertDashboardAccess(event: H3Event) {
   const key = process.env.CAMPANHA_DASHBOARD_KEY
-  if (!key) return
+  if (!key) {
+    // Sem chave configurada o painel ficava ABERTO (qualquer pessoa lia, editava e apagava leads).
+    // Em producao agora falha fechado; em desenvolvimento local continua liberado.
+    if (process.env.NODE_ENV === 'production') {
+      throw createError({ statusCode: 401, statusMessage: 'Acesso não autorizado' })
+    }
+    return
+  }
   const sent = Buffer.from(String(getHeader(event, 'x-campanha-key') || ''))
   const expected = Buffer.from(key)
   if (sent.length !== expected.length || !timingSafeEqual(sent, expected)) {

@@ -42,6 +42,9 @@ const tipoLabel = computed(() => TIPO_LABEL[props.lead.tipo] ?? props.lead.tipo)
 const QTD_SHORT: Record<string, string> = { '1-2': '1 a 2 un.', '3-5': '3 a 5 un.', 'mais-5': 'Mais de 5 un.', 'visita': 'Visita p/ medição' }
 const quantidadeLabel = computed(() => QTD_SHORT[props.lead.quantidade] ?? QUANTIDADE_LABEL[props.lead.quantidade] ?? props.lead.quantidade)
 const viaWhatsApp = computed(() => props.lead.tipo === 'nao-informado')
+const hasPhone = computed(() => props.lead.phone.replace(/\D/g, '').length >= 10)
+const refCode = computed(() => props.lead.tracking?.ref || '')
+const clickOnly = computed(() => !hasPhone.value && !!refCode.value)
 const fromAds = computed(() => !!(props.lead.tracking?.gclid || props.lead.tracking?.gbraid || props.lead.tracking?.wbraid))
 
 let flashTimer: ReturnType<typeof setTimeout> | undefined
@@ -111,7 +114,8 @@ function onDragStart(event: DragEvent) {
         >
           <span class="block break-words text-[15px] font-extrabold leading-tight text-primary">{{ lead.name }}</span>
           <span class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-            <span class="inline-flex items-center gap-1"><CampanhaIcon name="call" :size="14" /> {{ campanhaDisplayPhone(lead.phone) }}</span>
+            <span v-if="hasPhone" class="inline-flex items-center gap-1"><CampanhaIcon name="call" :size="14" /> {{ campanhaDisplayPhone(lead.phone) }}</span>
+            <span v-else-if="refCode" class="inline-flex items-center gap-1 font-mono font-bold text-slate-700"><CampanhaIcon name="tag" :size="14" /> Ref: {{ refCode }}</span>
             <span class="inline-flex items-center gap-1" :title="campanhaFormatDate(lead.createdAt)">
               <CampanhaIcon name="schedule" :size="14" /> {{ campanhaFormatDate(lead.createdAt) }} · {{ campanhaTimeAgo(lead.createdAt) }}
             </span>
@@ -131,7 +135,7 @@ function onDragStart(event: DragEvent) {
       <!-- Itens solicitados -->
       <div class="mt-2.5 flex flex-wrap gap-1.5 text-xs font-semibold">
         <span v-if="viaWhatsApp" class="inline-flex items-center gap-1 rounded-full bg-[#e7f9ee] px-2.5 py-1 text-emerald-800">
-          <CampanhaIcon name="chat" :size="15" /> Chamou pelo botão do WhatsApp
+          <CampanhaIcon name="chat" :size="15" /> {{ clickOnly ? 'Clicou no WhatsApp (procure o Ref na conversa)' : 'Chamou pelo botão do WhatsApp' }}
         </span>
         <template v-else>
           <span class="inline-flex items-center gap-1 rounded-full bg-[#e6f2ff] px-2.5 py-1 text-secondary">
@@ -154,6 +158,7 @@ function onDragStart(event: DragEvent) {
 
       <!-- WhatsApp -->
       <a
+        v-if="hasPhone"
         :href="waUrl"
         target="_blank"
         rel="noopener"
@@ -224,6 +229,8 @@ function onDragStart(event: DragEvent) {
         />
       </div>
 
+      <p v-if="refCode" class="rounded-lg bg-white p-2.5 text-xs text-slate-600 ring-1 ring-[#e9eef5]"><strong>Ref (código na mensagem do WhatsApp):</strong> <span class="font-mono font-bold">{{ refCode }}</span></p>
+
       <div v-if="lead.tracking && (lead.tracking.utm_campaign || lead.tracking.utm_term || fromAds)" class="rounded-lg bg-white p-2.5 text-xs text-slate-600 ring-1 ring-[#e9eef5]">
         <p v-if="lead.tracking.utm_campaign"><strong>Campanha:</strong> {{ lead.tracking.utm_campaign }}</p>
         <p v-if="lead.tracking.utm_term"><strong>Palavra-chave:</strong> {{ lead.tracking.utm_term }}</p>
@@ -232,8 +239,8 @@ function onDragStart(event: DragEvent) {
       </div>
 
       <div class="flex items-center justify-between pt-1">
-        <a :href="`tel:+${lead.phone}`" class="inline-flex items-center gap-1 text-xs font-bold text-secondary"><CampanhaIcon name="call" :size="16" /> Ligar</a>
-        <div v-if="!confirmingDelete">
+        <a v-if="hasPhone" :href="`tel:+${lead.phone}`" class="inline-flex items-center gap-1 text-xs font-bold text-secondary"><CampanhaIcon name="call" :size="16" /> Ligar</a>
+        <div v-if="!confirmingDelete" :class="hasPhone ? '' : 'ml-auto'">
           <button type="button" class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600" @click="confirmingDelete = true">
             <CampanhaIcon name="delete" :size="16" /> Excluir lead
           </button>

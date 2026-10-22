@@ -87,6 +87,8 @@ export interface LeadTracking {
   utm_term?: string
   utm_content?: string
   landing?: string
+  /** Código de referência (8 caracteres) enviado na mensagem do WhatsApp: liga o clique ao cliente. */
+  ref?: string
 }
 
 export interface CampanhaLead {

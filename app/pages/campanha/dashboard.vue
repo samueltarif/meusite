@@ -169,6 +169,7 @@ const filtered = computed(() => {
   return leads.value.filter(l =>
     campanhaNormalizeText(`${l.name} ${l.local}`).includes(q)
     || (digits.length >= 3 && l.phone.includes(digits))
+    || (q.length >= 4 && (l.tracking?.ref || '').toLowerCase().includes(search.value.trim().toLowerCase()))
   )
 })
 

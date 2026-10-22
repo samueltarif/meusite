@@ -98,6 +98,24 @@ onMounted(() => {
 const whatsappUrl = (text: string) => `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(text)}`
 const defaultWhatsappUrl = whatsappUrl(CONFIG.whatsappMessage)
 
+/** Código de referência de 8 caracteres (sem 0/O/1/I/L). Vai na mensagem do WhatsApp e no painel. */
+const REF_ALPHABET = '23456789ABCDEFGHJKMNPQRSTVWXYZ'
+function generateRef(): string {
+  let out = ''
+  const buf = new Uint8Array(32)
+  while (out.length < 8) {
+    crypto.getRandomValues(buf)
+    for (let i = 0; i < buf.length && out.length < 8; i++) {
+      if (buf[i]! < 240) out += REF_ALPHABET[buf[i]! % REF_ALPHABET.length]
+    }
+  }
+  return out
+}
+const withRef = (text: string, ref: string) => `${text}\nRef: ${ref}`
+
+// true = pop-up antigo (pede nome + WhatsApp antes). false = vai direto ao WhatsApp com Ref e salva o clique no painel.
+const USE_WA_POPUP = false
+
 /* ==========================================================================
  * QUIZ
  * ========================================================================== */
@@ -116,10 +134,10 @@ const TIPOS: { value: LeadTipo; label: string; hint: string; src: string; images
     src: `${IMG2}tipo-janela.webp`,
     images: [
       `${IMG2}tipo-janela.webp`,
-      `${IMG2}tela_janela.png`,
-      `${IMG2}tela_para_janela.png`,
+      `${IMG2}tela_janela-640.webp`,
+      `${IMG2}tela_para_janela-640.webp`,
       `${IMG2}janela-depois.webp`,
-      `${IMG2}tela_em_portas_e_janelas.png`
+      `${IMG2}tela_em_portas_e_janelas-640.webp`
     ]
   },
   {
@@ -129,10 +147,10 @@ const TIPOS: { value: LeadTipo; label: string; hint: string; src: string; images
     src: `${IMG2}tipo-porta-balcao.webp`,
     images: [
       `${IMG2}tipo-porta-balcao.webp`,
-      `${IMG2}tela_porta_correr.png`,
-      `${IMG2}tela-mosquiteira-de-correr-depois.2.jpeg`,
+      `${IMG2}tela_porta_correr-640.webp`,
+      `${IMG2}tela-mosquiteira-de-correr-depois.2-640.webp`,
       `${IMG2}correr-depois.webp`,
-      `${IMG2}tela_porta_balcao.png`
+      `${IMG2}tela_porta_balcao-640.webp`
     ]
   },
   {
@@ -142,11 +160,11 @@ const TIPOS: { value: LeadTipo; label: string; hint: string; src: string; images
     src: `${IMG2}tipo-porta-giro.webp`,
     images: [
       `${IMG2}tipo-porta-giro.webp`,
-      `${IMG2}tela_para_porta.png`,
+      `${IMG2}tela_para_porta-640.webp`,
       `${IMG2}porta-depois.webp`,
-      `${IMG2}Tela-mosquiteira-para-porta-depois.2.jpeg`,
-      `${IMG2}tela-mosquiteira-depois.2.jpeg`,
-      `${IMG2}tela_pota.png`
+      `${IMG2}Tela-mosquiteira-para-porta-depois.2-640.webp`,
+      `${IMG2}tela-mosquiteira-depois.2-640.webp`,
+      `${IMG2}tela_pota-640.webp`
     ]
   },
   {
@@ -156,8 +174,8 @@ const TIPOS: { value: LeadTipo; label: string; hint: string; src: string; images
     src: `${IMG2}tipo-casa-inteira.webp`,
     images: [
       `${IMG2}tipo-casa-inteira.webp`,
-      `${IMG2}telas_casa_toda.png`,
-      `${IMG2}tela_em_portas_e_janelas.png`,
+      `${IMG2}telas_casa_toda-640.webp`,
+      `${IMG2}tela_em_portas_e_janelas-640.webp`,
       `${IMG2}correr-depois.webp`,
       `${IMG2}janela-depois.webp`
     ]
@@ -231,6 +249,7 @@ async function submit() {
   if (submitting.value || !nameValid.value || !phoneValid.value || !answers.tipo || !answers.quantidade || !localValid.value) return
   submitting.value = true
   submitError.value = ''
+  if (!quizRef.value) quizRef.value = generateRef()
   try {
     const res = await $fetch<{ ok: boolean; id?: string }>('/api/campanha/leads', {
       method: 'POST',
@@ -241,7 +260,7 @@ async function submit() {
         quantidade: answers.quantidade,
         local: answers.local.trim(),
         origem: 'landing-quiz',
-        tracking: tracking.value,
+        tracking: { ...tracking.value, ref: quizRef.value },
         website: answers.website
       }
     })
@@ -261,13 +280,15 @@ const summaryText = computed(() => {
   return { tipo, qtd }
 })
 
-const thankYouUrl = computed(() => whatsappUrl(
+const quizRef = ref('')
+const thankYouUrl = computed(() => whatsappUrl(withRef(
   `Olá! Sou ${answers.name.trim()}. Acabei de pedir um orçamento no site da GMK:\n`
   + `• Tipo: ${summaryText.value.tipo}\n`
   + `• Quantidade: ${summaryText.value.qtd}\n`
   + `• Local: ${answers.local.trim()}\n`
-  + 'Pode me atender?'
-))
+  + 'Pode me atender?',
+  quizRef.value
+)))
 
 /* ==========================================================================
  * MODAL "ATENDIMENTO WHATSAPP": pede nome + WhatsApp, grava o lead e abre a conversa
@@ -289,7 +310,24 @@ function markCaptured() {
 
 /** Todo botão de WhatsApp da página chama esta função. */
 function openWhatsApp(origem: string) {
-  // Sempre abre o pop-up (nome + WhatsApp) para registrar o lead no painel antes de ir ao WhatsApp.
+  if (!USE_WA_POPUP) {
+    // Direto ao WhatsApp: gera o Ref, salva o clique no painel e abre a conversa (tudo dentro do toque do usuário).
+    const ref = generateRef()
+    const url = whatsappUrl(withRef(CONFIG.whatsappMessage, ref))
+    trackWhatsAppClick(origem)
+    try {
+      void fetch('/api/campanha/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref, origem, tracking: tracking.value }),
+        keepalive: true
+      }).catch(() => { /* nunca impede o cliente de chegar ao WhatsApp */ })
+    } catch { /* idem */ }
+    const popup = window.open(url, '_blank')
+    if (!popup) window.location.href = url
+    return
+  }
+  // Pop-up (nome + WhatsApp) para registrar o lead no painel antes de ir ao WhatsApp.
   wa.origem = origem
   wa.attempted = false
   wa.open = true
@@ -353,13 +391,15 @@ const VIDEOS = [
   {
     id: 'porta-correr-1',
     title: 'Tela para Porta de Correr',
-    src: '/videos/videos%20gmk/tela-para-porta-de-correr.mp4',
+    src: '/videos/videos%20gmk/tela-para-porta-de-correr-opt.mp4',
+    poster: '/videos/videos%20gmk/tela-para-porta-de-correr-poster.webp',
     badge: 'Porta de Correr'
   },
   {
     id: 'porta-correr-2',
     title: 'Tela para Porta de Correr',
-    src: '/videos/videos%20gmk/tela-para-porta.mp4',
+    src: '/videos/videos%20gmk/tela-para-porta-opt.mp4',
+    poster: '/videos/videos%20gmk/tela-para-porta-poster.webp',
     badge: 'Porta de Correr'
   }
 ]
@@ -576,7 +616,7 @@ onBeforeUnmount(() => {
           target="_blank"
           rel="noopener"
           :class="barVisible ? 'hidden' : 'inline-flex'"
-          class="h-10 shrink-0 items-center gap-2 rounded-full bg-[#25D366] px-4 lg:inline-flex text-sm font-bold text-white shadow-sm transition hover:bg-[#1fb957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+          class="h-10 shrink-0 items-center gap-2 rounded-full bg-[#128241] px-4 lg:inline-flex text-sm font-bold text-white shadow-sm transition hover:bg-[#0e6b35] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
           @click.prevent="openWhatsApp('header')"
         >
           <CampanhaWhatsappIcon :size="18" />
@@ -638,7 +678,7 @@ onBeforeUnmount(() => {
                   :href="thankYouUrl"
                   target="_blank"
                   rel="noopener"
-                  class="mt-5 flex min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-5 text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1fb957] active:scale-[0.99]"
+                  class="mt-5 flex min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-[#128241] px-5 text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#0e6b35] active:scale-[0.99]"
                   @click="trackWhatsAppClick('obrigado')"
                 >
                   <CampanhaWhatsappIcon :size="24" /> Adiantar meu atendimento no WhatsApp
@@ -814,7 +854,7 @@ onBeforeUnmount(() => {
                 <button
                   type="submit"
                   :disabled="submitting"
-                  class="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1fb957] active:scale-[0.99] disabled:opacity-70"
+                  class="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#128241] text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#0e6b35] active:scale-[0.99] disabled:opacity-70"
                 >
                   <template v-if="submitting">
                     <span class="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" /> Enviando...
@@ -1040,9 +1080,10 @@ onBeforeUnmount(() => {
                 <div class="relative overflow-hidden rounded-2xl bg-black flex items-center justify-center">
                   <video
                     :src="vid.src"
+                    :poster="vid.poster"
                     controls
                     playsinline
-                    preload="metadata"
+                    preload="none"
                     class="max-h-[520px] w-full rounded-2xl object-contain bg-black shadow-inner"
                     @play="pauseOtherVideos($event.target as HTMLVideoElement)"
                   />
@@ -1171,7 +1212,7 @@ onBeforeUnmount(() => {
       target="_blank"
       rel="noopener"
       aria-label="Falar com a GMK no WhatsApp"
-      class="gmk-wa-float fixed right-4 z-50 hidden h-14 w-14 place-items-center rounded-full lg:grid bg-[#25D366] text-white shadow-xl shadow-black/25 transition hover:bg-[#1fb957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+      class="gmk-wa-float fixed right-4 z-50 hidden h-14 w-14 place-items-center rounded-full lg:grid bg-[#128241] text-white shadow-xl shadow-black/25 transition hover:bg-[#0e6b35] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
       @click.prevent="openWhatsApp('flutuante')"
     >
       <CampanhaWhatsappIcon :size="30" />
@@ -1187,7 +1228,7 @@ onBeforeUnmount(() => {
           :href="defaultWhatsappUrl"
           target="_blank"
           rel="noopener"
-          class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-[15px] font-extrabold text-white shadow-md shadow-[#25D366]/30 transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+          class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#128241] text-[15px] font-extrabold text-white shadow-md shadow-[#25D366]/30 transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
           @click.prevent="openWhatsApp('barra-fixa')"
         >
           <CampanhaWhatsappIcon :size="22" /> Falar no WhatsApp · Visita grátis
@@ -1255,7 +1296,7 @@ onBeforeUnmount(() => {
             <button
               type="submit"
               :disabled="wa.submitting"
-              class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#1fb957] active:scale-[0.99] disabled:opacity-70"
+              class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#128241] text-base font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition hover:bg-[#0e6b35] active:scale-[0.99] disabled:opacity-70"
             >
               <template v-if="wa.submitting">
                 <span class="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" /> Abrindo WhatsApp...
