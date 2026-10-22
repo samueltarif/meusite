@@ -15,7 +15,9 @@ onMounted(() => {
   }
   check()
   window.addEventListener('load', check, { once: true })
-  setTimeout(check, 1500)
+  document.fonts?.ready?.then?.(() => { root.classList.add('gmk-icons-ready') })
+  setTimeout(check, 1000)
+  setTimeout(check, 2500)
 })
 </script>
 

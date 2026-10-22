@@ -124,6 +124,7 @@ const LOGO = encodeURI(`${IMG}logo-gmk.webp`)
 const IMG2 = '/images/campanha-gmk/'
 
 const carouselIndex = ref(0)
+const carouselReady = ref(false)
 let cardsTimer: ReturnType<typeof setInterval> | null = null
 
 const TIPOS: { value: LeadTipo; label: string; hint: string; src: string; images: string[] }[] = [
@@ -585,6 +586,16 @@ onMounted(() => {
   document.addEventListener('focusin', onFocusIn)
   document.addEventListener('focusout', onFocusOut)
 
+  // Libera o carregamento dos próximos frames do carrossel após o paint inicial
+  if (typeof window !== 'undefined') {
+    const startCarousel = () => { carouselReady.value = true }
+    if ('requestIdleCallback' in window) {
+      ;(window as any).requestIdleCallback(startCarousel, { timeout: 1200 })
+    } else {
+      setTimeout(startCarousel, 800)
+    }
+  }
+
   cardsTimer = setInterval(() => {
     carouselIndex.value++
   }, 2000)
@@ -606,7 +617,7 @@ onBeforeUnmount(() => {
     <header class="sticky top-0 z-40 border-b border-[#d7dce4] bg-white/95 backdrop-blur">
       <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
         <div class="flex min-w-0 items-center gap-2.5">
-          <img :src="LOGO" alt="GMK" width="320" height="267" class="h-12 w-auto shrink-0" fetchpriority="high">
+          <img :src="LOGO" alt="GMK" width="320" height="267" class="h-12 w-auto shrink-0" fetchpriority="high" decoding="async">
           <p class="max-w-[130px] text-[11px] font-bold leading-tight text-secondary sm:max-w-none sm:text-sm">
             Telas Mosquiteiras em Alumínio Sob Medida
           </p>
@@ -710,13 +721,15 @@ onBeforeUnmount(() => {
                         <img
                           v-for="(imgSrc, imgIdx) in t.images"
                           :key="imgSrc"
-                          :src="imgSrc"
+                          :src="(imgIdx === 0 || carouselReady) ? imgSrc : undefined"
                           :alt="t.label"
                           width="400"
                           height="400"
                           class="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out group-hover:scale-105"
                           :class="(carouselIndex % t.images.length) === imgIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
                           :loading="imgIdx === 0 ? 'eager' : 'lazy'"
+                          :fetchpriority="imgIdx === 0 && t.value === 'janela' ? 'high' : 'auto'"
+                          decoding="async"
                         />
                         <!-- Indicador discreto das fotos -->
                         <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-20 flex gap-1">
@@ -1192,7 +1205,7 @@ onBeforeUnmount(() => {
     </main>
 
     <footer class="bg-primary px-4 py-8 text-center text-sm text-white/70">
-      <img :src="LOGO" alt="GMK" width="320" height="267" loading="lazy" class="mx-auto h-14 w-auto">
+      <img :src="LOGO" alt="GMK" width="320" height="267" loading="lazy" decoding="async" class="mx-auto h-14 w-auto">
       <p class="mt-3 font-semibold text-white">GMK · Telas Mosquiteiras em Alumínio Sob Medida</p>
       <p class="mt-1">© {{ new Date().getFullYear() }} GMK. Todos os direitos reservados.</p>
       <div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/60">
