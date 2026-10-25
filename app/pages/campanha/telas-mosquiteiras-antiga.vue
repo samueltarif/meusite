@@ -13,6 +13,16 @@ useSeoMeta({
   robots: 'noindex, nofollow'
 })
 
+useHead({
+  script: [
+    {
+      key: 'clarity-ms',
+      type: 'text/javascript',
+      innerHTML: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "z0y9ky79tm");`
+    }
+  ]
+})
+
 /* ==========================================================================
  * CONFIGURAÇÃO DA CAMPANHA  →  EDITE AQUI antes de publicar
  * ========================================================================== */
@@ -72,6 +82,20 @@ function loadGtag() {
   }
 }
 
+function loadClarity() {
+  if (import.meta.server) return
+  const w = window as any
+  if (w.clarity) return
+  ;(function(c: any, l: Document, a: string, r: string, i: string) {
+    c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) }
+    const t = l.createElement(r) as HTMLScriptElement
+    t.async = true
+    t.src = 'https://www.clarity.ms/tag/' + i
+    const y = l.getElementsByTagName(r)[0]
+    y?.parentNode?.insertBefore(t, y)
+  })(w, document, 'clarity', 'script', 'z0y9ky79tm')
+}
+
 /* ==========================================================================
  * UTMs / GCLID  (guardados com o lead para medir o que vem do Google Ads)
  * ========================================================================== */
@@ -91,6 +115,7 @@ onMounted(() => {
   tracking.value = { ...stored, ...fromUrl, landing: location.pathname }
   try { sessionStorage.setItem('gmk-tracking', JSON.stringify(tracking.value)) } catch { /* ignore */ }
   loadGtag()
+  loadClarity()
 })
 
 /* ==========================================================================
