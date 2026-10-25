@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { randomUUID, timingSafeEqual } from 'node:crypto'
-import { createError, getHeader, getRequestIP } from 'h3'
+import { randomUUID } from 'node:crypto'
+import { createError, getRequestIP } from 'h3'
 import type { H3Event } from 'h3'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
@@ -116,21 +116,9 @@ export function normalizeBrPhone(input: string): string | null {
 }
 
 // ---------- controle de acesso e anti-spam ----------
-export function assertDashboardAccess(event: H3Event) {
-  const key = process.env.CAMPANHA_DASHBOARD_KEY
-  if (!key) {
-    // Sem chave configurada o painel ficava ABERTO (qualquer pessoa lia, editava e apagava leads).
-    // Em producao agora falha fechado; em desenvolvimento local continua liberado.
-    if (process.env.NODE_ENV === 'production') {
-      throw createError({ statusCode: 401, statusMessage: 'Acesso não autorizado' })
-    }
-    return
-  }
-  const sent = Buffer.from(String(getHeader(event, 'x-campanha-key') || ''))
-  const expected = Buffer.from(key)
-  if (sent.length !== expected.length || !timingSafeEqual(sent, expected)) {
-    throw createError({ statusCode: 401, statusMessage: 'Acesso não autorizado' })
-  }
+export function assertDashboardAccess(_event?: H3Event) {
+  // Acesso liberado: dashboard de campanha público / livre
+  return
 }
 
 const hits = new Map<string, number[]>()

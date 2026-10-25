@@ -11,23 +11,18 @@ useSeoMeta({
 })
 
 const LOGO = encodeURI('/imagens campanha gmk/otimizadas/logo-gmk.webp')
-const KEY_STORE = 'gmk-dashboard-key'
 const REFRESH_MS = 20_000
 
-const route = useRoute()
 const isDesktop = useMediaQuery('(min-width: 1024px)')
 
 const leads = ref<CampanhaLead[]>([])
 const loading = ref(true)
 const refreshing = ref(false)
 const loadError = ref('')
-const unauthorized = ref(false)
 const lastUpdated = ref<Date | null>(null)
 const activeTab = ref<LeadStatus>('novo')
 const search = ref('')
 const toast = ref('')
-const accessKey = ref('')
-const keyInput = ref('')
 const draggingId = ref<string | null>(null)
 const overStatus = ref<LeadStatus | null>(null)
 
@@ -35,46 +30,26 @@ let inFlight = 0
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 let pollTimer: ReturnType<typeof setInterval> | undefined
 
-function authHeaders(): Record<string, string> {
-  return accessKey.value ? { 'x-campanha-key': accessKey.value } : {}
-}
-
 function showToast(message: string) {
   toast.value = message
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { toast.value = '' }, 3500)
 }
 
-function isUnauthorized(err: unknown) {
-  const e = err as { statusCode?: number; status?: number; response?: { status?: number } }
-  return (e?.statusCode ?? e?.status ?? e?.response?.status) === 401
-}
-
 async function load(silent = false) {
   if (silent && inFlight > 0) return
   if (!silent) refreshing.value = true
   try {
-    const res = await $fetch<{ leads: CampanhaLead[] }>('/api/campanha/leads', { headers: authHeaders() })
+    const res = await $fetch<{ leads: CampanhaLead[] }>('/api/campanha/leads')
     leads.value = res.leads
     loadError.value = ''
-    unauthorized.value = false
     lastUpdated.value = new Date()
-  } catch (err) {
-    if (isUnauthorized(err)) unauthorized.value = true
-    else if (!silent) loadError.value = 'Não foi possível carregar os leads. Verifique a conexão e tente de novo.'
+  } catch {
+    if (!silent) loadError.value = 'Não foi possível carregar os leads. Verifique a conexão e tente de novo.'
   } finally {
     loading.value = false
     refreshing.value = false
   }
-}
-
-function submitKey() {
-  const key = keyInput.value.trim()
-  if (!key) return
-  accessKey.value = key
-  try { localStorage.setItem(KEY_STORE, key) } catch { /* ignore */ }
-  loading.value = true
-  load()
 }
 
 function onVisibility() {
@@ -82,16 +57,6 @@ function onVisibility() {
 }
 
 onMounted(async () => {
-  // Chave opcional (só necessária se CAMPANHA_DASHBOARD_KEY estiver definida no servidor)
-  const fromUrl = route.query.key
-  const queryKey = Array.isArray(fromUrl) ? fromUrl[0] : fromUrl
-  if (queryKey) {
-    accessKey.value = String(queryKey)
-    try { localStorage.setItem(KEY_STORE, accessKey.value) } catch { /* ignore */ }
-    await navigateTo({ path: route.path, query: {} }, { replace: true })
-  } else {
-    try { accessKey.value = localStorage.getItem(KEY_STORE) || '' } catch { /* ignore */ }
-  }
   await load()
   pollTimer = setInterval(() => { if (!document.hidden) load(true) }, REFRESH_MS)
   document.addEventListener('visibilitychange', onVisibility)
@@ -114,17 +79,15 @@ async function patchLead(id: string, patch: { status?: LeadStatus; notes?: strin
   try {
     const res = await $fetch<{ lead: CampanhaLead }>(`/api/campanha/leads/${id}`, {
       method: 'PATCH',
-      body: patch,
-      headers: authHeaders()
+      body: patch
     })
     const i = leads.value.findIndex(l => l.id === id)
     if (i >= 0) leads.value[i] = res.lead
     if (patch.status) showToast(`Movido para ${STATUS_META[patch.status].label}`)
-  } catch (err) {
+  } catch {
     const i = leads.value.findIndex(l => l.id === id)
     if (i >= 0) leads.value[i] = before
-    if (isUnauthorized(err)) unauthorized.value = true
-    else showToast('Não foi possível salvar. Tente de novo.')
+    showToast('Não foi possível salvar. Tente de novo.')
   } finally {
     inFlight--
   }
@@ -135,7 +98,7 @@ async function removeLead(id: string) {
   leads.value = before.filter(l => l.id !== id)
   inFlight++
   try {
-    await $fetch(`/api/campanha/leads/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await $fetch(`/api/campanha/leads/${id}`, { method: 'DELETE' })
     showToast('Lead excluído')
   } catch {
     leads.value = before
@@ -225,18 +188,7 @@ const updatedLabel = computed(() => lastUpdated.value
     </header>
 
     <main class="mx-auto max-w-[1600px] px-3 py-4 sm:px-5">
-      <!-- Acesso protegido (só aparece se o servidor exigir chave) -->
-      <section v-if="unauthorized" class="mx-auto mt-10 max-w-sm rounded-2xl border border-[#d7dce4] bg-white p-6 text-center shadow-sm">
-        <CampanhaIcon name="lock" :size="36" class="text-secondary" />
-        <h2 class="mt-2 font-heading text-lg font-extrabold">Acesso protegido</h2>
-        <p class="mt-1 text-sm text-slate-600">Digite a chave de acesso do dashboard.</p>
-        <form class="mt-4 flex gap-2" @submit.prevent="submitKey">
-          <input v-model="keyInput" type="password" autocomplete="current-password" placeholder="Chave de acesso" class="h-11 min-w-0 flex-1 rounded-lg border border-[#c7c5d0] px-3 text-base outline-none focus:border-secondary">
-          <button type="submit" class="h-11 rounded-lg bg-secondary px-4 text-sm font-bold text-white">Entrar</button>
-        </form>
-      </section>
 
-      <template v-else>
         <!-- KPIs -->
         <section class="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4" aria-label="Resumo">
           <div v-for="k in kpis" :key="k.label" class="flex items-center gap-3 rounded-xl border border-[#d7dce4] bg-white p-3">
@@ -342,7 +294,6 @@ const updatedLabel = computed(() => lastUpdated.value
             </p>
           </section>
         </div>
-      </template>
     </main>
 
     <!-- Aviso -->
