@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     const endpoint = config.r2Endpoint || process.env.R2_ENDPOINT
     const accessKeyId = config.r2AccessKeyId || process.env.R2_ACCESS_KEY_ID
     const secretAccessKey = config.r2SecretAccessKey || process.env.R2_SECRET_ACCESS_KEY
-    const bucketName = config.r2BucketName || process.env.R2_BUCKET_NAME || 'unajoya'
+    const bucketName = config.r2BucketName || process.env.R2_BUCKET_NAME || 'avyro-sites'
     const publicBaseUrl = (config.r2PublicUrl || process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
 
     if (!endpoint || !accessKeyId || !secretAccessKey) {

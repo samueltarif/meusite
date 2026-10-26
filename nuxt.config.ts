@@ -45,6 +45,13 @@ export default defineNuxtConfig({
           rel: 'stylesheet',
           href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap'
         }
+      ],
+      script: [
+        {
+          key: 'clarity-ms',
+          type: 'text/javascript',
+          innerHTML: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "z0y9ky79tm");`
+        }
       ]
     }
   },
@@ -53,7 +60,7 @@ export default defineNuxtConfig({
     r2Endpoint: process.env.R2_ENDPOINT || '',
     r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || '',
     r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
-    r2BucketName: process.env.R2_BUCKET_NAME || 'unajoya',
+    r2BucketName: process.env.R2_BUCKET_NAME || 'avyro-sites',
     r2PublicUrl: process.env.R2_PUBLIC_URL || '',
     pexelsApiKey: process.env.PEXELS_API_KEY || '',
     unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY || '',
@@ -71,7 +78,9 @@ export default defineNuxtConfig({
       googleAdsId: '',
       googleAdsConversionLabel: '',
       stripePublicKey: process.env.STRIPE_PUBLIC_KEY || '',
-      instagramOauthEnabled: String(process.env.INSTAGRAM_OAUTH_ENABLED || process.env.NUXT_PUBLIC_INSTAGRAM_OAUTH_ENABLED).toLowerCase() === 'true'
+      instagramOauthEnabled: String(process.env.INSTAGRAM_OAUTH_ENABLED || process.env.NUXT_PUBLIC_INSTAGRAM_OAUTH_ENABLED).toLowerCase() === 'true',
+      microsoftClarityId: process.env.MICROSOFT_CLARITY_ID || 'z0y9ky79tm',
+      r2PublicUrl: process.env.R2_PUBLIC_URL || 'https://media.avyro.com.br'
     }
   }
 })
