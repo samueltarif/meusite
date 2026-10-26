@@ -15,6 +15,13 @@ export default defineNuxtConfig({
     compatibilityVersion: 4
   },
   vite: {
+    vue: {
+      template: {
+        transformAssetUrls: {
+          includeAbsolute: false
+        }
+      }
+    },
     optimizeDeps: {
       include: ['ws']
     },
