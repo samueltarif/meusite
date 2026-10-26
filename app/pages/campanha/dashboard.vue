@@ -10,7 +10,7 @@ useSeoMeta({
   themeColor: '#010133'
 })
 
-const LOGO = encodeURI('/imagens campanha gmk/otimizadas/logo-gmk.webp')
+const LOGO = 'https://media.avyro.com.br/imagens%20campanha%20gmk/otimizadas/logo-gmk.webp'
 const REFRESH_MS = 20_000
 
 const isDesktop = useMediaQuery('(min-width: 1024px)')

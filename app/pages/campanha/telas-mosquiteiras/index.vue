@@ -144,9 +144,9 @@ const USE_WA_POPUP = false
 /* ==========================================================================
  * QUIZ
  * ========================================================================== */
-const IMG = '/imagens campanha gmk/otimizadas/'
-const LOGO = encodeURI(`${IMG}logo-gmk.webp`)
-const IMG2 = '/images/campanha-gmk/'
+const IMG = 'https://media.avyro.com.br/imagens%20campanha%20gmk/otimizadas/'
+const LOGO = `${IMG}logo-gmk.webp`
+const IMG2 = 'https://media.avyro.com.br/images/campanha-gmk/'
 
 const carouselIndex = ref(0)
 const carouselReady = ref(false)
@@ -417,15 +417,15 @@ const VIDEOS = [
   {
     id: 'porta-correr-1',
     title: 'Tela para Porta de Correr',
-    src: '/videos/videos%20gmk/tela-para-porta-de-correr-opt.mp4',
-    poster: '/videos/videos%20gmk/tela-para-porta-de-correr-poster.webp',
+    src: 'https://media.avyro.com.br/videos/videos%20gmk/tela-para-porta-de-correr-opt.mp4',
+    poster: 'https://media.avyro.com.br/videos/videos%20gmk/tela-para-porta-de-correr-poster.webp',
     badge: 'Porta de Correr'
   },
   {
     id: 'porta-correr-2',
     title: 'Tela para Porta de Correr',
-    src: '/videos/videos%20gmk/tela-para-porta-opt.mp4',
-    poster: '/videos/videos%20gmk/tela-para-porta-poster.webp',
+    src: 'https://media.avyro.com.br/videos/videos%20gmk/tela-para-porta-opt.mp4',
+    poster: 'https://media.avyro.com.br/videos/videos%20gmk/tela-para-porta-poster.webp',
     badge: 'Porta de Correr'
   }
 ]

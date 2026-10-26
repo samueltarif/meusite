@@ -33,7 +33,6 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/images/**': { redirect: { to: 'https://media.avyro.com.br/images/**', statusCode: 301 } },
-    '/imagens campanha gmk/**': { redirect: { to: 'https://media.avyro.com.br/imagens%20campanha%20gmk/**', statusCode: 301 } },
     '/videos/**': { redirect: { to: 'https://media.avyro.com.br/videos/**', statusCode: 301 } },
     '/datasheets/**': { redirect: { to: 'https://media.avyro.com.br/datasheets/**', statusCode: 301 } }
   },

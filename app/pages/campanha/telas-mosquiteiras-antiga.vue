@@ -127,14 +127,14 @@ const defaultWhatsappUrl = whatsappUrl(CONFIG.whatsappMessage)
 /* ==========================================================================
  * QUIZ
  * ========================================================================== */
-const IMG = '/imagens campanha gmk/otimizadas/'
-const LOGO = encodeURI(`${IMG}logo-gmk.webp`)
+const IMG = 'https://media.avyro.com.br/imagens%20campanha%20gmk/otimizadas/'
+const LOGO = `${IMG}logo-gmk.webp`
 
 const TIPOS: { value: LeadTipo; label: string; hint: string; src: string }[] = [
-  { value: 'janela', label: 'Janela', hint: 'Correr, basculante e outras', src: encodeURI(`${IMG}janela.webp`) },
-  { value: 'porta-giro', label: 'Porta de Giro', hint: 'Porta de abrir', src: encodeURI(`${IMG}porta-giro.webp`) },
-  { value: 'porta-balcao', label: 'Porta-Balcão / Sacada', hint: 'Porta de correr', src: encodeURI(`${IMG}porta-balcao.webp`) },
-  { value: 'casa-inteira', label: 'Casa Inteira', hint: 'Todas as aberturas', src: encodeURI(`${IMG}casa-inteira.webp`) }
+  { value: 'janela', label: 'Janela', hint: 'Correr, basculante e outras', src: `${IMG}janela.webp` },
+  { value: 'porta-giro', label: 'Porta de Giro', hint: 'Porta de abrir', src: `${IMG}porta-giro.webp` },
+  { value: 'porta-balcao', label: 'Porta-Balcão / Sacada', hint: 'Porta de correr', src: `${IMG}porta-balcao.webp` },
+  { value: 'casa-inteira', label: 'Casa Inteira', hint: 'Todas as aberturas', src: `${IMG}casa-inteira.webp` }
 ]
 
 const QUANTIDADES: { value: LeadQuantidade; label: string; hint?: string; icon: string }[] = [
